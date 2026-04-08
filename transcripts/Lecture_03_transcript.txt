@@ -1,0 +1,2217 @@
+[00:05] Cool. Hello everyone and uh welcome to
+[00:09] lecture 3 of CME 295.
+[00:12] Um so today is a very exciting day
+[00:14] because we're going to finally introduce
+[00:17] large language models. Uh but I guess
+[00:20] before we go into that I'm just going to
+[00:22] start traditionally with uh some
+[00:24] announcements. Um so some of you wanted
+[00:27] to have the slides before the class. So
+[00:30] just a heads up that in case you want to
+[00:33] use the slides to do some annotations
+[00:36] uh they're on the website right now. So
+[00:38] feel free to get them and uh with
+[00:40] Shervin we'll try to just on a regular
+[00:42] basis every Thursday evening have them
+[00:45] published on the website so that you can
+[00:47] download them and annotate.
+[00:50] Cool. So with that, let's start. And as
+[00:55] usual, we're going to recap uh last
+[00:58] week's episodes.
+[01:01] So if you remember, you know, lecture
+[01:03] one and lecture two were all about
+[01:06] introducing the concept of self
+[01:08] attention and linking them to the
+[01:12] construct of the transformer. And what
+[01:14] we did last lecture was look at all the
+[01:18] types of models that there are out there
+[01:21] and how they were all based on the
+[01:23] transformer.
+[01:25] So there are three categories, three
+[01:26] main categories of models. So the first
+[01:29] one that we saw was encoder decoder
+[01:33] model which basically relies on the
+[01:36] transformer. It has the encoder of the
+[01:38] transformer, the decoder of the
+[01:40] transformer and typically the tasks
+[01:42] there are input text. So text in text
+[01:46] out.
+[01:48] So we saw that one example was T5 and
+[01:51] all the variations.
+[01:55] The second type of model is where we
+[01:58] remove the decoder from the trans
+[02:01] transformer and we obtain an encoder
+[02:04] only model.
+[02:06] So uh we went uh deeper into BERT which
+[02:10] is the typical encoder only model and uh
+[02:14] I guess we also saw that what BERT has
+[02:16] is this nice property that it's encoded
+[02:20] embeddings are very meaningful and
+[02:22] expressive of the inputs and so yeah we
+[02:26] saw like the example of classification
+[02:28] sentiment extraction. So what we did was
+[02:31] in particular um take into consideration
+[02:34] the encoded embedding of the CLS token.
+[02:39] So uh I guess in real life BERT is used
+[02:43] to encode documents to encode sentences
+[02:47] and we're going to see later in the
+[02:49] class how these models are useful.
+[02:54] And then last but not least, we have the
+[02:57] third category of models which is
+[03:00] decoder only. So we only keep the
+[03:04] decoder part of the transformer. And so
+[03:07] here we also do a little bit of a of a
+[03:09] modification. So we remove the cross
+[03:11] attention because we don't need it
+[03:13] anymore. We don't have an encoder. And
+[03:16] these kinds of models are text in text
+[03:21] out.
+[03:22] And so GPT is a very good example of
+[03:24] such models and actually most models
+[03:27] these days they're only like they are
+[03:30] decoder only.
+[03:33] So these are the three main kinds of
+[03:36] models that you can see out there.
+[03:40] So far so good for everyone.
+[03:43] Cool. So with that I'm going to
+[03:46] introduce the term LLM. So, LLM stands
+[03:51] for large language model. So, what is a
+[03:55] large language model? So, first of all,
+[03:58] a large language model is a language
+[04:00] model. So, a language model is a model
+[04:03] that assigns probability to sequences of
+[04:06] tokens.
+[04:08] So, in this case, our model always
+[04:11] predicts the probability of the next
+[04:14] token. So, it's in that sense a language
+[04:18] model.
+[04:20] But also a large language model is
+[04:22] large. So why is it large? So we're
+[04:25] going to see that these models they are
+[04:28] actually scaled up in terms of size. So
+[04:31] first of all in terms of model size. So
+[04:35] these days it's not uncommon to see
+[04:37] models on the order of hundreds of
+[04:40] billions of parameters.
+[04:42] But yeah, typically when we say LLM, we
+[04:45] say at least on the order of a billion.
+[04:48] These models, they've also been trained
+[04:51] on a huge amount of data. And here by
+[04:54] amount of data, we quantify that by the
+[04:57] number of tokens that they were
+[04:58] pre-trained with. And this is on the
+[05:01] order of magnitude of hundreds of
+[05:03] billions of tokens or even trillions of
+[05:07] tokens.
+[05:09] So I think the biggest one biggest ones
+[05:10] are like on the tens of trillions of
+[05:12] tokens. So it's like huge
+[05:14] training sets
+[05:17] and they're also large because they need
+[05:19] a lot of compute. So typically you need
+[05:22] a bunch of GPUs to make them work.
+[05:24] Although these days there's been a lot
+[05:26] of um optimizations to have them work on
+[05:30] uh consumerbased GPUs. So we're going to
+[05:33] see that later.
+[05:36] But an LLM is large according to these
+[05:39] categories.
+[05:41] So another thing that I want to point
+[05:42] out is that all these terminologies
+[05:45] they're relatively new. So um I remember
+[05:49] in 2018 19 there was nothing like there
+[05:53] was no real definition of an LM. I think
+[05:55] no one actually talked about LLMs in the
+[05:57] beginning maybe people talked about
+[05:59] LLMs. They included BERT,
+[06:02] but BERT is an encoder only model that
+[06:04] does not produce text. So with the
+[06:08] current definition of an LLM, which
+[06:09] right now has been pretty well
+[06:11] established, BERT would not be an LLM
+[06:16] because it doesn't produce text. So here
+[06:19] we only consider language models that do
+[06:22] textto text that are very large in size
+[06:26] in terms of amount of data they have
+[06:28] been trained on and in terms of compute.
+[06:32] Cool. And as we saw before these models
+[06:36] are decoder only. So here what we do is
+[06:40] we remove the encoder. We only keep the
+[06:44] masked self attention, the feed forward
+[06:47] neuronet network and then the you know
+[06:49] addition and normalization.
+[06:51] So we only keep this and this is the
+[06:55] backbone of LMS
+[06:59] and uh so I mentioned you know GPT is a
+[07:02] kind of a good example but it's not just
+[07:04] that you have plenty of other models. So
+[07:06] you may have heard of Llama from Meta,
+[07:09] Gemma from Google, uh Deepseek, Mistro
+[07:13] Quen, so on like the the list is long.
+[07:16] I would say roughly I mean more than 90%
+[07:20] of like modern day LLMs, they're all
+[07:24] decoder only. So I think that's uh
+[07:27] something to keep in mind.
+[07:30] Cool.
+[07:31] Um okay so now you know how LLMs are
+[07:36] made of but there is something else that
+[07:40] people these days also introduced to
+[07:42] these models and we're going to see that
+[07:44] in a bit
+[07:46] so I mentioned that these models are
+[07:49] huge in size again typically hundreds of
+[07:53] billions of parameters so it takes a lot
+[07:57] of compute to just compute one inference
+[08:02] or also to train these models.
+[08:05] But you may wonder, do you really need
+[08:09] to have all these parameters be
+[08:12] activated during a forward pass to make
+[08:14] a simple prediction?
+[08:18] So I'm going to u like have a little
+[08:20] metaphor. So let's suppose you enter in
+[08:23] a room and in the room there is a
+[08:27] mathematician,
+[08:28] a physicist, a chemist and a historian.
+[08:33] So you come in this class there's a
+[08:35] bunch of people who are expert in what
+[08:37] they do.
+[08:39] And you have a question, you have a math
+[08:41] question.
+[08:43] That's a question I have for you is who
+[08:45] would you ask your question?
+[08:49] Would you ask the mathematician? Would
+[08:50] you ask the chemist? Would you ask
+[08:52] everyone?
+[08:54] Well, right now we ask everyone. We ask
+[08:57] all parameters of the model to be
+[08:59] involved in the computation of uh you
+[09:03] know the generation.
+[09:06] And so the idea here is
+[09:09] given an input
+[09:11] maybe it's not necessary to ask everyone
+[09:15] to be involved in the computation. So
+[09:18] the idea is let's actually just have a
+[09:21] subset of the model be involved in the
+[09:25] computation of the next token.
+[09:30] So I'm just introducing this idea of
+[09:33] experts. So let's suppose we're
+[09:36] introducing uh the following notation.
+[09:38] So let's suppose we have n experts. So
+[09:42] think of it as your mathematician, your
+[09:45] chemist, historian, like whatever. So
+[09:48] these are your experts and the idea is
+[09:52] given an input X,
+[09:56] you're going to ask yourself
+[09:59] who should be involved in the generation
+[10:03] of the output.
+[10:05] So you're going to have let's say
+[10:08] another network. We're we're going to
+[10:10] call it G like gate but it's also
+[10:14] sometimes called router.
+[10:16] So let's suppose we have some gate that
+[10:20] tells us which expert should be involved
+[10:25] in the inference.
+[10:28] So if we have that so let's suppose here
+[10:30] the gate tells us okay so actually
+[10:32] expert number two is well suited to
+[10:35] answer your question. So here the idea
+[10:38] is that the input is just going to flow
+[10:42] into that expert
+[10:44] but not the other experts.
+[10:48] So this has a name. It's called mixture
+[10:52] of experts. So it's denoted.
+[10:56] Everyone talks about so these are
+[10:58] mixture of experts. And so the formula
+[11:01] that you will see a lot is this one. So
+[11:06] the output y which is denoted yhat is
+[11:10] the sum of the expert output
+[11:16] weighted by some quantity which is the
+[11:19] output of the gate which tells you how
+[11:22] important the output of each expert is.
+[11:27] Yeah,
+[11:37] great question. So question is how do
+[11:39] you train G? How do you train E? So
+[11:41] typically you train them jointly.
+[11:44] So we're going to see that maybe in a
+[11:47] yeah a little later, but you can think
+[11:48] of it as you know just training as
+[11:51] usual. You do your forward pass, you
+[11:53] compute the last and you back prop.
+[11:56] And it's actually an interesting
+[11:57] question because there is some
+[11:59] challenges that come with training emois
+[12:01] that we're going to see in a second.
+[12:03] Yep.
+[12:09] Uh question is uh what are these E what
+[12:12] is the architecture of these E? So let's
+[12:14] suppose right now that they're just some
+[12:15] network. We're not specifying them for
+[12:18] now but we're going to see this in a
+[12:19] second. Let's suppose for now it's like
+[12:21] some network.
+[12:24] Cool.
+[12:26] Okay, so I told you that you know what
+[12:29] if we don't activate everyone? What if
+[12:31] we activate a subset? But this formula
+[12:34] actually
+[12:36] um I guess assumes that we're actually
+[12:40] considering all expert outputs. So I
+[12:43] just want to distinguish two kinds of.
+[12:48] So there's one kind that is called a
+[12:50] dense.
+[12:52] So dense MO actually does not have any
+[12:56] constraints on the number of experts
+[12:58] that are involved.
+[13:00] So these weights they can be anywhere
+[13:04] between zero and one. So think of them
+[13:06] as a probability distribution
+[13:09] but it's just going to put more weight
+[13:13] towards some experts compared to others.
+[13:17] So back back to the example that I had.
+[13:19] So let's suppose I have a math question.
+[13:23] So I'm going to ask the mathematician,
+[13:24] the chemist, the historian. So I'm
+[13:27] probably going to add a higher weight to
+[13:30] what the mathematician says compared to
+[13:32] let's say the historian. So this is the
+[13:34] idea.
+[13:36] But then the interesting thing is when
+[13:41] we constrain the number of experts that
+[13:45] are activated because here as we
+[13:48] mentioned previously what we're
+[13:50] interested in is to not involve everyone
+[13:53] is to make some savings in the amount of
+[13:57] compute that we do. So there's a second
+[13:59] kind of MOE that's called the sparse MOE
+[14:04] and what it does is it only selects the
+[14:08] quoteunquote top K experts.
+[14:12] So K can be equal to one. So one expert
+[14:15] or even two. So it's a hyperparameter
+[14:18] that you choose. And so here the
+[14:20] expression of the output becomes the sum
+[14:25] over all the chosen experts of uh g of x
+[14:31] time e of x.
+[14:36] So far so good.
+[14:39] Cool. Uh and of course there's a lot
+[14:42] more to it. So in case you are
+[14:44] interested in learning more uh feel free
+[14:45] to go into the resources that are at the
+[14:47] bottom of the slide. Um so one thing
+[14:50] that I will say is that we have a unit
+[14:53] of measure of the amount of compute that
+[14:56] these models produce for each uh each
+[15:00] pass. So you will see the term flops. So
+[15:05] have you have you seen the term flops
+[15:07] out there?
+[15:09] No not really. So it stands for floating
+[15:13] point operations.
+[15:15] So it quantifies how many operations
+[15:18] like think of it as like additions,
+[15:20] multiplications
+[15:22] are involved in a forward pass let's say
+[15:26] and it basically quantifies how compute
+[15:30] heavy is your task.
+[15:33] So typically what we say is when we go
+[15:37] through a sparse MO as opposed to a
+[15:39] dense MOE we have a lower amount of
+[15:42] flops.
+[15:44] So this is the unit of measure that you
+[15:46] will see.
+[15:48] But back to your question. So what are
+[15:51] these experts?
+[15:53] So if you remember I mean 10 minutes ago
+[15:57] we said that LLMs they are decoder only
+[16:00] models.
+[16:02] So I have a question for you. Let's
+[16:05] suppose we wanted to put some
+[16:08] in our LLM.
+[16:11] Where would would we put it?
+[16:13] So here I guess we have three choices.
+[16:16] We have uh the mass self attention
+[16:18] layer. We have the feed for neural
+[16:21] network and then we have like this
+[16:23] normalization. So question for you I
+[16:26] guess where would you put this?
+[16:32] I guess where do you think
+[16:36] is I guess the most complex part of the
+[16:40] network? Where is there a lot of
+[16:42] operations
+[16:45] feed forward? Yes. Yeah. Great great
+[16:47] answer. So uh it's indeed the feed
+[16:49] forward neuron network
+[16:52] and the reason for that is I think
+[16:53] Shervin mentioned it I think in lecture
+[16:56] one. So if you remember the feed for
+[17:00] neural network is a network such that
+[17:03] you have the input which is your you
+[17:06] know dd dimensional input vector and
+[17:11] then you have uh this being projected
+[17:13] into let's say dfff dimensional space
+[17:17] and then it goes back to the dd
+[17:19] dimensional
+[17:21] um I guess uh space. So the DFF
+[17:25] is typically larger than your
+[17:31] dimension of I guess the input. When I
+[17:33] say input is here. So it's typically
+[17:36] larger. So
+[17:39] the amount of parameters that you have
+[17:41] in that feed for null network is
+[17:44] something on the order of magnitude of D
+[17:47] model time D FFF
+[17:50] time 2 plus some bias. So it's basically
+[17:53] your order of magnitude and
+[17:57] the attention layer if you think about
+[17:59] if you remember it's basically composed
+[18:01] of the projection matrices.
+[18:05] What is the dimension of the projection
+[18:06] matrices? So it's the model times the
+[18:10] dimension of keys, the dimension of
+[18:12] queries, the dimension of values.
+[18:15] And this dimension is typically much
+[18:17] lower.
+[18:19] So think of it of hundreds.
+[18:22] So your D model is typically O of 100, O
+[18:25] of a,000
+[18:26] and then the projection here the DFF
+[18:30] is O of a,000 or of 10,000.
+[18:36] Cool. So is everyone now convinced that
+[18:39] this is a good way good place to put the
+[18:42] mixture of experts?
+[18:44] Yeah.
+[18:47] Cool. So this is actually how it's done.
+[18:50] So in modern day day LLMs this idea of
+[18:56] not involving everyone in the
+[18:59] computation of the next token prediction
+[19:02] is such that you would put put the
+[19:05] mixture of experts where the FFN is
+[19:09] which is basically here
+[19:12] and typically you would have a sparse
+[19:15] mixture of experts meaning that so back
+[19:18] to your question so these experts are
+[19:20] feed for neural network. So you would
+[19:23] you would have several networks that you
+[19:25] can train but you would only activate
+[19:29] one.
+[19:32] So typically K would be equal to one. It
+[19:34] can be also equal to two but it would
+[19:36] only be a subset. So that's my point. Um
+[19:39] and this routing would be done at the
+[19:43] token level.
+[19:46] So if you remember you know the decoder
+[19:48] it basically takes uh something as
+[19:50] input. So you know a bunch of tokens
+[19:54] and here what I'm saying is that each
+[19:57] token will be processed by an expert
+[20:01] that may be different from the other
+[20:02] token.
+[20:05] So the router router here would take
+[20:10] the representation of the token as input
+[20:13] and figure out which expert should be
+[20:16] best for this token to flow towards.
+[20:21] Does this idea make sense?
+[20:25] So I have a little um illustration later
+[20:28] on that hopefully will help.
+[20:31] So now back to your question about how
+[20:33] you train this model like do you train
+[20:35] the router separately do you train the
+[20:37] expert separately. So one challenge that
+[20:41] people have is when they train these
+[20:46] based models
+[20:48] to make sure that all experts
+[20:51] are I guess having a weight are being
+[20:55] used
+[20:56] because it's very possible that you
+[20:59] train your model and that somehow only I
+[21:03] don't know one or two experts always get
+[21:05] activated
+[21:07] and the other one they always are
+[21:09] inactive. They're never involved in the
+[21:11] computation.
+[21:13] So this problem is called routing
+[21:16] collapse. So why is it called routing
+[21:18] collapse? Is because a router always
+[21:22] chooses some experts but not others.
+[21:27] So this is a challenge and the way
+[21:31] people try to mitigate this challenge is
+[21:34] by changing the loss function
+[21:37] and adding it some extra term which is
+[21:41] written here.
+[21:42] So it's basically some hyperparameter
+[21:45] alpha
+[21:47] times the number of experts
+[21:50] times the sum of quantities that depend
+[21:55] on whether or not tokens went to a
+[21:59] certain expert I and then summed over
+[22:02] all experts.
+[22:04] So it's not super important that you
+[22:07] completely understand exactly how that
+[22:10] formula works. The only thing that I
+[22:12] think you should take away from this
+[22:14] slide is that this extra loss
+[22:19] allows these quantities
+[22:23] to converge more towards uniform
+[22:26] distributions. So what are these
+[22:28] quantities just as a reminder? So f of I
+[22:31] is the fraction of tokens that are
+[22:34] routed to expert I
+[22:38] and P of I is the average routing
+[22:42] probability for expert I.
+[22:45] So when I say that, you know, all
+[22:46] experts should be used kind of the same,
+[22:51] what I'm saying is I want this
+[22:53] probability to be kind of uniform
+[22:56] across experts.
+[23:00] Yeah.
+[23:20] Yeah. So the question is uh I guess uh
+[23:22] when do you compute this quantities? So
+[23:24] yeah like you can think of it as like
+[23:25] you know regular training uh process
+[23:28] like you know you do some like mini
+[23:29] batch you kind of like go go go through
+[23:31] that through like the the model and then
+[23:33] you compute all these quantities and
+[23:35] then what you do is you do your um your
+[23:39] back propagation based on that and I
+[23:42] guess what I want you to remember is
+[23:44] that this incentivizes
+[23:48] the probability
+[23:50] um I guess the the choice of the router
+[23:53] to be more uniform across experts which
+[23:58] is something that mitigates this routing
+[24:00] collapse phenomena.
+[24:06] Yeah.
+[24:14] >> Yeah. So the question is can we use
+[24:15] dropout? Of course you can always like
+[24:17] bundle that with some other techniques.
+[24:18] So people have just kind of found this
+[24:21] to be very helpful. So speaking of other
+[24:23] techniques, there is something that I've
+[24:25] not talked about which is very similar
+[24:26] to the dropout um idea. So it's called
+[24:30] noisy gating.
+[24:32] Noisy gating is basically uh you have
+[24:37] your
+[24:40] your predictions from the gates but then
+[24:42] you add some noise to it.
+[24:45] So basically it you know by pure chance
+[24:48] it just allows other experts to be
+[24:50] involved in the computation. So it's
+[24:52] also some other technique. There's a
+[24:53] bunch of techniques but yeah dropout is
+[24:55] uh indeed quite useful for like things
+[24:57] like overfeeding and the idea can be
+[25:00] reused in in different settings.
+[25:04] Yep.
+[25:06] Yep.
+[25:14] So the question is how can you so you
+[25:16] mean differentiable?
+[25:18] So here I guess how do you take the
+[25:20] derivative is that your your question?
+[25:23] Uh how is that? So can you explain a bit
+[25:26] more what your concern is?
+[25:43] >> Mhm. So I guess uh to this question um
+[25:47] so the average routing probability
+[25:50] so that one is a function of the gate
+[25:55] output right that's one pi
+[26:01] right so I guess your question is for fi
+[26:05] for fi
+[26:07] okay I don't have a good answer on top
+[26:10] of my head but I think like people have
+[26:11] some techniques and these days you know
+[26:13] you just don't even have to do this by
+[26:15] hand. You have uh like the built-in
+[26:18] thing. Um so maybe I can follow up with
+[26:20] you for fi, but for P of I, do you see
+[26:22] that this one is is quite clean? It's
+[26:25] just the average of uh the probabilities
+[26:28] from the gates.
+[26:35] Uh yeah. So basically the probability
+[26:38] the output probability from the the gate
+[26:40] you can think of it as just the vector
+[26:44] being projected on a space of n where n
+[26:48] corresponds to your number of experts
+[26:51] and then it's gone through softmax. So
+[26:53] your output is basically summing up to
+[26:55] one
+[26:57] and each of these dimensions they
+[27:01] represent the value corresponding to
+[27:04] what expert I would be I guess used for
+[27:08] like for instance the first dimension
+[27:09] would be for expert one second dimension
+[27:12] for expert two and so on. So you just
+[27:14] take the average of this and like this
+[27:15] one you can express it from you know all
+[27:17] the parameters. So I think you should be
+[27:19] you should be fine with that one. Yeah.
+[27:31] So the question is if we increase the
+[27:34] number of moes does it increase the
+[27:35] number of model parameters. So it's a
+[27:37] great question. So it's actually
+[27:39] actually one of the ideas behind MO
+[27:42] based models which is that you can scale
+[27:44] the model without having to incur the
+[27:48] cost of having significantly more
+[27:51] compute at inference time.
+[27:54] So you can increase so people say
+[27:55] capacity can increase your the capacity
+[27:57] of your model but you will still keep
+[28:01] some I guess like control the amount of
+[28:06] active parameters and active parameters
+[28:09] are the parameters that are that are
+[28:11] used for a forward pass. So yeah people
+[28:14] just kind of use that. So yeah it will
+[28:16] just increase the number of parameters.
+[28:17] So that's why you see some MO based
+[28:20] models that are even bigger than the
+[28:23] ones that we kind of had like on the
+[28:25] order of hundreds of billions. We even
+[28:27] have on the order of trillions of
+[28:29] parameters. So for instance here uh one
+[28:32] reading I I recommend is switch
+[28:34] transformer
+[28:36] which scaled up to 1 something trillion
+[28:40] parameters. So yes, definitely more
+[28:44] uh but that being said, so if you read
+[28:46] the paper, you will also see that these
+[28:49] models there are more what they call
+[28:51] sample efficient.
+[28:53] So they take less time
+[28:56] to be as good as what the model would
+[28:59] have been with a lower number of
+[29:02] parameters. So if you look at like if
+[29:05] you draw the you know training training
+[29:08] curve as a function of like the training
+[29:10] time you see that these models they're
+[29:12] typically more sample efficient.
+[29:18] Sorry.
+[29:26] >> Yeah. Yeah. Exactly. Everything here is
+[29:27] a trade-off. Everything here is a
+[29:29] trade-off.
+[29:30] >> Yeah. Cool. Yeah.
+[29:40] Um, so the question is each attention
+[29:43] head will have a number of experts. So
+[29:45] it's actually regardless of the
+[29:46] attention heads. So the attention heads
+[29:49] are you can think of them as being like
+[29:50] independent you know something else and
+[29:53] the number of experts is independent of
+[29:55] that.
+[29:59] Does that make sense?
+[30:05] Yeah.
+[30:07] Right. Right.
+[30:10] All right. Yeah. The question is whether
+[30:12] every block will have a number of extra.
+[30:14] The answer is yes. And typically those
+[30:16] weights are not shared.
+[30:18] So typically you So actually we're going
+[30:21] to see an example. Um it can very well
+[30:24] be that layer one there is the expert
+[30:26] number I don't know three that was
+[30:27] chosen but layer two there is like
+[30:29] expert number one. And you know it's
+[30:31] it's like it's all free. It's trainable.
+[30:43] So the so the question is we will decide
+[30:46] where to uh where expert will go to. So
+[30:48] all of that is decided by the gates
+[30:51] which is this quantity.
+[30:54] Everything is uh decided by the gates
+[30:55] which has trainable weights. So you can
+[30:58] think of this as just some projection
+[31:00] from the input x to an n dimensional
+[31:04] space where n is the number of experts.
+[31:10] Uh so question is at what point during
+[31:12] the inference is it decided? So um let's
+[31:15] suppose we're at inference time. I'm
+[31:17] going to walk you through how it works.
+[31:20] So you have your x.
+[31:22] So you have this you know attention
+[31:23] mechanism. So it interacts with all
+[31:26] tokens from the past given that it's
+[31:27] decoder only. So it's like the masked
+[31:30] and it goes here and at the beginning of
+[31:33] the fit for neural network block the
+[31:37] token is of course contextual. So it has
+[31:40] the information from like these other
+[31:42] tokens because it's attended. And what
+[31:45] it does is it goes here.
+[31:49] So X first goes into G.
+[31:52] G computes uh this you know probability
+[31:54] distribution over all experts and given
+[31:58] here that we are in a sparse MOE setting
+[32:01] we will only choose the top K. So let's
+[32:03] suppose it's the top one just the
+[32:06] highest uh probability
+[32:09] um and you will you will know which
+[32:11] expert this one will be and so as a
+[32:15] result of that you will only compute the
+[32:18] the output value of the expert that the
+[32:21] input was chosen.
+[32:30] Mhm. So can you elaborate on that
+[32:32] actually?
+[32:35] Yeah.
+[32:40] At what point exactly? So it's after the
+[32:43] self attention layer.
+[32:46] Yeah.
+[32:51] Uh so the question is do we have
+[32:53] different classification for different
+[32:54] heads? No. So there's only one router.
+[32:58] So uh I think I I understand your
+[33:00] question. So your question is what do
+[33:02] you do given that you have different
+[33:04] attention computations going on in
+[33:06] parallel with the heads. So if you
+[33:08] remember the attention layer has these
+[33:11] different heads but at the end of it
+[33:14] what it does is it concatenates all the
+[33:17] results from each of these heads and
+[33:20] then projects it once again in the D
+[33:24] model space.
+[33:33] Yep.
+[33:39] Yep.
+[33:46] Yep.
+[33:57] Yes. So the question is do we have
+[33:58] different G's? So the only thing I can
+[34:00] tell you is that the G is just layer
+[34:03] specific. It's layer specific. It's
+[34:05] trainable. So it's basically going to
+[34:07] learn how to process all these uh
+[34:10] inputs. So the G the only thing I can
+[34:13] tell you for for your question is is
+[34:14] going to be layer specific. So the G is
+[34:16] going to be one G for let's say the
+[34:19] first layer, another G for the second
+[34:21] layer and so on. And that one is going
+[34:23] to be trained.
+[34:25] Cool.
+[34:27] Great. Looking at the time. Do we have
+[34:29] any other questions here?
+[34:34] We're good.
+[34:36] Perfect.
+[34:38] So now I just wanted to show you a cool
+[34:42] thing that um I believe uh the Mistral
+[34:46] uh team was showing in one of their
+[34:48] papers. So what they were showing here
+[34:51] was for a given piece of text
+[34:56] to show in which expert each token was
+[35:00] routed.
+[35:02] So as we noted before um
+[35:05] so experts are different from one layer
+[35:08] to another. So I believe here it's yeah
+[35:10] for layer zero so it's like for one
+[35:12] given layer and we do see that
+[35:16] you know roughly these tokens I guess
+[35:20] they leverage
+[35:23] like a uniform amount of experts more or
+[35:25] less.
+[35:27] What you would not want to see is to
+[35:29] have every token be the same color, but
+[35:32] luckily it is not.
+[35:35] But yeah, so that's one cool way of just
+[35:37] representing how the routing is done is
+[35:39] to just have your input text and just
+[35:42] represent where each token in which
+[35:44] expert each token went.
+[35:50] Cool. Okay.
+[35:53] So what we just saw was
+[35:57] one way that modern day LMS
+[36:01] change their architecture to incorporate
+[36:04] the fact that we may want to scale the
+[36:07] model but not increase the computation
+[36:12] complexity for one forward pass and we
+[36:15] saw that with
+[36:17] so you will see a lot of MOE based LLM
+[36:19] out there and now what we will
+[36:23] is
+[36:24] knowing that we have an LLM, we're going
+[36:27] to focus on
+[36:30] don't worry uh we're going to focus on
+[36:32] how a response is being generated.
+[36:36] So remember when I told you that you
+[36:39] know these uh modern day LLMs what they
+[36:41] do is they take some text in and they
+[36:43] have some text out. So it's typically
+[36:46] this task of next token prediction. So
+[36:50] you have a token in so let's say
+[36:52] beginning of sentence you go through
+[36:54] your llm and it just uh generates the
+[36:57] next word or the next token so a and
+[37:00] then you take a and it goes to teddy and
+[37:02] then teddy bear is etc etc
+[37:08] but so far we have never really dug into
+[37:13] exactly how we chose the next token.
+[37:18] So what we're going to do right now is
+[37:20] to see exactly how we're generating the
+[37:23] next token.
+[37:26] So as you know here our LM is just a
+[37:30] decoder only architecture. So here what
+[37:33] you have is a decoder with your input
+[37:36] here and then your output there.
+[37:39] So let's suppose for a second that we
+[37:42] know everything that's happening in the
+[37:44] middle and we're just obtaining
+[37:48] output probabilities
+[37:51] that are going to look a little bit like
+[37:54] this.
+[37:56] So given a token or some sequence of
+[37:58] token as inputs, you have an output
+[38:02] probability distribution that represents
+[38:06] what the model thinks is the likelihood
+[38:09] that there will be a next token let's
+[38:11] say that is equal to a to airplane to
+[38:13] fluffy etc.
+[38:15] So this is what you have.
+[38:19] So now my question to you is
+[38:22] if we told you we have some sequence as
+[38:25] inputs and we want to choose the next
+[38:27] token
+[38:29] and if I told you that our model is
+[38:30] giving out actually a probability
+[38:32] distribution.
+[38:33] I guess how would you choose the next
+[38:35] token based on this?
+[38:41] Sorry.
+[38:43] Great. The token with maximum
+[38:45] probability
+[38:47] there. Okay. Great. So yeah, the first
+[38:49] idea, let's just take the token with
+[38:50] highest probability.
+[38:53] So,
+[38:55] so it's a very natural approach, but I'm
+[39:00] not sure if you've been using things
+[39:02] like chat GPT or Gemini. Every time you
+[39:05] ask something, it always responds it
+[39:08] responds something that is slightly
+[39:10] different,
+[39:11] right? So if you always choose the token
+[39:15] with the highest probability
+[39:18] given that the computation here we're
+[39:20] going to see is all deterministic
+[39:22] what that means is you're always going
+[39:25] to generate the same thing regardless of
+[39:30] uh I guess with the same input right so
+[39:33] that's one one limitation so it's not
+[39:35] very like diverse
+[39:38] the second problem is
+[39:41] if you choose
+[39:43] the highest probability token on a I
+[39:46] guess iterative basis.
+[39:50] You're locally optimal, but you're not
+[39:53] necessarily globally optimal.
+[39:56] So what does that mean? So I guess if
+[39:58] you think about it, our objective is for
+[40:02] us to produce a sequence, an output
+[40:05] sequence of tokens that is, I guess, of
+[40:08] a high probability.
+[40:11] But the problem is if you always choose
+[40:13] the highest probability token, you will
+[40:15] not necessarily obtain the highest
+[40:17] probability sequence.
+[40:20] Are you convinced of this statement by
+[40:21] the way? So let me give you an example.
+[40:24] So let's suppose you have the next token
+[40:27] where one token is8 the other one is 7
+[40:31] and then you choose to go with the 08.
+[40:34] No actually it's not 7 because it has to
+[40:36] sum to one. So let's say 02. So let's
+[40:39] suppose if you go ahead with the
+[40:41] sequence that that starts with the 08.
+[40:46] Let's suppose all other token
+[40:49] probabilities are very low.
+[40:52] Basically you will have an output
+[40:54] sequence that will have a lower
+[40:55] probability than let's say the other
+[40:58] path which would let's suppose have
+[41:02] higher probability predictions in the
+[41:05] later steps.
+[41:07] Right? So we're going to see this in a
+[41:09] second, but this is the idea. So if you
+[41:11] choose the highest predicted
+[41:13] probability, it's a good first idea, but
+[41:16] it's locally optimal, but not
+[41:18] necessarily globally optimal.
+[41:21] And this is the reason why we have a a
+[41:24] second method
+[41:27] that is about keeping track of the K
+[41:32] most probable path.
+[41:35] So I'm not sure if you've heard of beam
+[41:37] search. So that's what beam search does.
+[41:40] So here K is sometimes called the beam
+[41:44] size or the beam width. So if you hear
+[41:47] these terms, these are just names that
+[41:50] are given to the number of path that we
+[41:52] keep track of. And so this works as
+[41:56] follows.
+[41:57] So let's suppose we start our generation
+[42:00] with the beginning of sentence token.
+[42:03] we want to figure out what the next
+[42:06] token is. So let's suppose we have uh
+[42:09] here in this example very basic example
+[42:11] like three tokens
+[42:13] and let's suppose the two highest
+[42:16] probable tokens are a and z.
+[42:21] So if we have k equal to two what we're
+[42:24] going to do is to keep track of these
+[42:26] two branches.
+[42:28] So that's the first iteration.
+[42:30] The second iteration is we're going to
+[42:32] look at all the probabilities
+[42:38] of next token prediction for these two
+[42:40] tokens
+[42:41] and we're going to always
+[42:44] save the two most probable path and here
+[42:48] for instance let's suppose if it's like
+[42:49] the and then fluffy and then a and cute.
+[42:52] So back to what I was saying later uh
+[42:54] earlier. So what I was saying was here
+[42:59] if you were choosing the path that went
+[43:02] along the highest probability token path
+[43:05] like the the
+[43:07] it's very much possible that the highest
+[43:11] probability token after the would be a
+[43:15] much lower probability than the one
+[43:18] after a.
+[43:21] And so this is what beam search tries to
+[43:23] do. tries to have a more globally
+[43:26] optimal solution. So let's suppose we
+[43:29] continue that and then at the end of the
+[43:30] day we obtain
+[43:33] uh I guess a number of uh potential I
+[43:37] guess choices uh and the k potential
+[43:39] choices and then we we pick the one that
+[43:41] is the kind of highest likely the
+[43:44] sequence with the highest probability.
+[43:48] So people typically what they do is they
+[43:51] take the sum of the logarithm of the
+[43:54] probabilities of the token. So they they
+[43:57] what they say is they say uh okay so the
+[44:01] log probability of the sequence is the
+[44:03] sum of the log probability of each next
+[44:06] token prediction. So it's the log
+[44:08] probability of a uh knowing bos and and
+[44:12] then cute knowing boss and a and so on
+[44:14] and so forth.
+[44:16] But I just want to point out one
+[44:19] limitation of this approach which is
+[44:22] that
+[44:23] the more you generate tokens
+[44:28] the lower
+[44:30] your I guess uh end sequence probability
+[44:35] will be
+[44:37] because if you think about it you know
+[44:39] all these probabilities they're between
+[44:40] zero and one. So think of it like in the
+[44:42] kind of multiplied sense. So let's
+[44:44] suppose you have the probability of the
+[44:46] whole sequence
+[44:48] which is just a multiplication of the
+[44:50] probability of the next token.
+[44:53] The more you add probabilities be below
+[44:56] like less than one,
+[45:00] the more this quantity will I guess go
+[45:02] towards zero.
+[45:04] So I guess uh this method as is
+[45:08] will prioritize sequences that are
+[45:11] shorter
+[45:14] and so for that reason beam search has
+[45:17] some uh additional term that basically
+[45:20] counteracts that that effect. So
+[45:23] something on the order of like one over
+[45:26] number of tokens to the power of
+[45:29] something. So in practice there's some
+[45:33] uh technique to make sure that you know
+[45:35] things kind of work relatively well.
+[45:40] But okay let's suppose we figure out all
+[45:43] these things. Uh the problem is that we
+[45:46] need to keep track of this most probable
+[45:48] path. We need to do all this uh kind of
+[45:51] uh saving etc. And it just like requires
+[45:54] a lot of computation.
+[45:57] And the other thing is we're still
+[46:00] interested in the most probable path
+[46:04] which basically will lead to a sequence
+[46:07] that is you know very that the model
+[46:09] thinks is very likely
+[46:12] but sometimes what you want is for your
+[46:14] output to be more diverse or more
+[46:16] creative.
+[46:19] So that's why beam search is actually
+[46:21] not something that people typically use.
+[46:25] People use beam search for things like
+[46:27] machine translation where you actually
+[46:29] need to have something that is close to
+[46:33] uh something being very likely but
+[46:35] actually people use a third method
+[46:40] and this method is called also the
+[46:42] sampling method. So I told you we have a
+[46:46] probability distribution over tokens
+[46:50] regarding what the next token should be.
+[46:53] And so what people do is they just
+[46:55] sample the next token
+[46:59] using that probability distribution.
+[47:04] Does this make sense?
+[47:06] So in this example, uh fluffy, gentle,
+[47:10] kind, and let's say smart will have a
+[47:12] higher probability of being drawn as
+[47:15] opposed to let's say airplane and wear
+[47:18] that have a lower probability of
+[47:20] occurring. nonzero probability but they
+[47:22] have a probability of occurring.
+[47:26] Cool.
+[47:28] Any questions so far?
+[47:31] Yep.
+[47:35] Right. Uh so the question is it's not
+[47:36] for training, it's for inference. Yes.
+[47:38] Correct. So this is the you can think of
+[47:40] it as response generation. So let's
+[47:42] suppose you have your model that is
+[47:44] trained. What you want is to generate an
+[47:46] output. So what would you do?
+[47:50] Yeah.
+[47:51] So I guess just to complete my answer.
+[47:53] So during training what you would do is
+[47:55] care about the output probabilities and
+[47:58] then compare them with the actual label
+[48:01] uh which is most of the time like a hard
+[48:03] label. Uh and yeah this is what you
+[48:05] would compare. So this one is let's
+[48:07] suppose you have an LLM that is trained.
+[48:09] How would you generate a response?
+[48:12] Cool.
+[48:15] Everyone good?
+[48:18] Yeah.
+[48:25] Yep.
+[48:26] Yeah. So question is how do you do
+[48:28] sampling in this situation? So actually
+[48:30] my next slides but I just want to make
+[48:32] sure everyone was uh on the same page
+[48:35] regarding just the intuition.
+[48:38] So highest probability is called greedy
+[48:40] decoding is probably not something that
+[48:42] we want.
+[48:44] Beam search is a little bit better. It's
+[48:47] more something that is globally optimal.
+[48:49] It's not globally optimal, but more
+[48:50] towards that. So, it's better, but it
+[48:53] lacks diversity. It lacks creativity,
+[48:55] which is why what we want to do is to
+[48:57] actually sample
+[48:59] each token.
+[49:01] Um, and I guess we have a few methods
+[49:05] that um also restrict
+[49:10] the kinds of tokens that we want to
+[49:12] sample from. because I mentioned you
+[49:13] know these very low probability tokens
+[49:18] they can still I theoretically be
+[49:22] sampled but it's not necessarily
+[49:24] something that we want.
+[49:26] So what people do is they typically
+[49:28] restrict the highest probability tokens
+[49:33] and only sample from them. So you may
+[49:36] have heard of this term top K sampling.
+[49:39] Who has heard of this term? Yeah, a
+[49:42] little bit. Okay. So, what you do is you
+[49:44] select the top
+[49:47] highest probable K. So, the top K
+[49:50] highest probable tokens and you sample
+[49:52] from them. So, let's suppose if K is
+[49:54] equal to four, you take the highest four
+[49:57] highest probable and then you just
+[49:58] sample with them. And there's something
+[50:01] else that is quite similar in idea which
+[50:03] is called top P.
+[50:06] So top P is that you limit yourself to
+[50:11] the top to the highest probable tokens
+[50:16] such that their cumulative probability
+[50:20] is more than a threshold P.
+[50:24] So again it will do the same thing. It
+[50:26] will select the highest probable um
+[50:30] tokens.
+[50:32] But then there is a part that I still
+[50:34] left out.
+[50:36] which is how do you obtain these
+[50:38] probabilities to start with.
+[50:41] So if you remember
+[50:43] here I had mentioned that we just assume
+[50:47] we have the probabilities we just have
+[50:50] them and we want to choose what the next
+[50:53] token is.
+[50:55] But now the question that I'm asking is
+[50:57] now that we know what we will do with
+[51:00] these probabilities. I guess one
+[51:02] question is how do you obtain these
+[51:03] probabilities to start with?
+[51:07] So if you remember
+[51:10] these
+[51:12] transformerbased architecture basically
+[51:16] computes an encoded representation of
+[51:19] the input.
+[51:21] And what you have is some final layers
+[51:25] at the very top of the figure which aims
+[51:28] at projecting
+[51:31] the vector into the space of the
+[51:35] vocabulary
+[51:38] because what you want to do is to have a
+[51:40] probability number for how probable it
+[51:45] is for you to sample a given token.
+[51:49] Right? So here what you would do is at
+[51:52] the very top of the of the architecture
+[51:54] have your uh input which is your encoded
+[51:57] embedding of the token go through a
+[52:00] linear layer which basically projects
+[52:03] your dmodel vector into a space of
+[52:08] dimension
+[52:10] size of v.
+[52:12] And of course what you want is
+[52:14] probability. So you would have a softmax
+[52:16] layer which basically converts
+[52:19] everything to probabilities such that
+[52:20] everything sums to one
+[52:24] and in order to compute the
+[52:29] probabilities
+[52:31] this is the formula that you would use
+[52:33] which is the softmax layer. So there is
+[52:37] a a hyperparameter that is quite
+[52:40] important that I want to talk to you
+[52:41] about which is the temperature T.
+[52:46] And so this is where it uh pops up. So
+[52:49] you have the probability of
+[52:54] the next token being a given word which
+[52:57] is equal to the exponential of the input
+[53:01] respect to that given word over
+[53:03] temperature. And then you normalize that
+[53:06] by the sum of all the other exponential
+[53:08] of the quantity over t.
+[53:13] And now what we're going to see is what
+[53:15] that t is used for or what that t
+[53:20] actually uh does in practice.
+[53:23] So before we go into that just one
+[53:25] question has anyone heard about
+[53:28] temperatures when it comes to response
+[53:31] generation?
+[53:32] Yeah. Cool. So hopefully that will kind
+[53:37] of give you a better idea of how the
+[53:39] temperature kind of influences your
+[53:42] output predictions.
+[53:45] So I guess the question that I want to
+[53:46] ask you is what would be the impact of
+[53:52] having a low temperature versus a high
+[53:55] temperature?
+[54:04] So low temperature would correspond to
+[54:06] diverse. Why?
+[54:21] Yeah.
+[54:27] Yeah. Has
+[54:36] anyone So we'll come to that in a
+[54:37] second. So yeah, do you have a
+[54:42] a lower temperature? Increase in
+[54:44] temperature. So I guess back to your um
+[54:46] the explanation about like uh I guess
+[54:49] lowering the temperature and what impact
+[54:51] it will do to the So I guess like do you
+[54:53] have a suggested uh response to that? I
+[54:56] guess like yellow temperature. Let's
+[54:58] suppose you have a lower temperature.
+[54:59] What happens?
+[55:09] Mhm.
+[55:16] Yeah. Yeah. Yeah. Yeah. So I guess um
+[55:20] so the long story short is low
+[55:22] temperature will create a spiky
+[55:25] distribution and then high temperature
+[55:27] will create a uniform distribution. But
+[55:30] I guess so I think you had the right
+[55:32] like intuition. Um
+[55:36] I'm going to maybe write this in more
+[55:38] mathematical terms.
+[55:40] So whoops. Okay. Um let's suppose you
+[55:44] have your probability
+[55:48] which is uh you know the exponential of
+[55:52] x i / t
+[55:56] over the sum of
+[56:00] exponential of xj / t.
+[56:04] So just mathematically you can actually
+[56:06] prove uh what is happening here. So
+[56:09] let's suppose you have the index of the
+[56:14] highest x i
+[56:17] So let's call that K.
+[56:20] So let's suppose what I do is I will
+[56:25] factor by this uh quantity. So actually
+[56:28] here I don't have space. So let's do
+[56:30] here. So it will be a e of
+[56:38] k
+[56:40] temperature and then here you have the
+[56:44] sum of over all j of exponential of x j
+[56:51] over t minus
+[56:54] x k / t.
+[56:58] So what I did is I just multiplied the
+[57:00] numerator and the denominator by
+[57:03] exponential of x k / t. So I multiplied
+[57:07] numerator and denominator and of course
+[57:08] they cancel out. But then what I have
+[57:11] here is xy - x k / t and here xj - ak
+[57:16] over t.
+[57:19] So when
+[57:21] I is equal to k,
+[57:24] this term is zero, right? is exactly
+[57:28] zero regardless of the temperature.
+[57:33] And here
+[57:35] xj minus a x k
+[57:38] is always negative or zero.
+[57:43] Right?
+[57:44] So here
+[57:46] if I is equal to k
+[57:51] you have
+[57:53] zero
+[57:54] over t. So here it's one
+[57:58] and then you have 1 +
+[58:02] I guess some quantity so j - x k / t
+[58:07] which is going to be negative
+[58:10] so t going to zero so that one will be I
+[58:15] guess
+[58:17] going to let's say minus infinity
+[58:22] so exponential of minus infinity is
+[58:27] zero.
+[58:29] So what you will end up with is
+[58:31] something where for i equal to k you
+[58:36] will have a nonzero
+[58:38] probability
+[58:40] but then for i not equal to k you will
+[58:45] have zero
+[58:48] over something that is not equal to zero
+[58:51] which is zero.
+[58:54] So just mathematically if you factor by
+[58:58] exponential of x k / t where k is the
+[59:03] index of the highest value uh I guess
+[59:07] the highest logit or the highest
+[59:09] activation vector
+[59:12] can actually show that for a small
+[59:15] temperature
+[59:16] only the highest
+[59:19] so the index of the I guess highest
+[59:23] um value will be the one that will be uh
+[59:27] I guess highest probable with a spike
+[59:29] there
+[59:30] and then when you have a high
+[59:32] temperature basically it will look like
+[59:36] a uniform distribution because all this
+[59:38] all these quantities so when t tends to
+[59:42] plus infinity this tends to zero so
+[59:46] exponential of zero is
+[59:49] just e sorry not uh one
+[59:53] >> it's one so it's one over the number of
+[59:57] J so it's one so just a uniform
+[59:59] distribution across all the tokens of
+[60:02] your vocabulary
+[60:04] yeah
+[60:16] um so the question is how can I
+[60:17] interpret a small
+[60:22] Mhm.
+[60:28] So the question is can I interpret that
+[60:29] as a gausian? I think so it's kind of
+[60:32] tough because gausian you have like some
+[60:35] continuous quantity as in the x-axis. So
+[60:37] here you have you know you have tokens
+[60:40] so it's kind of discrete and it's not
+[60:42] like uh something that you can order. So
+[60:44] just probably interpret that as small
+[60:47] temperature is very spiky. So you will
+[60:51] really have a given set of tokens that
+[60:54] are the highest probable that will
+[60:55] appear more.
+[60:57] And if you have a high temperature then
+[61:01] basically tokens even the ones that were
+[61:03] not uh there to be kind of the highest
+[61:07] probable will actually have an adjusted
+[61:09] probability that that would be higher.
+[61:15] Yes. So you can think of it as like some
+[61:16] kind of scaling in that sense. So long
+[61:19] story short, what I want to tell you is
+[61:22] if you have a small temperature, it will
+[61:25] encourage the next token to be
+[61:30] geared towards being the highest
+[61:32] probable token.
+[61:34] And then if if you have a high
+[61:36] temperature,
+[61:37] I guess the distribution of
+[61:40] probabilities will be kind of closer to
+[61:42] a uniform if you really increase that
+[61:43] temperature by a lot. So your output
+[61:46] will be more creative. You'll have
+[61:48] tokens that um you would have not drawn
+[61:51] that would be drawn.
+[61:53] And so what that means in practice if
+[61:55] you're I don't know if you're with your
+[61:57] favorite LLM and let's suppose you want
+[62:00] to uh I don't know write something very
+[62:03] creative.
+[62:05] So which one would you use? Would you
+[62:06] use a low temperature or high
+[62:07] temperature?
+[62:09] High temperature. Yes. So if you want
+[62:11] something that's more deterministic,
+[62:13] more I guess closer to uh something that
+[62:16] is very um I guess what you think would
+[62:19] be high quality, you will use more of a
+[62:22] lower uh temperature. So one note here
+[62:26] is that if you have
+[62:28] a strictly positive temperature,
+[62:32] every time you run your model over an
+[62:35] input,
+[62:37] you will obtain a different output.
+[62:41] Right.
+[62:43] So something I want to point out is
+[62:47] nothing in the transformer architecture
+[62:51] is probabilistic. Everything is
+[62:53] deterministic. The only thing that is
+[62:56] not deterministic is how you sample the
+[62:59] next token. It's the only thing that is
+[63:01] not deterministic.
+[63:04] So what will you do to have like a
+[63:06] deterministic output?
+[63:09] we have t equal to zero. t equal to
+[63:12] zero, you know for sure that your output
+[63:15] will be just one thing and nothing else.
+[63:18] Well, that's what is kind of a
+[63:22] theoretical
+[63:23] uh property. But in practice,
+[63:27] you have some stuff that is happening in
+[63:29] the computation that introduces some
+[63:34] nondeterministic
+[63:36] operations. So it's very much more
+[63:38] advanced than the scope of this class.
+[63:40] Much more advanced of the scope of this
+[63:41] class. I just want to call out that in
+[63:44] practice t equal to zero may lead to
+[63:47] different results because of this um
+[63:50] kind of practical piece. So what I
+[63:53] recommend so there's a suggested reading
+[63:55] in case you're completely optional. So
+[63:58] there's a very recent article around
+[64:01] defeating nondeterminism in LM
+[64:04] inference.
+[64:05] So I recommend that you read it in case
+[64:07] you're interested. So the high level
+[64:09] idea is
+[64:12] our GPUs, our hardware
+[64:15] when they reduce some of these
+[64:18] operations,
+[64:20] sometimes they are reducing numbers that
+[64:23] are on really different scales.
+[64:26] So the order at which these operations
+[64:29] are happening is actually quite
+[64:31] important.
+[64:32] So the idea is if these operations they
+[64:35] happen in different order it may lead to
+[64:38] different results. Even if in theory it
+[64:41] should be exactly the same in practice
+[64:43] it may not be the same. And this article
+[64:46] actually does a great job at just
+[64:48] explaining the intuition.
+[64:50] So yeah just if you're interested
+[64:52] completely optional.
+[64:55] Cool. Uh I know I'm kind of late. So I
+[64:58] guess um last thing that I want to say
+[65:00] is
+[65:02] let's suppose what you want to do is to
+[65:06] generate an output in a very specific
+[65:09] format. Let's suppose JSON JSON format.
+[65:15] So I guess a very naive approach would
+[65:17] be to tell your LLM well please generate
+[65:21] this in let's say JSON and then it
+[65:24] produces something and then you kind of
+[65:28] uh try to see if it's a valid JSON. If
+[65:30] it's not you repeat you just tell it to
+[65:33] generate again until it does something
+[65:36] well. So that's the first naive
+[65:37] approach.
+[65:39] Well there's a second approach that is
+[65:41] called guided decoding.
+[65:45] And what that does is during the
+[65:47] generation process,
+[65:49] it filters out what it calls invalid
+[65:53] next tokens.
+[65:55] So here uh let's suppose I want to
+[65:57] generate this JSON. I know for sure that
+[66:01] my first token must be uh something that
+[66:04] opens the you know the
+[66:07] I forgot what the English word was for
+[66:09] this but you know it just opens the the
+[66:11] brackets. Yeah, open the brackets. So
+[66:13] you can only have this and then you can
+[66:16] only have the property name it's and so
+[66:18] on and so forth and sometimes you can
+[66:20] have more than one permitted next token
+[66:23] in which case you would go back to our
+[66:27] you know next token strategy.
+[66:31] Yeah.
+[66:38] So the question is how do you restrict
+[66:40] uh the the other tokens? There's a bunch
+[66:42] of papers that go into that. We will not
+[66:44] cover this, but I can give you some
+[66:46] pointers. Uh just type finite state
+[66:48] machine FSM uh context grammar. So
+[66:52] there's a bunch of papers that do that.
+[66:53] We will not cover that here.
+[66:56] Cool. And I think with that we will uh
+[66:59] go to the second part uh with Shervin.
+[67:03] Great.
+[67:06] Thank you.
+[67:08] So uh now together we're going to look
+[67:11] at uh different prompting strategies. So
+[67:13] now that we know how responses are
+[67:15] generated, we're going to see how to get
+[67:18] uh responses and how to get great
+[67:20] responses.
+[67:23] So let's go back to our favorite example
+[67:25] about our cute teddy bear. Uh so just I
+[67:28] want to introduce one piece of
+[67:30] vocabulary. So when you have some kind
+[67:32] of input uh you have the length of your
+[67:36] inputs measured in number of tokens uh
+[67:39] and you will see in the literature that
+[67:41] it can have different names. So you can
+[67:43] uh see it called context length, context
+[67:46] size, window size and I think the latest
+[67:50] tools like if you code on you know
+[67:52] cursor or any other uh code assisted
+[67:55] tool I think they call it a more context
+[67:57] length but like all these terms are uh
+[68:00] equivalent
+[68:02] and they know the same thing. Okay.
+[68:06] So now I want to take some time to
+[68:09] discuss like what can be some orders of
+[68:12] magnitude here. So uh like modern day
+[68:16] LLMs they tend to be in the order of
+[68:18] magnitude of tens of thousands hundreds
+[68:22] of thousands or millions of input tokens
+[68:26] as inputs. So this is the kind of input
+[68:28] it can take. So sometimes you hear some
+[68:31] new LLM boast some number and then that
+[68:34] number of context length is exactly
+[68:36] that. So it's like how much tokens can
+[68:39] it accommodate in a single pass.
+[68:43] Okay, great. And then yeah the models
+[68:46] you have seen uh like maybe some like
+[68:48] advertisement of these models. So I
+[68:49] think like Gemini and others they're in
+[68:52] the million territory. Um and uh you
+[68:56] know does that mean it's all nice and
+[68:59] pretty? you know, do we if we have like
+[69:01] more context length, is it going to
+[69:03] solve everything?
+[69:05] Actually, not. There is a phenomenon
+[69:08] that was recently dubbed as context rot
+[69:12] in a paper from earlier this summer
+[69:15] where basically the authors are
+[69:18] experimenting the capacity of the model
+[69:21] to retrieve some piece of information uh
+[69:24] in a test called needle in a haststack.
+[69:27] So basically they ask some question and
+[69:30] in larger and larger pieces of text they
+[69:33] bury the answer and they they try to
+[69:36] look at the capacity of the model to
+[69:39] surface that answer and then you can see
+[69:42] that with respect to an increasing
+[69:44] context length that ability to ground
+[69:47] the information with the answer that is
+[69:49] in the context decreases
+[69:52] and yeah the paper I think is a very
+[69:54] interesting one. it like controls with
+[69:56] respect to what else is in the context
+[69:59] like there is a term of like distractors
+[70:02] where they like put some noise and then
+[70:04] they see distractors basically
+[70:07] contributes in decreasing the retrieval
+[70:10] capability. So you know also what is in
+[70:13] your context matters. Um, so this is why
+[70:16] in general when you have a retrieval
+[70:18] problem where you want to use your LLM
+[70:20] to solve it, you have some good
+[70:23] incentive to try to target as much as
+[70:25] possible the right piece of context for
+[70:28] your LLM to see and predict on.
+[70:33] Okay, great. And yep.
+[71:06] Yep. So the
+[71:09] Yes. So the question is uh is the
+[71:11] context length exactly what is shown
+[71:12] during self attention? Uh yes. Yeah. So
+[71:16] and then we're going to see so I think
+[71:18] we saw last time that uh sometimes there
+[71:21] are like some uh tricks that are used
+[71:23] for the like complexity of the self
+[71:26] attention mechanism not to be n squared.
+[71:28] So this is what is being used to uh like
+[71:31] manage basically the complexity of the
+[71:33] computations as the context length
+[71:35] grows. Yeah, but great call out that
+[71:37] that's exactly uh what is it about.
+[71:41] Okay, great. Any questions? Any other
+[71:42] questions?
+[71:45] Okay, great. Um so now let's define what
+[71:51] do uh prompts usually look like. So
+[71:54] there is no formal theory on how to
+[71:57] structure a given prompt but this is
+[72:00] these are the main lines that are
+[72:01] usually found in uh prompts presented to
+[72:05] models. So you can distinguish a part
+[72:07] that is uh like setting up the context
+[72:10] where you like just put the setting you
+[72:13] know you make it clear to the model what
+[72:16] you know kind of query you want to to
+[72:20] issue. Then uh let's say if you have
+[72:22] some task that you want the model to
+[72:24] perform, you have instructions and then
+[72:26] these instructions are like some sort of
+[72:28] function that take as input something.
+[72:31] So you add some inputs and uh in order
+[72:34] to get what you want out of the model's
+[72:37] response, you may want to add some
+[72:38] constraints out of it. So here we we
+[72:41] took our favorite example with a teddy
+[72:44] bear. Uh the context is you know
+[72:48] like what is the teddy bear basically
+[72:51] what is the mood of the teddy bear? What
+[72:53] do we want uh you know to do in order to
+[72:56] um like make our teddy bear happy and
+[72:59] then uh we we give some input regarding
+[73:01] where the story that we want to generate
+[73:04] is and then uh we give some constraints.
+[73:08] If you want some other example uh in the
+[73:10] LLMs that you query every day. So the
+[73:13] context could be um you know some
+[73:16] sentence that says you are chat GPT it
+[73:20] is uh you know we are October 10th uh it
+[73:23] is uh 4:44 p.m. So you set the setup.
+[73:28] The instructions can be uh basically
+[73:31] what the user queries alongside the
+[73:33] input and then constraints might be
+[73:36] things that you don't see as a user but
+[73:38] that might be um you know present in the
+[73:41] prompts given to the LLM such as safety
+[73:43] instructions for example do not generate
+[73:46] any contents that might lead to harm or
+[73:48] things like this. So you know every time
+[73:51] you see an input being fed to an LLM, I
+[73:54] think this projection into four these
+[73:57] four dimensions can be a good mental
+[73:59] model of seeing you know which pieces
+[74:01] correspond to what goal um in in that
+[74:04] structure.
+[74:06] Does that make sense?
+[74:09] Okay, great. So now that we know like
+[74:13] what kind of mindset we might have for
+[74:16] inputs to an LLM, let's see how we can
+[74:19] get an LLM to do what we want. And let's
+[74:22] see how we can get an LLM to do what we
+[74:24] want without tuning any weights. And we
+[74:27] can do so with a concept called in
+[74:30] context learning where the learning is a
+[74:33] bit of a term that is overloaded because
+[74:36] you don't actually learn anything with
+[74:38] respect to the weights of the LLM but
+[74:41] you can uh like distill some knowledge
+[74:44] inside of it um you know as part of the
+[74:47] context in order to do what you want. So
+[74:50] you distinguish two main categories of
+[74:54] in context learning. So there is one
+[74:56] category that is very simple you know in
+[74:58] mindset it's called zero shot. So
+[75:01] basically you don't give
+[75:03] anything other than your input um your
+[75:07] input query you know you just ask the
+[75:09] LLM to do what what you want to do and
+[75:12] then there is another uh school of
+[75:14] thought
+[75:15] learning where you give examples of
+[75:19] inputs and outputs to the LLM before
+[75:22] asking the input that you're interested
+[75:24] in. So in the case of teddy bears and
+[75:28] the bedtime stories. So you might, you
+[75:30] know, name your teddy bears. So maybe
+[75:32] you have a teddy teddy bear that's
+[75:34] called teddy and you generated a story.
+[75:37] So you put your query, you put the story
+[75:39] that you want to generate and you give
+[75:41] multiple such examples and let's say you
+[75:44] have another teddy bear that's called,
+[75:47] you know, Bob, you know, and then you
+[75:49] want to generate a story for Bob. So you
+[75:51] put all of these examples and you ask
+[75:54] the LLM to generate uh the story that
+[75:57] you're interested in and then this is
+[75:59] basically what we call a few shots
+[76:01] setting.
+[76:04] Okay, great. So now
+[76:08] um generally when you look at the
+[76:10] performance of the of the given u like
+[76:13] of the resulting task giving examples
+[76:17] tends to steer the LLM nicely into the
+[76:21] task that you're interested in just
+[76:23] because you have like given an idea to
+[76:27] the model of what you are looking for
+[76:29] and then it can use what it has learned
+[76:31] during its training process to connect
+[76:34] the dots and uh basically replicates
+[76:38] um and then uh but of course you need to
+[76:41] gather such examples. So this is costly
+[76:44] uh this will put some more uh tokens in
+[76:47] the context window. So you will need to
+[76:49] like more compute
+[76:52] uh but uh there is an interesting
+[76:54] trade-off here that we see in recent
+[76:56] models. So they're gaining more and more
+[76:59] reasoning capabilities which is why I
+[77:02] put the generally
+[77:04] um nuance in Italy here. So they're
+[77:08] generally better few shots but not
+[77:10] always because these days uh with this
+[77:13] like better models people have seen that
+[77:17] with um like basically making the
+[77:20] instruction better you could make the
+[77:23] performance of in context learning on
+[77:27] par or even better than if you provide
+[77:30] examples because basically when you
+[77:32] think of it when you provide examples
+[77:35] you constrain your model into given sets
+[77:38] of examples that are finite. So when you
+[77:40] are at inference time, let's say you
+[77:43] want to perform a task on a distribution
+[77:45] of data that has not been seen, it is
+[77:48] harder for the model to generalize
+[77:50] because it will try to align on what it
+[77:54] has seen in the context. Whereas if you
+[77:56] turn your instructions into something
+[77:59] that is more reasoning based, you
+[78:01] explain how to do the task with natural
+[78:04] language, it can use its reasoning
+[78:06] abilities to actually do it. And then
+[78:09] this is something that you see more and
+[78:10] more these days. Um so the literature on
+[78:13] this I think is still in in progress but
+[78:17] you have some papers like plan and solve
+[78:21] uh that I think came out recently and
+[78:23] that showed you know if you ask the LM
+[78:26] to plan itself and then solve something
+[78:28] uh it can have very good performance.
+[78:31] So yeah this is an interesting u this is
+[78:34] an interesting fact.
+[78:37] Okay great. So now that we have seen uh
+[78:41] basically the kinds of learning that we
+[78:42] have now we're going to see what we can
+[78:45] do to improve the quality of the
+[78:47] response. So there is this concept
+[78:50] called chain of thought where uh
+[78:53] researchers have seen that if you force
+[78:56] the model to come up with some rational
+[78:59] to some answer before actually giving it
+[79:02] it would give higher performance. So
+[79:05] this is what you what people call as
+[79:07] chain of thought. It's basically what's
+[79:09] led you to the answer. So here for
+[79:12] example if you uh you know ask yourself
+[79:15] you know how old is the teddy bear and
+[79:18] if you force the model to respond
+[79:20] directly with a number it might not be
+[79:24] able to do the connection as to exactly
+[79:27] why the teddy bear is a given age.
+[79:30] Whereas when you give the kind of full
+[79:32] chain of reasoning then it becomes clear
+[79:35] as to you know what led to that
+[79:36] response. So I think this is the main
+[79:40] mindset behind this technique
+[79:42] and uh basically this is something that
+[79:44] is that can be used in in context
+[79:47] learning. So if you give uh like few
+[79:50] shot examples you know how old were was
+[79:53] this teddy bear you give some number and
+[79:55] then you slightly change the query and
+[79:58] then based on the reasoning formatting
+[80:01] and then the response the LLM can adjust
+[80:04] the reasoning and the response
+[80:06] accordingly and it will force the model
+[80:08] to output some reasoning alongside the
+[80:11] response which shows an improvement in
+[80:14] um in basically metrics.
+[80:18] Okay, great. And then yeah, something
+[80:20] else that I want to say, you know, let's
+[80:22] say you are uh you want to do a task and
+[80:25] you want to do it well, you know, often
+[80:27] times you will always have some samples
+[80:29] that do not work and then for them you
+[80:32] you want to have debugging ability,
+[80:35] right? And usually when you debug with
+[80:38] LLMs, you don't debug like the old days,
+[80:41] you don't look at weights at at the
+[80:43] intrinsics of the LLM. What you want is
+[80:46] something more interpretable that comes
+[80:49] out of it in terms of tokens and usually
+[80:52] uh you know with these techniques you
+[80:54] can see the reasoning that the model had
+[80:57] before outputting a given response and
+[80:59] you can debug basically what went wrong.
+[81:02] So if you ask how old will will the bear
+[81:06] be next year and if in the chain of
+[81:09] thought it says hey we're in 2019
+[81:13] you know that somehow in your context
+[81:15] you know oh maybe I put the wrong dates
+[81:18] you know in there so you can like trace
+[81:20] back to you can do some root causing
+[81:22] very easily so it's also used for that
+[81:26] and you know exactly in the same way as
+[81:30] other techniques that increase the
+[81:32] number of tokens. This is a trade-off
+[81:34] that you have to manage that it will of
+[81:36] course take more time, you know, to
+[81:38] infer because you need to to generate
+[81:41] more tokens, but typically we're fine
+[81:43] with it.
+[81:46] Any questions on coot?
+[81:50] Okay, great. So, now let's take it one
+[81:53] step further.
+[81:55] Um so I want to introduce you know even
+[81:58] to make coot
+[82:01] even stronger. You can sample your model
+[82:04] several times look at the answers it
+[82:08] generates and then do some majority
+[82:10] voting to select the answer that was
+[82:14] predicted most of the times by a given
+[82:16] LLM. And this is what we call
+[82:18] self-consistency
+[82:20] where basically you sample responses
+[82:23] multiple times and then parse
+[82:26] the actual answer. So basically you kind
+[82:29] of factor out the whole reasoning and
+[82:31] then try to target the answer and then
+[82:32] by majority voting you can come up to an
+[82:35] answer in a more um robust way.
+[82:40] Yep.
+[82:50] Yep. So the question is do you need to
+[82:53] have some benchmark to know if it's
+[82:55] better and yes absolutely I think the
+[82:57] paper operates on top of all the
+[83:00] arithmetic and then mathematical based
+[83:03] ones and then I think one tangential
+[83:05] question to yours is how can you locate
+[83:08] the answer and then do majority majority
+[83:10] voting on it. So typically you can put
+[83:12] into the context some instruction that
+[83:15] says put the actual answer last. So you
+[83:18] can just like extract the last people I
+[83:20] think uh use regex based techniques
+[83:23] otherwise to extract the answer or you
+[83:25] could even think of using some other LLM
+[83:28] to extract the answer. So there is
+[83:29] always a way to kind of do it. Uh but
+[83:32] yeah to your point yes we need uh some
+[83:35] benchmark and then ground truth labels
+[83:37] to assert that this is indeed better.
+[83:54] Yeah. So the request here, so the
+[83:55] question is uh is it going to be sent to
+[83:57] the same request as example? So
+[83:59] typically you sample it in parallel. So
+[84:01] basically you ask your model exactly
+[84:03] what Ashin just mentioned. You sample
+[84:05] from the probability distribution of BOS
+[84:09] and whatever tokens you had the next
+[84:11] token and you do that in several other
+[84:15] uh kind of branches and you do that all
+[84:18] of that in parallel and then you kind of
+[84:21] parse the answer at the end of it. So
+[84:25] basically the latency of this process is
+[84:28] equal roughly to the maximum latency of
+[84:33] either parallel generation because you
+[84:35] can do all of this in parallel.
+[84:37] >> Yeah.
+[84:38] >> So so none of these go into the context
+[84:40] of each other. They're all done in
+[84:41] parallel and then you get final answer.
+[84:45] Okay. Great.
+[84:48] All good.
+[84:51] Okay. Great. So now that we have seen a
+[84:54] few prompting techniques uh I want to
+[84:57] cover together um tricks that people
+[85:00] have come up with at inference time to
+[85:03] make the generation as efficient as
+[85:05] possible. So
+[85:08] um and basically uh yeah so in modern
+[85:11] day models you have a lot of parameters
+[85:14] you want to generate a lot of tokens how
+[85:16] do you do it the most efficiently
+[85:18] possible. So I want to us to divide this
+[85:23] thought process into two parts. So we're
+[85:26] going to see you know what methods we
+[85:28] can come up with that give up that give
+[85:31] us increased efficiency on an exact
+[85:34] level. So you exactly do the same
+[85:36] computations as you were supposed to do
+[85:38] but you know in a more efficient way and
+[85:40] I put some um you know hints as to what
+[85:44] kind of techniques we're going to
+[85:46] explore. So you know let's take let's
+[85:48] try to look for techniques that avoid
+[85:51] redundancies.
+[85:52] Let's try to see what we could do to uh
+[85:55] manage the memory in the best way and
+[85:57] also let's try to see if we can uh
+[86:00] reformulate uh the equations inside the
+[86:04] LLM in a way that could simplify the the
+[86:07] generation in practice.
+[86:09] Then there is a second category that
+[86:12] we're going to explore as well uh that
+[86:14] is going to focus on what kind of
+[86:16] approximations it might be fine to do
+[86:19] and get a high quality answer uh at a le
+[86:24] at at a lesser cost uh but you know it
+[86:27] would be approximate. So we have you
+[86:29] know what kind of um variations we could
+[86:33] do on the architecture. Is there
+[86:34] something we could do on the embeddings
+[86:36] um to make them more efficient? And then
+[86:41] maybe on the token prediction side, is
+[86:43] there something we could uh do to make
+[86:45] it, you know, faster?
+[86:48] Does that sound good?
+[86:51] So, we have approximately 22 minutes.
+[86:53] We're going to try to go through all of
+[86:55] them um here. Okay. So I grouped the
+[87:00] categories of techniques into exact and
+[87:03] approximate techniques. Uh but actually
+[87:06] we're going to look at them in a grouped
+[87:08] manner. First looking at the attention
+[87:11] layer seeing what kind of techniques we
+[87:13] could um have there and then in a second
+[87:16] time in a second part we're going to
+[87:19] look at the output layer and then see
+[87:22] you know what we can do at the level of
+[87:25] token generation to make things uh you
+[87:27] know as as good as possible. Okay. So
+[87:30] let's start at the attention level.
+[87:33] So we have seen that uh you know for
+[87:37] every token you need the current token
+[87:41] to attend to the previous ones right in
+[87:44] this masked self attention. So let's say
+[87:48] you generate your sequence you are at a
+[87:52] given token. So let's say you know you
+[87:53] have generated a cute teddy bear and
+[87:55] then now you are at ease.
+[87:58] Now you have the query ease.
+[88:01] You will compute the key representation
+[88:04] and the and the value representation of
+[88:06] ease because of course you have to do
+[88:08] it. It's your current token. But we want
+[88:12] to have a way to reuse the past
+[88:16] computations we had done to compute the
+[88:19] key representation of the previous
+[88:21] tokens and the value representation of
+[88:23] the previous tokens.
+[88:26] Does that make sense as a goal? Does
+[88:29] everyone agree?
+[88:33] Okay.
+[88:35] And more precisely, basically, we want
+[88:38] to find a way for the key and value
+[88:41] matrices to be saved. And um you know
+[88:45] I'm not underlining the Q the Q part
+[88:48] here because of course the query
+[88:51] corresponding to the previous tokens are
+[88:53] not going to be of interest uh for the
+[88:56] the present token. So it's like the key
+[88:58] and value part.
+[89:00] Okay. So there is u like this concept of
+[89:05] KV cache where the goal is to store
+[89:09] these key and value matrices somewhere.
+[89:14] um
+[89:16] and reuse them directly from the cache.
+[89:18] So like what I just mentioned here, you
+[89:21] know, when you want to compute a given
+[89:22] token, you would reuse the key and the
+[89:27] value directly from the cache instead of
+[89:29] computing it again. So yeah, so
+[89:33] um yeah, so this is basically um you
+[89:36] know representation of what we just
+[89:37] mentioned here.
+[89:39] Um yeah, does that make sense?
+[89:46] Okay, awesome.
+[89:48] So, what else we could could we do? Oh,
+[89:51] yeah.
+[89:59] Yeah, great question. So, during
+[90:01] training, do we do KV caching? I would
+[90:03] say during uh training, you have this
+[90:05] concept of teacher forcing where you put
+[90:08] all your inputs and pass it all together
+[90:11] at once. So this concept of KV caching
+[90:14] caching doesn't even come up. Uh yeah.
+[90:17] Yeah. But great point. Yeah. Yep.
+[90:37] >> Yep. Yep. Yes. So the question was uh
+[90:40] you know what is the point of all this?
+[90:42] We want to just reuse uh like the
+[90:45] computations that were already done and
+[90:47] then your answer is yes. Spot on.
+[90:50] Any other questions?
+[90:54] Okay great. So now that we have seen you
+[90:59] know that we could cache these
+[91:00] quantities. So what else could we do? So
+[91:03] is there something from last week's
+[91:05] lecture that we could reuse? you know,
+[91:08] maybe something that reduces the amount
+[91:10] of cash, you know, the key and value.
+[91:14] Do we have some techniques
+[91:18] sparse attention? Um,
+[91:24] yeah, that could be that could be, but
+[91:26] not here. Like, let's say you're not
+[91:28] you're attending to everyone and you
+[91:31] focus on the number of keys and values.
+[91:33] Is there a a way to reduce this number?
+[91:37] So just to recap, we have here I'm
+[91:41] operating in the context of multi- head
+[91:44] detention which is you have your H
+[91:46] heads. So you have H number of query
+[91:50] projections, H key projections, H value
+[91:53] projections. Is is there any technique
+[91:56] from last week that we could reuse that
+[91:58] could reduce this number?
+[92:00] Yeah, I heard it. Yeah, group query
+[92:02] attention. Yeah, exactly. So we had this
+[92:06] um you know concept of grouping keys and
+[92:11] values together uh where basically the
+[92:13] general formulation is called group
+[92:15] query attention where you group these
+[92:17] and then the external values h and one
+[92:21] denote respectively the full multi head
+[92:24] intention and then multi-query attention
+[92:27] and then in uh modern day LLM's uh like
+[92:30] a lot of papers they use uh GQA
+[92:35] uh with with some uh group that is
+[92:37] sensible value. Yeah. So this is also
+[92:40] something we can do.
+[92:43] Okay. Great. And now I'm going to go a
+[92:47] little bit into the hardware side of
+[92:50] things.
+[92:51] So if we were to store the cache for all
+[92:55] these values in a naive way, you know,
+[92:57] at inference time. So let's say you
+[92:59] receive so let's say I'm an inference
+[93:03] server I receive queries from multiple
+[93:06] users
+[93:08] and let's say I receive a query one and
+[93:11] I receive a query two um you know a
+[93:14] naive way of storing the key and and
+[93:17] value um you know matrices would be in
+[93:20] reserving a pro a portion of the memory
+[93:23] at the beginning that correspond to the
+[93:25] entire context length.
+[93:28] because you don't know you know where
+[93:29] you're going to stop right your decoding
+[93:31] because you stop your decoding when you
+[93:33] hit the EOS token so you would have like
+[93:36] this whole block of size uh you know
+[93:39] context length like maximum context
+[93:42] length that could be reserved so one
+[93:45] observation is that it leads to a lot of
+[93:47] waste so let's say if your context
+[93:50] length is of size like 2k you have 2k
+[93:53] reserved for a given uh you know request
+[93:56] 2k Okay, there. So at any given time
+[93:59] like let's say you want to get more
+[94:00] requests, you want to serve more
+[94:02] requests, your memory will very quickly
+[94:05] not have enough space to uh accommodate
+[94:10] uh them.
+[94:12] Does this constraints or this challenge
+[94:15] make sense?
+[94:19] Yep.
+[94:22] Okay. And then there is this paper uh
+[94:24] that uh that is called page detention
+[94:26] and it defines several um like
+[94:30] quantities. So there is this like
+[94:32] reserved quantity internal fragmentation
+[94:35] and external fragmentation. Internal
+[94:37] fragmentation is basically the space
+[94:40] that is being reserved by the model to
+[94:43] complete the request and the reserved
+[94:46] spot is the subset of it that
+[94:49] corresponds to tokens that were actually
+[94:51] being used. So it's the kind of space
+[94:53] that's actually used internal
+[94:54] fragmentation. There is nothing in there
+[94:56] but this was reserved. an external
+[94:58] fragmentation. It's the memory uh
+[95:01] management system that doesn't
+[95:03] necessarily put one uh you know block
+[95:06] one after another but has its own way of
+[95:09] allocating uh memory blocks. So it might
+[95:12] give some other gaps and they came up
+[95:15] with a system that is called a page
+[95:18] detention uh that is um you know
+[95:21] powering uh one inference
+[95:24] package called the VLM
+[95:28] that uh solves this issue by mapping uh
+[95:32] like the generation process by blocks of
+[95:35] fixed size. So instead of uh
+[95:39] allocating a whole portion of the memory
+[95:42] to answer a given request, it breaks it
+[95:45] down by smaller chunks. So I think the
+[95:47] paper takes uh like a value of 16 for
+[95:51] blocks. So as you can see, let's say you
+[95:54] are in your generation process and you
+[95:55] have used a given row, you would just
+[95:58] start using another row without
+[96:02] um you know wasting more space than
+[96:05] that.
+[96:06] And then you have some dictionary that
+[96:08] maps token position indices to uh to
+[96:12] basically their their cache values. So
+[96:15] there is like a smart way of managing it
+[96:18] and they show that it reduces
+[96:19] fragmentation by quite a lot.
+[96:23] Yeah.
+[96:25] Okay. Great.
+[96:27] Now let's do something else with this KV
+[96:30] cache. So uh we just saw that you know
+[96:36] you have your internal representation of
+[96:38] your token and you project it into query
+[96:41] key and value and then key and value is
+[96:46] actually something that is of a
+[96:48] dimension that is like non-negligible
+[96:51] and you need to store uh each copies of
+[96:54] it in each transformer block. So you
+[96:58] have many of these uh vectors that you
+[97:01] need to keep track of and is there a way
+[97:04] to make that representation somehow more
+[97:07] compact
+[97:09] and this is a topic that uh DeepS has um
+[97:15] you know tried to tackle in a concept
+[97:18] called um I think it was called
+[97:21] multi-latent
+[97:23] attention.
+[97:24] We're going to see uh so you know let's
+[97:27] look at the vanilla case you know if you
+[97:29] are in multi head detention then for a
+[97:31] given representation of a token you have
+[97:35] h projection matrices that turn it into
+[97:39] a key
+[97:40] does everyone agree with that
+[97:44] the kind of uh self attention formula
+[97:47] you know you have a projection matrix w
+[97:50] k for keys that will project the token
+[97:54] representation into some key and you
+[97:57] have h heads,
+[97:59] you have h such projections and you have
+[98:04] h such resulting embeddings that you
+[98:06] need to store in your cache cuz you have
+[98:09] that for keys, you have that for values,
+[98:12] that's a lot of um vectors to store and
+[98:16] these keys and values they are uh you
+[98:19] know
+[98:20] quite long as well. Uh so let's see if
+[98:23] we can like um make it smaller.
+[98:27] What multi- latent attention does is
+[98:31] that it factorizes these um you know
+[98:35] projection matrix into an intermediary
+[98:38] space that is of lower dimension than
+[98:42] the space of keys.
+[98:44] You have a first transformation that
+[98:47] reduces the dimension and then another
+[98:49] one that decompresses it.
+[98:52] So this is the first
+[98:54] u operation kind of that they did in
+[98:57] order to make the reput representation
+[98:59] more compact.
+[99:01] But they did something else that is very
+[99:04] smart. They said that the compression
+[99:09] matrix
+[99:11] could be shared across keys and values.
+[99:16] which says for a given token
+[99:19] representation
+[99:21] the cache that you need to store for
+[99:24] keys and for values is the same
+[99:28] and then you would have u you know still
+[99:30] different matrices here for the
+[99:32] decompression part to like actually
+[99:35] learn different representations for a
+[99:37] key and value. But you know one
+[99:41] um simplification here has been to like
+[99:43] share it for like across keys and values
+[99:47] and even better share it across the h
+[99:51] heads. So instead of having h such
+[99:54] embeddings you have just one
+[99:58] uh and then you do that you know for key
+[100:00] you do that for value. So at the end of
+[100:02] it for every transformer block you have
+[100:05] a single representation per token.
+[100:10] Does that make sense?
+[100:13] So not only
+[100:15] you have you know less things to store
+[100:18] the deep sev2 paper also showed a
+[100:21] performance improvement that it's uh
+[100:24] kind of credited like some
+[100:26] regularization
+[100:28] um consequence of doing so. So it it
+[100:31] learns representations that are maybe
+[100:33] more useful and shared across keys and
+[100:35] values. So you know apparently there is
+[100:38] also um performance benefits to it that
+[100:41] is not just hardware based.
+[100:46] Okay great. So now we have seen some
+[100:48] trick. Oh yeah.
+[100:56] Yeah. So the question is do you tune the
+[100:57] low rank dimension? So the dimension
+[100:59] itself is a design choice. It's fixed.
+[101:07] So the question is is it the same uh
+[101:09] like lower dimension for everyone? So
+[101:12] the dimension size is fixed and is the
+[101:14] same for everyone I think. So but it's a
+[101:15] design choice. Yeah, you you could have
+[101:17] different ones but I think in practice
+[101:19] it's it might be the same one.
+[101:20] >> Yep.
+[101:22] Any other questions?
+[101:26] Okay, great. So now we have less than 10
+[101:28] minutes. We are going to cover
+[101:30] techniques that operate at the output
+[101:32] token level. Um and then start with a
+[101:36] concept called speculative dec decoding.
+[101:39] That is um kind of a very interesting
+[101:43] method that uses some smaller model to
+[101:48] help the generation of a bigger model
+[101:51] and then uses some scheme that makes the
+[101:55] distribution output match the one of the
+[101:58] target one. So it uses a combination of
+[102:02] tricks of using like a smaller model to
+[102:04] generate things and then gates it with
+[102:07] some mathematical based properties to
+[102:11] ensure we get a distribution that looks
+[102:13] like the one of the big model.
+[102:17] So here's what is the mind like here's
+[102:20] the mindset of it. So let's just come
+[102:23] back to our favorite example about teddy
+[102:25] bears.
+[102:26] So what you do is that you ask a a
+[102:30] smaller model uh that we that the paper
+[102:32] calls draft to generate next words. So
+[102:36] you have like my teddy bear you know
+[102:38] what could be next words. So you have
+[102:41] one pass you know you find token is you
+[102:44] fit token is here again you find cute
+[102:47] and smart since the LLM is small this is
+[102:51] typically done faster than with the big
+[102:53] LLM.
+[102:54] And then once you have all of these, you
+[102:57] put the tokens that are predicted by the
+[103:01] smaller LLM all as input to the target
+[103:06] uh LLM that is like the bigger model
+[103:09] like the one that you use to generate
+[103:11] probability distributions for each of
+[103:13] them.
+[103:16] And then we're going to see that by
+[103:19] having some rule on the output
+[103:22] distribution of each of these tokens,
+[103:25] you can simulate
+[103:27] a distribution, a probability
+[103:29] distribution of each token of each next
+[103:32] token that's um kind of looks like the
+[103:36] one of the target models.
+[103:38] So here's basically how it goes. Um so
+[103:44] it looks at the probability of the the
+[103:49] token that the draft model has
+[103:50] predicted. So if the probability of the
+[103:53] draft model is bigger than the one of
+[103:57] the draft model in the draft model's
+[103:59] output distribution then you just accept
+[104:02] the token. Otherwise you have some
+[104:05] acceptance rejection mechanism that
+[104:09] either accepts the token or rejects it.
+[104:13] And uh you know let's say everything is
+[104:15] accepted then in a single pass you were
+[104:18] able to advance you know by way more
+[104:20] tokens
+[104:22] um and then if it fails then basically
+[104:25] you resume the process of generation
+[104:27] from that code token onwards with some
+[104:30] uh adjustments on the distribution.
+[104:35] So one question that you might ask from
+[104:38] all of this you know this looks like a
+[104:41] recipe like why is that matching the
+[104:43] target distribution.
+[104:45] So if you start from the law of total
+[104:48] probability and write each term with
+[104:52] these quantities
+[104:54] then you will find the target
+[104:55] distribution at the end. So it's an
+[104:58] exercise that I encourage you to do and
+[105:00] the to the paper that is attached to the
+[105:03] slide here demonstrates it in like just
+[105:06] a few lines. So it's a very simple
+[105:08] proof. Uh and I think it's a very very
+[105:11] interesting one.
+[105:13] Does that does that make sense? Yep.
+[105:19] Yeah. So I think it's Yeah. The question
+[105:21] is is that rejection sampling? Yep.
+[105:25] So, some of you might be familiar with
+[105:26] it already.
+[105:29] Does that make sense?
+[105:34] Yeah. And then one thing that I didn't
+[105:35] say is that why did we even put the last
+[105:39] token here? You know, we put all the
+[105:41] draft tokens, but also the last one that
+[105:43] was predicted because by doing a single
+[105:46] forward pass with all these draft
+[105:48] tokens, you get for free the probability
+[105:51] distribution of the token that comes
+[105:54] after that that you can then just sample
+[105:56] from Q k + one.
+[106:01] So like just to give some summary of the
+[106:04] rational
+[106:05] um doing a single pass is like as
+[106:11] expensive as doing one pass at a time
+[106:13] because at inference time you are memory
+[106:16] bound like in other words
+[106:19] uh computations are not the limiting
+[106:21] factor. It's basically the memory that
+[106:22] will bottleneck your computation. So you
+[106:26] want to do it on a smaller model and
+[106:28] then on the big model you want to
+[106:29] compute all of these probability
+[106:31] distributions at once.
+[106:35] Does that make sense?
+[106:39] Okay, great.
+[106:41] And then I want to talk about one last
+[106:43] technique that is called multi-token
+[106:46] prediction. It's the same. So by the
+[106:49] way, this previous technique was called
+[106:51] speculative decoding.
+[106:53] And then this one is basically doing the
+[106:57] same but so it's doing exactly a
+[107:00] different thing but the draft model is
+[107:04] embedded in the same model which is very
+[107:06] powerful. So basically it's a model that
+[107:10] uh attaches multiple heads on top of the
+[107:13] representation of the last decoder.
+[107:16] And the process here is that at training
+[107:18] time, it doesn't do next word
+[107:20] prediction. It does multi-word
+[107:23] prediction. And at test time, the draft
+[107:27] model is all your heads. And your uh
+[107:31] main model is just the first heads. So
+[107:34] you have like all your draft uh tokens
+[107:37] that you then feed back to the first
+[107:40] head and then do accept acceptance and
+[107:43] rejection. So the paper does it in a
+[107:45] greedy way. So doesn't do it with this
+[107:47] like formula because since the
+[107:49] architecture and then the objective
+[107:51] function has changed. you don't have
+[107:53] this like nice property of finding again
+[107:55] the like next token predictions
+[107:57] distribution but you have like a slight
+[107:59] variation of it and uh yeah so like the
+[108:02] interesting note out of the multi-token
+[108:04] prediction is the change in objective
+[108:08] function and then second the um the fact
+[108:12] that the draft model and the target
+[108:14] model are basically embedded in the same
+[108:16] one
+[108:18] so don't have to like separate the two
+[108:21] and Um yeah so you do remember these
+[108:24] slides we have explored techniques that
+[108:27] can remedy each of these aspects. So
+[108:32] yeah I highly recommend you know taking
+[108:33] a look at the associated papers as well.
+[108:36] And with that thank you very much.

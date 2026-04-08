@@ -1,0 +1,2194 @@
+[00:05] Cool. Hello everyone. Welcome to lecture
+[00:09] two of CME295.
+[00:12] So before we start, I wanted to give you
+[00:15] a heads up about two logistical things.
+[00:19] So the first one is uh with Shervin we
+[00:22] reviewed the recording of lecture one
+[00:25] and we couldn't help but notice that the
+[00:27] audio was suboptimal.
+[00:30] So what we're doing for this lecture is
+[00:33] to have another setup. But then one
+[00:36] issue is my voice will not be you know
+[00:39] propagated in the room. So I guess I
+[00:42] have one question. Can any everyone hear
+[00:44] me very well even from the back? Okay
+[00:47] cool. Great. So that's point number one.
+[00:50] Point number two is about the final
+[00:51] exam. So the final exam right now has a
+[00:55] placeholder dates for Wednesday, I think
+[00:58] December the 10th. But uh just a heads
+[01:01] up that we're trying to see if there's a
+[01:03] way to move that to earlier in the week.
+[01:06] So we'll let you know when that's
+[01:07] finalized, but for now uh this is still
+[01:10] TBD, but we'll make sure to let you
+[01:12] know.
+[01:14] Cool. So with that aside, let's go into
+[01:18] today's topic. But before we do that, as
+[01:22] always, what we will do is we'll just
+[01:24] quickly recap what we saw in the
+[01:26] previous episodes.
+[01:28] So if you remember, lecture one was all
+[01:32] about introducing the concept of self
+[01:36] attention.
+[01:38] And if you remember what self attention
+[01:40] is is that each token is attending to
+[01:47] all other token in the sequence through
+[01:49] this mechanism of attention. So you have
+[01:52] these notations of queries, keys and
+[01:56] values. So here the idea is that the
+[02:00] query is going to ask which other tokens
+[02:03] are most similar to itself by comparing
+[02:07] query and key and then once that's done
+[02:10] uh basically we will be taking the
+[02:12] associated value.
+[02:15] So we saw that the self attention
+[02:17] mechanism can be expressed in with this
+[02:21] formula. So soft max of query *
+[02:24] qranspose over square root of dk * v.
+[02:30] So I hope this formula is familiar for
+[02:32] you. Um so just know that this formula
+[02:35] is highly optimized. You know these are
+[02:36] like big matrix multiplications that our
+[02:40] hardware is uh very um you know capable
+[02:44] of doing is very optimized in doing
+[02:46] that.
+[02:48] And all of that to say that we also
+[02:51] introduced the architecture of the
+[02:54] transformer which you can see on the
+[02:55] right.
+[02:57] So uh here if you remember the
+[02:59] transformer is composed of two main
+[03:02] components. So the encoder on the left
+[03:05] side and the decoder on the right side
+[03:10] and uh the transformer was initially
+[03:12] introduced in the context of machine
+[03:14] translation.
+[03:16] So you can think of the left side as
+[03:19] processing the input text in the source
+[03:22] language say English
+[03:25] and the right side is responsible for
+[03:28] decoding the translation in a target
+[03:31] language let's say in French
+[03:35] and this multi head attention layer is
+[03:39] where the self attention mechanism
+[03:41] happens
+[03:43] and um I remember there was a lot of
+[03:47] questions regarding you know um it's
+[03:50] called multi-head attention layer so
+[03:51] there are several heads what does that
+[03:53] correspond to
+[03:55] so in the transformer paper which is the
+[03:58] attention is unit paper you have this
+[04:01] figure
+[04:03] which actually represents each of these
+[04:06] heads and you can think of each head as
+[04:10] an opportunity for the model to learn
+[04:14] one way of projecting
+[04:16] the input into being a query, a key or a
+[04:21] value.
+[04:24] So just being a bit more clear. So for
+[04:26] instance for the query and the key, so
+[04:28] this is like each heads. So the number
+[04:31] of these little boxes is basically the
+[04:33] number of heads.
+[04:36] And to better visualize and understand
+[04:40] what this means, um
+[04:43] I also wanted to show I guess what is
+[04:46] being shown in the paper which is a way
+[04:49] to interpret what each of these heads
+[04:52] do. So we have this concept called
+[04:54] attention map
+[04:56] which basically
+[04:58] um
+[04:59] tries to represent the value of each of
+[05:06] these query.p product query.
+[05:11] So in this example what we're interested
+[05:14] in is to see which other token is being
+[05:19] most similar to token its
+[05:23] And so what we do is we take a look at
+[05:27] the quantities
+[05:29] the query that is representing it
+[05:34] product all other keys
+[05:37] and we look at what other keys are
+[05:41] leading to a high value of the product
+[05:44] query times key.
+[05:47] And when you do that basically what you
+[05:48] see or what the paper sees is you have
+[05:51] these two words. So application and law
+[05:55] which are highlighted as being you know
+[05:57] with a high attention weight. So
+[05:59] attention weight here being uh the
+[06:01] dotproduct of the query eats and the key
+[06:06] uh you know for each of these tokens.
+[06:08] And I guess there is also a way to
+[06:11] interpret those. And here you can see
+[06:14] that the tokens that are being kind of
+[06:17] highlighted are law and application
+[06:20] which basically makes sense because the
+[06:23] token eats is referring to law.
+[06:28] So basically the model needs to kind of
+[06:30] learn how to associate these words with
+[06:34] what happened before. And it is also
+[06:38] referring to application which is also
+[06:39] another way of kind of explaining why
+[06:41] that is the case. And so here what the
+[06:44] authors chose to do was to show these
+[06:48] values as a function of these different
+[06:50] heads.
+[06:52] So for instance on the left side these
+[06:55] are the kind of intensity for heads for
+[06:59] let's say the first heads and then the
+[07:01] second heads shows that you know the
+[07:03] intensity is very high for law. So
+[07:05] basically long story short these heads
+[07:09] may learn I guess different ways of uh
+[07:13] kind of figuring out what what words
+[07:16] matters. Yeah.
+[07:30] >> Great question. So the question is when
+[07:31] we're doing all these computations, are
+[07:33] they going through different uh
+[07:36] different MLPS? The answer is that we're
+[07:40] going to have different projection
+[07:43] matrices for each of them. And so um you
+[07:46] can think of um so we had this like
+[07:49] detailed example that actually kind of
+[07:51] uh went through that where
+[07:54] each head is going to have its own
+[07:57] projection and in parallel you're going
+[07:59] to have that computation that's going to
+[08:01] happen.
+[08:03] So each head is going to have one result
+[08:06] here that is then going to be
+[08:08] concatenated and then projected once
+[08:11] once again
+[08:13] with the output matrix.
+[08:17] So yeah, long story short, it's highly
+[08:19] parallelized
+[08:21] and uh it's basically just like
+[08:23] projections and like here you have like
+[08:25] some matrix multiplication and softmax.
+[08:29] Does that make sense?
+[08:30] >> Cool.
+[08:32] Any other questions on this?
+[08:38] Cool. So, I guess this is just a way to
+[08:40] illustrate the conversation we had for,
+[08:42] you know, lecture one. I know there was
+[08:44] some questions about about
+[08:46] um these uh attention heads, what they
+[08:49] do. And I guess looking at the attention
+[08:53] maps is one way of making sense of what
+[08:58] they mean.
+[09:00] Cool. With that, I highly recommend that
+[09:04] you read the transformers paper. So,
+[09:07] attention is all you need. So, it's a
+[09:09] very dense paper. It's just a few pages
+[09:11] long. Uh, but I hope that what we you've
+[09:14] seen in lecture one, you'll be able to
+[09:17] digest the content in a way that will
+[09:20] kind of make sense to you.
+[09:24] Cool. So, with that, we're going to
+[09:27] start the actual meat of what we're
+[09:29] going to discuss today.
+[09:31] So surprisingly
+[09:33] this transformer architecture which was
+[09:36] introduced in 2017
+[09:38] is actually an architecture that has
+[09:40] kind of um you know still stayed
+[09:45] relevant along the years and there are
+[09:49] few components that have slightly
+[09:51] changed and we're going to see which
+[09:53] ones they are. So there are like some
+[09:55] slight variations
+[09:57] but overall today's models are we're
+[10:01] going to see all more or less based on
+[10:04] the initial transformer architecture.
+[10:07] So we're going to try to divide the
+[10:09] class in in in two parts. So the first
+[10:12] one is what I'm going to cover which is
+[10:14] what are the parts of the transformer
+[10:16] that are important and that had some
+[10:19] variation. And in the second part,
+[10:21] Shervin is going to talk about um I
+[10:24] guess the nomenclature of today's models
+[10:28] and how they relate to the original
+[10:30] transformer.
+[10:32] Cool.
+[10:34] Okay. So, let's start with the first
+[10:37] important concept that's in this
+[10:38] architecture and this is the position
+[10:41] embedding.
+[10:44] So if you remember here, we're letting
+[10:49] tokens interact with all other tokens in
+[10:52] a direct fashion. So they have direct
+[10:54] links.
+[10:57] But contrary to things like RNNs where
+[11:01] you have a sequential dependency where
+[11:03] you process each token one at a time
+[11:07] here you're basically losing
+[11:10] this idea of a token being processed
+[11:13] before another one. So you kind of lose
+[11:17] this position information.
+[11:21] So as a result of that we need to
+[11:23] somehow
+[11:26] quantify
+[11:27] positions at sorry tokens at each
+[11:30] position and try to inject that
+[11:33] information when the transformer is
+[11:36] processing the the inputs.
+[11:40] So how are we going to do that? So the
+[11:43] original transformer paper authors,
+[11:47] they choose to have a dedicated
+[11:51] embedding. And when I say dedicated,
+[11:54] what that means is each position has one
+[11:57] embedding.
+[11:59] So position one has one embedding,
+[12:01] position two has one embedding, etc.,
+[12:03] etc.
+[12:04] And what they chose to do is
+[12:08] to add that embedding to the input token
+[12:12] embedding.
+[12:14] So for instance, if I say a cute teddy
+[12:16] bear is reading uh which is position
+[12:20] number one will be represented by the
+[12:23] token representing the token A
+[12:26] plus the embedding
+[12:30] representing the first position.
+[12:33] Yeah,
+[12:39] >> it's a great question. So the question
+[12:40] is are the position embeddings learned
+[12:43] or static? Both. Both as in the authors
+[12:48] have tried both
+[12:50] and we're going to see what the second
+[12:51] one is. But I guess I guess here let's
+[12:55] suppose that they are learned. So what
+[12:58] does that mean? So that means that
+[13:01] basically you need to learn embeddings
+[13:04] for each position.
+[13:07] And um the problem with this approach is
+[13:11] that you're very much dependent on what
+[13:13] is in your training set.
+[13:16] So for instance um like here if you have
+[13:19] somehow a text that always has something
+[13:22] that is happening at position number two
+[13:25] your learn embeddings will kind of have
+[13:27] that bias kind of learned. So that's
+[13:30] like one limitation of that.
+[13:33] Second limitation is you can only learn
+[13:38] positions up to the max number of
+[13:41] position that is in your training set.
+[13:44] So let's suppose you train your
+[13:45] transformer on sequences that are up to
+[13:48] let's say I don't know 512 let's say
+[13:51] you can only learn position embeddings
+[13:54] up to that position right
+[14:06] yeah so the question is I guess how do
+[14:09] you parameterize that so I guess what
+[14:11] you do is you have a kind of a
+[14:13] placeholder of a position learnable
+[14:15] position embedding. Let's say between
+[14:18] like position one and 512.
+[14:20] And basically when you do your training,
+[14:24] you're just letting these these weights
+[14:27] be learned through the regular, you
+[14:29] know, gradient descent, all these
+[14:30] things.
+[14:33] So yeah, so this is like the first
+[14:34] method. Uh but as I was mentioning, it
+[14:37] has its limitations.
+[14:39] um because you can only learn embeddings
+[14:41] of positions up to the max position that
+[14:45] is present in the training set. So for
+[14:48] instance, if you have at inference time
+[14:51] a position that is beyond the position
+[14:54] that was uh in the training set, well
+[14:57] you have not learned that. So you need
+[14:59] to find a way to kind of infer the
+[15:01] value. So that's the second limitation.
+[15:05] And uh but yeah, but on the pro side, I
+[15:08] guess you're just letting your model
+[15:10] learn and uh we've seen that the
+[15:13] gradient descent does wonders when it
+[15:15] comes to just, you know, learning from
+[15:17] the data. Um so yeah and for these
+[15:20] reasons these methods
+[15:23] was something that the authors said that
+[15:26] was performing well along with a second
+[15:30] method which is different
+[15:34] which is around
+[15:37] having an arbitrary formula for each
+[15:41] dimension
+[15:44] corresponding to a position embedding.
+[15:46] And we're going to see that now.
+[15:48] So first method was you know you have
+[15:52] one embedding per position and you just
+[15:55] learn that.
+[15:56] Second method is you have one embedding
+[15:59] per position but you're not going to
+[16:02] learn that. you're going to have
+[16:03] something that is predetermined that
+[16:05] you're going to use
+[16:08] and
+[16:10] we're going to see that what the authors
+[16:12] chose was a formulation using s and
+[16:17] cosine. So it can feel kind of weird,
+[16:21] you know, why did they choose this? But
+[16:22] we're going to see why that makes sense.
+[16:24] So the idea here is for a given position
+[16:29] let's say m
+[16:32] have a vector of size d model. So d
+[16:37] needs to match the dimension of your
+[16:39] token embeddings because of course
+[16:40] you're adding them.
+[16:42] And what you're going to do is for every
+[16:46] index you're going to compute the
+[16:50] corresponding value with respect to
+[16:52] these formulas.
+[16:54] So what are these formulas? So it's
+[16:57] basically s of something time m and
+[17:02] we're going to see what that something
+[17:04] something means. And then the second one
+[17:06] is cosine of something* m.
+[17:11] So who remembers trigonometry formulas?
+[17:17] Cool. Everyone.
+[17:19] So before we go into that, let's just
+[17:23] simplify the notations. Let's just
+[17:25] assume that this big quantity that you
+[17:27] saw is actually something like omega. So
+[17:29] let's suppose it's omega as a function
+[17:31] of i * m
+[17:35] and you note omega i as being this you
+[17:37] know quantity. So 10,000 to the^ of
+[17:40] minus 2 i over d model.
+[17:44] Let's suppose you you construct your
+[17:47] embeddings to have this way.
+[17:50] Then
+[17:52] I guess I want us to think about why
+[17:54] that would make sense.
+[17:57] Because if you think about it,
+[18:00] what you want is to represent
+[18:04] positions in a way that reflects the
+[18:08] following facts.
+[18:10] words that are close together are likely
+[18:13] to be more relevant
+[18:16] as opposed to words that are further
+[18:18] together, right? So, if you have two
+[18:21] words that are like just one position
+[18:23] apart versus 10 10,000 position apart,
+[18:27] what you want is that the one that is
+[18:30] one position apart is more similar than
+[18:32] the other one.
+[18:34] So, let's see if the formula makes
+[18:36] sense. So let's suppose you have two
+[18:39] position embeddings. So one at position
+[18:42] m and the other one at position n.
+[18:46] And let's suppose you compute, you know,
+[18:48] all the values from this predetermined
+[18:51] um formula.
+[18:54] Well, it turns out
+[18:58] if you remember your trigonometry
+[19:01] formulas, so cosine of a minus b is
+[19:06] equal to cosine of a cosine of b plus
+[19:10] sin a sin b. Right?
+[19:14] Well, turns out that if you express
+[19:17] cosine of omega i
+[19:22] factor of m minus n,
+[19:25] this is something that you obtain. It's
+[19:26] just like the identity that I mentioned.
+[19:29] Well, it just turns out that this
+[19:32] quantity
+[19:34] is just one component that appears when
+[19:38] you do the dotproduct of these two
+[19:40] position embeddings.
+[19:44] Right?
+[19:45] Because basically here when you do the
+[19:47] dot product of position m and position n
+[19:49] what you do is you take the first
+[19:51] position you multiply them then you plus
+[19:54] the second position you multiply them
+[19:56] etc etc and then you come here it's s of
+[20:00] this time s of this plus cosine of this
+[20:04] time cosine of this right which is just
+[20:08] this quantity.
+[20:11] So at the end of the day what you
+[20:13] realize is that when you perform a
+[20:16] dotproduct of these embeddings
+[20:19] you end up with a sum of cosine
+[20:24] that are a function of the relative
+[20:27] distance between m and n.
+[20:32] Yeah.
+[20:42] What do you mean by pair by the way?
+[21:01] >> Exactly. Yeah. So basically, so the
+[21:03] question is um Yeah. So the closer they
+[21:06] are, the more similar they are. So
+[21:07] that's the intuition that basically this
+[21:10] way are formulating uh the embeddings is
+[21:13] trying to approximate or is trying to
+[21:15] mimic.
+[21:18] So with that you basically obtain a dot
+[21:21] product that is just a function of m and
+[21:24] n the relative distance between them
+[21:26] actually. Um and just as a reminder so
+[21:29] why do I care about the dot products?
+[21:31] It's because if you're remember
+[21:34] in the embedding world when we try to
+[21:37] quantify the similarity between two
+[21:39] embeddings what we do is typically
+[21:41] something that is involving the
+[21:43] dotproduct of these two. So you
+[21:45] typically have the cosine similarity but
+[21:48] cosine similarity is just dotproduct
+[21:51] over the norm of each embedding. So
+[21:53] which is basically a dot product
+[21:57] right? So that's why we care about the
+[21:59] dot product. And here we see great it's
+[22:02] a function of the relative distance
+[22:03] between the two.
+[22:06] So in particular again if you remember
+[22:10] your trigonometry class
+[22:13] cosine of zero is
+[22:17] one
+[22:19] and the higher this number
+[22:23] the lower the value of cosine of this
+[22:26] number. Right? Of course, it's uh
+[22:29] periodic. So, what I'm saying is not
+[22:31] necessarily true. Past 2 pi or sorry uh
+[22:35] pi just goes the other way. But I guess
+[22:39] what I'm trying to say is for m equal to
+[22:42] n
+[22:44] you'll have basically a sum of cosine of
+[22:47] zero
+[22:50] and it is the value at which
+[22:53] this quantity is maximum.
+[22:57] So when m is equal to n this quantity is
+[23:00] maximum which means basically if you're
+[23:03] looking at the position itself it's the
+[23:05] most similar which basically matches our
+[23:08] intuition
+[23:10] and so now when you plot the values of
+[23:15] the embeddings this is what you obtain.
+[23:18] So here in this graph on the yaxis I'm
+[23:22] basically representing all the
+[23:24] embeddings for each of the let's say 50
+[23:27] positions
+[23:29] and on the x-axis it's basically
+[23:33] values along a given vector across
+[23:37] several dimensions of a vector. So if
+[23:40] you take let's say the first row, you're
+[23:41] looking at the first or number zero
+[23:44] position depending on how you index your
+[23:47] vector and you're looking at all the
+[23:50] values of the position zero embedding.
+[23:55] And so you see that uh for low
+[24:00] dimensions
+[24:02] this value kind of goes up and down very
+[24:07] frequently. So it's more high frequency
+[24:10] and when the dimension is high it
+[24:14] basically takes a lot of time for the
+[24:16] value to go up and down. So it's
+[24:18] basically more low frequency.
+[24:22] So this relates to this omega I that I
+[24:25] mentioned this omega I. So omega I
+[24:31] is
+[24:32] very high for low values of I which is
+[24:36] the dimension and is very low for high
+[24:40] values of I.
+[24:43] So this basically just determines how
+[24:45] quickly your cosine and sign basically
+[24:48] vary.
+[24:52] Cool.
+[24:53] So this is what the original authors
+[24:57] have tried and basically what they said
+[25:00] what they noted was that using this
+[25:04] method leads to comparable results
+[25:07] compared to the learned one.
+[25:10] But here we have a big advantage because
+[25:12] it can extend to any sequence length not
+[25:15] just the sequence length that you saw at
+[25:17] training time.
+[25:19] And this is one of the reasons why you
+[25:21] know this may be something that is
+[25:23] preferable.
+[25:26] So yeah this is the intuition and this
+[25:28] is what the authors chose.
+[25:30] Now fast forward to 2025 guess you may
+[25:33] ask me are we still using that?
+[25:36] And the answer is kind of. So we're
+[25:39] still using this idea of we want far I
+[25:44] guess tokens to be less similar than
+[25:47] closer tokens.
+[25:49] But we're not injecting the embedding
+[25:52] like they did. And we're going to see
+[25:54] why.
+[25:56] Because if you remember,
+[25:59] what you care about is determining how
+[26:04] similar tokens are in the self attention
+[26:08] computation.
+[26:10] And where does the self attention
+[26:12] computation happen?
+[26:14] In the attention layer.
+[26:17] But here what what did I say? I said
+[26:21] let's compute these embeddings and let's
+[26:23] add them here.
+[26:25] But actually what we want is to reflect
+[26:28] this similarity in
+[26:31] the attention layer.
+[26:35] Do you have a question? Yeah.
+[26:40] So in this first method, yes. So the
+[26:42] question is is it added to the input
+[26:44] feature? Yes.
+[26:47] Yes, just add. Yeah. Yeah. But the
+[26:51] problem is we mostly want these I guess
+[26:57] intuition to hold true in the
+[27:01] multi head attention layer.
+[27:04] So this is one of the reasons why people
+[27:07] have tried different variations
+[27:10] and in particular
+[27:12] have these position embeddings
+[27:16] intervene directly in the attention
+[27:18] layer as opposed to the input because
+[27:22] basically when you do it at the input
+[27:25] just here fair okay it's going to be
+[27:27] roughly something that is going to go
+[27:29] into this attention layer but it's kind
+[27:31] of indirect
+[27:33] So what we want is to directly
+[27:37] kind of do something about the attention
+[27:41] formula that would I guess reflect the
+[27:45] fact that we want close tokens to be
+[27:48] more similar compared to further tokens.
+[27:52] And the way we do that is if you
+[27:54] remember
+[27:56] the self attention layer is basically
+[28:00] the softmax of q krpose over square root
+[28:04] of d * v.
+[28:06] So what we want is to add a little
+[28:10] something inside that softmax
+[28:12] which is basically where you quantify
+[28:15] how similar a token is to another token.
+[28:19] You want to add a little something
+[28:21] to reflect the fact that some tokens
+[28:26] they're supposed to be more similar
+[28:28] compared to that token compared to other
+[28:29] others.
+[28:32] So there's a a few methods that have
+[28:35] tried
+[28:37] to kind of have some variation of that.
+[28:41] So
+[28:42] for those of us who know like paper T T5
+[28:46] the T5 paper which we're going to see a
+[28:49] little bit later um they have tried
+[28:53] these kind of relative position bias by
+[28:57] learning the bias term which is in the
+[29:02] formula above.
+[29:04] So what they did was
+[29:07] let's suppose you have a given distance
+[29:09] between the positions m and n.
+[29:13] So their idea was let's learn that
+[29:17] let's basically bucketize
+[29:20] all you know m minus n into some buckets
+[29:24] and let's just have the model learn
+[29:27] these quantities that are then going to
+[29:30] be injected in the softmax.
+[29:34] Yeah.
+[29:42] M so question is does that pose a
+[29:45] problem that the the bias is here with
+[29:47] respect to the probability at the end
+[29:49] because it has to sum to one. Well you
+[29:51] can do whatever you want inside the
+[29:53] softmax because the softmax is going to
+[29:55] normalize it anyways.
+[29:59] So you can think of the bias as being
+[30:01] something that is maybe more negative
+[30:03] for things that are far apart compared
+[30:05] to things that are closer together.
+[30:08] So T5 says let's learn them.
+[30:13] We have another method from
+[30:17] um guess this train short Teslong paper
+[30:21] which introduced this method called
+[30:22] alibi. Alibi stands for attention with
+[30:27] linear bias I believe. And what they did
+[30:31] was
+[30:32] say instead of learning those biases,
+[30:36] let's actually have a deterministic
+[30:39] formula which is as a function of the
+[30:42] difference the relative difference
+[30:44] between those two positions
+[30:48] and they said that so they kind of had
+[30:51] some results. So you know all these
+[30:52] papers they always kind of compare based
+[30:55] on one another to kind of see which one
+[30:57] is um is I guess more performant.
+[31:01] But the reality is is that in today's
+[31:04] models
+[31:06] most models actually use another
+[31:11] kind of position embedding methods
+[31:16] and we're going to see it now.
+[31:18] So this method relies on rotating
+[31:24] the query and the key vector
+[31:27] by some angle
+[31:31] and I guess can think of it as you know
+[31:33] you have your query you have your key
+[31:35] let's suppose in the 2D space so what
+[31:37] you're going to do is rotate your query
+[31:41] by some angle that is a function of its
+[31:44] position
+[31:45] and you're going to
+[31:48] rotate the key
+[31:51] vector by some angle that is a function
+[31:53] of its position n
+[31:56] and
+[31:58] I guess how do you do that by the way I
+[32:01] wasn't supposed to show this thing so
+[32:03] let's suppose you have a vector by the
+[32:04] way
+[32:06] and you want to rotate that vector
+[32:08] because I had the answer on the slide
+[32:10] but guess how would you go about this
+[32:12] guess for people who just want to kind
+[32:16] talk about this with intuition.
+[32:21] So, who here has done uh I don't know
+[32:24] rotations in uh in space? Yeah.
+[32:30] Mhm.
+[32:33] Yeah, that's correct. Yeah. M matrix
+[32:35] multiplication. And you're going to use
+[32:37] a quantity that's called rotation
+[32:39] matrix.
+[32:42] And uh the rotation matrix is expressed
+[32:45] as follows. So it's basically a 2x2
+[32:47] matrix in the 2D plane that has co
+[32:51] cosine of this angle minus sign of this
+[32:54] angle s of this angle cosine of this
+[32:56] angle. I'm looking at the time. There's
+[32:58] actually it's quite simple to just show
+[33:00] that it works. Uh but we may run out of
+[33:04] time. Do you want you want me to quickly
+[33:06] show you that it's indeed a way to uh
+[33:10] rotate a vector?
+[33:12] Okay.
+[33:14] So here as a reminder what we're trying
+[33:17] to show is that we can use a matrix
+[33:21] multiplication to rotate a vector in 2D
+[33:24] space.
+[33:25] So let's suppose we have the following
+[33:28] vector that is something that you can
+[33:32] um you can quantify with uh two
+[33:37] dimensions let's say x and y
+[33:42] you can express your vector in 2D space
+[33:45] with this right
+[33:47] but I guess this
+[33:52] if you note are
+[33:54] the norm of the vector
+[33:57] and
+[34:00] phi
+[34:02] the angle respect to the x-axis.
+[34:05] You can also write v
+[34:09] as r
+[34:12] with
+[34:14] vector cos of cosine of phi and sine of
+[34:18] phi,
+[34:22] right?
+[34:24] So if you multiply the rotation matrix
+[34:27] with this V,
+[34:29] what you're going to obtain is some
+[34:32] multiplication of cosine minus s and co
+[34:37] cosine of this and that.
+[34:40] And I will leave this exercise for you.
+[34:43] But you can show that uh rotation
+[34:49] times this v
+[34:53] can be expressed as r
+[34:57] of cosine of theta + v
+[35:02] and sine
+[35:04] of theta + v.
+[35:09] So this is a quick proof. So I'll just
+[35:12] kind of leave you the multiplication of
+[35:14] the rotation matrix and V but you will
+[35:17] obtain these like trigonometric
+[35:20] identities that will have I guess lead
+[35:24] you to this formula. This basically
+[35:26] shows that if you multiply this matrix
+[35:29] and this vector you're basically
+[35:32] rotating the vector by this angle. Yeah.
+[35:38] So question is why do you want to do
+[35:39] this? It's a great question. It's my
+[35:41] next uh slide. So this is just like a
+[35:43] little intro. Um so I guess here just
+[35:48] going back to this methods.
+[35:52] What we want to do is to quantify the
+[35:56] similarity between tokens and have
+[36:00] closed tokens be more similar compared
+[36:02] to tokens that are more a far.
+[36:06] So
+[36:08] the problem that we had with the
+[36:10] previous methods was so in the first
+[36:13] method
+[36:14] this learned embedding you always had
+[36:17] this overfitting issue because basically
+[36:19] when you learn these biases it always
+[36:22] depends on which training set you have.
+[36:25] So maybe your data set in is in a way
+[36:28] that let's say tokens that are close are
+[36:30] kind of similar but in a different way
+[36:32] compared to what you see at inference
+[36:33] time
+[36:35] and this alibi methods
+[36:40] it didn't have that learnable component
+[36:41] but this was quite restrictive because
+[36:44] it's a very simple formula after after
+[36:46] all right just the relative difference
+[36:48] between n and m so I guess people have
+[36:50] tried different ways of coming up with
+[36:54] something that kind of tells you that I
+[36:57] guess an embedding that reflects the
+[37:00] fact that you want further positions to
+[37:03] be less similar than closer ones. So in
+[37:07] this method, we're going back to the s
+[37:10] and cosine world from what the author
+[37:13] had proposed and think about similarity
+[37:18] from the lens of I guess cosine and s
+[37:22] functions.
+[37:24] So this is a little intro
+[37:26] and their method is called ROP. I'm not
+[37:30] sure if you've heard of it. So it stands
+[37:32] for rotary position embeddings
+[37:36] and we're going to see that this method.
+[37:39] So why why do we care about this method?
+[37:41] So this method has two great things.
+[37:45] So the first one is
+[37:48] that if you rotate the query and the
+[37:51] key,
+[37:53] you will end up with a quantity that
+[37:55] will be a function of the relative
+[37:57] distance between the two. That's going
+[38:00] to be very nice. And that's why I I
+[38:02] wrote this thing on the blackboard. Not
+[38:05] sure if you can see by the way, but um
+[38:07] we won't have time to go into the
+[38:09] mathematical detail. But if you want to
+[38:11] just you know express these things at
+[38:13] home uh this is just a foundation.
+[38:19] And so in particular
+[38:22] if you remember your attention formula
+[38:26] so you have you know query times key
+[38:28] transpose.
+[38:30] So if you rotate the query by an angle m
+[38:35] and the key by an angle n,
+[38:39] what you're going to end up is a formula
+[38:42] that has the rotation matrix
+[38:46] of angle theta and I guess n minus m.
+[38:53] And this is great because this is a
+[38:55] function of the relative distance
+[38:57] between these two positions.
+[39:01] Okay, so why do I talk about this in
+[39:03] detail? Well, it turns out that most
+[39:05] models these days, they use rope, which
+[39:09] is why it's important.
+[39:12] And I would say another thing, it's it's
+[39:15] maybe a little bit hard to get the
+[39:16] intuition as to why that works, but
+[39:19] hopefully the explanation that I gave
+[39:22] regarding the, you know, s and cosine at
+[39:24] the very beginning can help you just
+[39:26] build that intuition.
+[39:30] And speaking of that,
+[39:33] it turns out that the upper bound of the
+[39:38] attention weight given by the query and
+[39:41] the key is such that we observe a
+[39:46] long-term decay.
+[39:48] Meaning that as m minus m is large, we
+[39:53] do see the upper bound that gets kind of
+[39:56] smaller and smaller.
+[39:58] Well, you see these little oscillations.
+[40:02] It's not like perfect either, but we do
+[40:05] have some mathematical
+[40:08] uh I guess results as to just the upper
+[40:12] bounds kind of decaying over the long
+[40:14] term.
+[40:18] Cool.
+[40:19] Any questions on this? Yeah.
+[40:24] Yep.
+[40:38] >> Exactly. Yeah. So the question is the
+[40:40] relative distance is captured in the
+[40:42] rotation matrix and yes.
+[40:45] Yes.
+[40:49] Oh yeah.
+[40:53] Ah it's a great question. So question is
+[40:55] what is theta? So theta is actually
+[40:57] fixed. So do you remember this omega
+[40:59] that I talked about here
+[41:02] here?
+[41:03] So it's basically some function of i and
+[41:08] d. I actually kind of uh passed it quite
+[41:11] quickly. But what I showed you is
+[41:15] in the 2D space but here we're in this
+[41:19] dimensional space which is greater than
+[41:21] two. So I kind of glossed it very
+[41:24] quickly but the way you extend this
+[41:26] method is by having this 2D 2D space
+[41:30] kind of by block. But then the theta is
+[41:34] a function of uh typically something
+[41:36] that you fix but a function of I which
+[41:40] is the dimension you know um it's
+[41:43] basically between one and d /2
+[41:48] it's a function of that and it's a
+[41:49] function of uh d as well. So it's
+[41:52] typically you you will see this theta as
+[41:54] being roughly equal to omega I which is
+[41:57] this this one more or less more or less
+[42:04] sorry.
+[42:08] Oh so the question is uh so that it has
+[42:10] the same dimension as the latent
+[42:12] dimension. So well here
+[42:16] you have a product of matrices.
+[42:21] So you need to have like the dimensions
+[42:22] match. So I guess your answer Yeah.
+[42:30] Does that make sense?
+[42:34] I'll take that as a yes. Okay. So I I
+[42:36] spent a bunch of time on this because uh
+[42:38] I think this is actually quite
+[42:39] important. Uh a lot of models use this
+[42:43] and uh yeah, I guess the intuition is
+[42:45] not super obvious. So I hope this was
+[42:48] helpful.
+[42:51] Okay. So this was position embeddings.
+[42:54] Yeah.
+[42:56] Oh yeah.
+[42:59] Oh yeah. So the question is about how do
+[43:01] you obtain this curve? So this is
+[43:03] actually a curve that I believe is shown
+[43:06] mathematically
+[43:08] cuz basically so it's kind of
+[43:10] complicated. We're not going to write
+[43:12] down the formula but if you're
+[43:13] interested so in this paper in the row
+[43:16] farmer paper there's an appendix where
+[43:18] they show mathematically that is upper
+[43:21] bounded by some quantity and this is
+[43:23] what this is what this is showing. Yep.
+[43:26] Great question.
+[43:30] Cool. So position embeddings is one part
+[43:34] of the transformer that has changed a
+[43:36] little bit and we've seen how that
+[43:38] changed and why.
+[43:40] So now we're going to see another
+[43:42] component of the transformer
+[43:44] that has also little bit changed and
+[43:48] that component is the layer
+[43:49] normalization.
+[43:52] So if you remember
+[43:54] the transformer architecture
+[43:56] is composed again of encoder decoder and
+[43:59] then you have the components inside.
+[44:02] So you have these boxes that say add and
+[44:06] norm.
+[44:08] So what do they mean? So basically here
+[44:11] what we do is we take the input as well
+[44:17] as the output of this sub layer.
+[44:21] We add them together
+[44:24] and then we normalize.
+[44:27] So this is a little trick that the
+[44:30] authors do and it is shown in practice
+[44:33] to improve convergence and just make the
+[44:37] convergence be quicker.
+[44:40] So the idea is as follows.
+[44:43] If you have a vector,
+[44:46] sometimes the components of the vector
+[44:48] can be super large, sometimes they can
+[44:49] be super small. The idea here is to kind
+[44:53] of normalize
+[44:55] the components of your vector
+[44:58] within some range, some normalized
+[45:00] range.
+[45:02] So the way you're going to do that is
+[45:04] you're going to take your vector
+[45:06] and then sub subtract it by the mean
+[45:10] computed mean which is basically the sum
+[45:12] of its components
+[45:14] and normalize it by basically its uh
+[45:17] standard deviation.
+[45:20] And what you're going to do is you're
+[45:22] going to learn two quantities.
+[45:26] One gamma which is going to be the
+[45:28] rescaling factor
+[45:30] and then beta which is um another factor
+[45:34] another term as well that you learn.
+[45:38] And you're going to let these two
+[45:40] quantities be learned by your model.
+[45:43] And so in practice as I mentioned so
+[45:45] what this does is it helps with training
+[45:49] stability and with convergence time.
+[45:53] So this was a technique that was used in
+[45:56] the original transformer paper.
+[45:59] Uh I just want to call out that there
+[46:01] has been some changes since then. Um, so
+[46:04] we went from normalizing the input
+[46:08] plus the output of the sub layer
+[46:12] to having a sum of the input
+[46:16] and the sub layer of the normalized
+[46:20] input.
+[46:21] So in other words, what we've done is to
+[46:24] change where the normalization is
+[46:27] located. So here in the the transformer
+[46:31] paper it was what we now call a postnorm
+[46:34] version
+[46:36] and nowadays we use a prenorm version
+[46:40] which basically consists of having the
+[46:43] layer norm right before the vector goes
+[46:46] into the sub layer and sub layer here
+[46:48] can be either the attention layer or the
+[46:51] ffn
+[46:56] but not only that there is also another
+[46:59] change. So nowadays people they do not
+[47:02] use layer norm. They use something else
+[47:05] called RMS norm RMS root mean square
+[47:09] normalization which is basically a
+[47:11] variation of what you've seen before.
+[47:15] So instead of computing this
+[47:18] basically what people do is they just
+[47:21] normalize X by the root mean square of
+[47:24] the
+[47:26] of the components of X and they learn
+[47:31] gamma only gamma
+[47:33] though. So why do they do that?
+[47:35] Basically they show that the convergence
+[47:39] uh properties they're basically
+[47:40] comparable but here you have fewer
+[47:43] parameters to learn. So it's basically
+[47:45] quicker.
+[47:47] Yeah.
+[48:08] Mhm.
+[48:12] Good question. So I guess the question
+[48:14] is what is the intuition behind
+[48:16] normalizing? So the intuition is that if
+[48:20] you look at your model you have several
+[48:23] layers in some layers your model your
+[48:26] vector your activation to be more
+[48:29] precise. So do you know the the vector
+[48:31] that you see that goes from here to here
+[48:33] is basically called the activation.
+[48:35] Sometimes the activation has extreme
+[48:37] values in one part of its components,
+[48:39] sometimes in another part.
+[48:41] And the model is typically having
+[48:45] trouble in learning the weights in each
+[48:48] of these layers if these activations
+[48:51] they vary too much.
+[48:54] So the idea is to bring the values of
+[48:58] the components of the activation to some
+[49:01] range
+[49:03] that is not too you know far off in some
+[49:07] direction.
+[49:10] So in case you're interested there is
+[49:11] this key word internal coariate shift
+[49:16] which is basically the term that is
+[49:17] given to the phenomenon that I'm
+[49:19] describing here. So yeah that's the
+[49:22] intuition.
+[49:24] Yeah.
+[49:27] Oh great great question. So question is
+[49:29] what is the difference between this and
+[49:31] batch normalization? So batch
+[49:32] normalization
+[49:35] is normalization across the other
+[49:37] dimension which is the norm the
+[49:38] dimension of the batch.
+[49:41] So let's suppose you have a bunch of
+[49:43] vectors. What you do is you normalize
+[49:46] each component
+[49:48] with respect to all the other components
+[49:54] for the same dimension but of the other
+[49:55] vectors.
+[49:57] So you can think of it as just another
+[49:59] way of normalizing. Uh but that being
+[50:02] said uh when it comes to these like
+[50:04] transformer-based models typically
+[50:06] people use layer norm probably because
+[50:09] empirically it works better but also
+[50:11] because uh batch norm you you're
+[50:15] basically also dependent on the batch
+[50:19] and it can be it can introduce some I
+[50:21] guess differences between training and
+[50:23] then inference. So that's basically the
+[50:25] reason why.
+[50:30] Cool.
+[50:32] Great. So we've seen position
+[50:34] embeddings, we've seen layer
+[50:35] normalization. So now we're going to see
+[50:37] a third important component of the
+[50:40] transformer, which is the attention.
+[50:44] And in particular, I guess there's
+[50:46] something I've not really emphasized,
+[50:48] but when you do self attention, you're
+[50:51] basically letting every token interact
+[50:54] with all other tokens.
+[50:57] So when you look at, let's say, a matrix
+[50:59] that shows all the interactions.
+[51:03] So you have like n the sequence length
+[51:06] and n the sequence length. You basically
+[51:08] have of n squ complexity,
+[51:12] which is a lot.
+[51:14] especially as n goes longer. So people
+[51:18] have tried to kind of approximate this
+[51:22] you know O of N squ into something that
+[51:24] is a little bit more tractable but does
+[51:26] not
+[51:27] lose the performance.
+[51:30] So there's this paper in 2020 that came
+[51:32] out long former. So what it did was just
+[51:36] try different versions of the attention
+[51:38] by restricting the window at which it
+[51:41] operates. So here, instead of letting
+[51:44] each token interact with everyone, each
+[51:47] token only interacts with its
+[51:49] neighborhoods.
+[51:52] Yep.
+[51:57] Again, a great question. So question is,
+[51:58] do you do that after the uh attention
+[52:01] matrix computation? You mean the
+[52:04] softmax, right? softmax of so you rais a
+[52:07] great point which is if you do the
+[52:09] softmax of everything why why would you
+[52:11] do this so in practice there is a bunch
+[52:15] of implementations that does a clever so
+[52:20] it's called like tiling bunch of clever
+[52:22] operations that do not involve this huge
+[52:27] matrix operation that you see in the
+[52:28] softmax
+[52:31] uh I guess it's like I guess softmax of
+[52:33] q krpose over there. You're not going to
+[52:35] compute the whole thing. We're going to
+[52:38] have a little bit like some cleverness
+[52:40] in how you compute that. Basically,
+[52:54] yes. So, the question is, can it be um
+[52:57] uh something that's compared comparable
+[52:59] to convolutions? And we're going to see
+[53:01] that in a second. But yeah, you have
+[53:04] some uh I guess similarities with the
+[53:06] vision world and we're going to see that
+[53:07] in a second.
+[53:11] Cool. So nowadays
+[53:14] when you have local attention like this,
+[53:18] like this
+[53:20] people use the term sliding window
+[53:23] attention. So when they use that term
+[53:25] they mean this which is basically just
+[53:28] restricting the attention to neighboring
+[53:30] uh tokens
+[53:32] and nowadays what people do is
+[53:36] in some layers they will have local
+[53:39] attention in some others they will have
+[53:42] global attention
+[53:44] and they interle these layers.
+[53:47] So depending on the model they you know
+[53:49] typically try different combinations. So
+[53:51] there's not like a set uh recipe, but
+[53:55] it's typically something that is used
+[53:57] nowadays. So the window here, I mean for
+[54:00] illustrative purposes, uh the window is
+[54:03] super small in my illustration, but um I
+[54:07] guess nowadays with the sequence lengths
+[54:10] that can be very big, you can think of
+[54:11] this window as being of several
+[54:13] thousands.
+[54:15] So So it seems pretty sizable.
+[54:20] And uh just to give you another example.
+[54:22] So back to the convolution um um like
+[54:27] comparison that you mentioned. So um you
+[54:31] have some architectures and here I'm
+[54:34] going to take the example of mistral
+[54:36] that has this sliding window attention
+[54:40] at every layer. But then uh when you
+[54:42] think about it,
+[54:44] the token here can attend up to the
+[54:47] token here, but then the token here can
+[54:49] attend up to the token here, etc., etc.
+[54:53] So, I guess if you think about it, it's
+[54:56] kind of similar to the idea of the
+[54:58] receptive field in computer vision. So,
+[55:01] I'm not sure if you're familiar or kind
+[55:03] of from the comput computer vision
+[55:05] world, but if you are, um, what this
+[55:09] means is
+[55:11] just taking one token and trying to
+[55:14] think what other tokens
+[55:18] has this token effectively interacted
+[55:20] with, which is basically the question
+[55:22] that people also sometimes ask when they
+[55:26] do convolution. they're like okay so
+[55:28] this value what other values did it
+[55:32] actually see
+[55:33] so yeah you can also think it uh this
+[55:36] way
+[55:39] okay so first variation is instead of
+[55:43] doing the full you know n byn attention
+[55:48] people sometimes do local attention
+[55:52] the second variation that is kind of
+[55:54] orthogonal to all of this is to not have
+[56:00] one projection matrix per head
+[56:04] but to share projection matrices across
+[56:07] heads.
+[56:10] So here the idea is you have let's say h
+[56:14] heads. The idea is you're going to have
+[56:18] some number of projection matrices for
+[56:20] the query, but then what you're going to
+[56:23] do is to group the projection matrices
+[56:26] for the key and the value that you're
+[56:30] going to share across several heads.
+[56:35] Now, you may ask, why do you share
+[56:37] projection matrices for the keys and the
+[56:39] values but not for the queries?
+[56:42] Is this a question that you you're
+[56:44] wondering?
+[56:47] Well, here
+[56:49] I guess you know people do things to
+[56:52] just try out if something works or not.
+[56:55] I guess here you can intuitively think
+[56:57] that uh you know the query is basically
+[57:00] wondering if something is similar to
+[57:02] another thing. So I guess you can ask
+[57:04] yourself this question in different
+[57:06] ways. So it may make sense to kind of
+[57:09] keep that diversity. But one of the core
+[57:12] reasons why we choose to group
+[57:15] projection matrices for the keys and the
+[57:17] values and not the query is because
+[57:21] when you decode
+[57:25] you perform a tension between the
+[57:29] current word and all the words before.
+[57:34] So in other words, every time you
+[57:37] generate a new word, you're going to
+[57:39] attend that word to all the words
+[57:41] before.
+[57:43] So the keys and the values, they're
+[57:45] going to come up a lot, right? So every
+[57:48] time you want to decode something, you
+[57:49] need to kind of attend to all other
+[57:51] things again and again. So we're going
+[57:54] to see in I think next lecture that
+[57:58] there's something called the KV cache
+[58:02] which basically saves the values of the
+[58:07] keys and values
+[58:09] and one thing that we want is for that
+[58:12] cache to not become too big.
+[58:16] So if you share projection matrices
+[58:18] across heads just allows you to save a
+[58:22] little bit of space, a little bit of
+[58:24] memory.
+[58:26] That's that's the why.
+[58:28] Does that does that roughly make sense?
+[58:33] Okay, cool. So speaking of that, there
+[58:36] are some variations as to I guess uh
+[58:39] just how many projection matrices to uh
+[58:43] share. So you have the extreme example
+[58:46] where all H heads they all share the
+[58:51] same projection matrices for V and and K
+[58:56] and in that case this method is called
+[58:58] MQA multi-query attention
+[59:04] you have the you know in between case
+[59:07] where you share
+[59:10] G where G is the number of groups G
+[59:14] projection matrices for V and K and then
+[59:17] you have groups of size uh let's say H
+[59:22] over G.
+[59:24] So this one is called group query
+[59:26] attention GQA.
+[59:30] And then you have the case that you are
+[59:33] very familiar with from the transformer
+[59:35] which is every head has its own
+[59:39] um query projection,
+[59:42] key projection and value projection
+[59:44] matrices. And this is the standard multi
+[59:47] heads attention.
+[59:53] Cool. So, I'm going to just take uh like
+[59:56] a pause to see if uh what I mentioned
+[59:59] makes sense. Wanted to soon uh
+[60:01] transition it to Shervin. But before I
+[60:03] do, I just want to make sure that the
+[60:04] way I discussed is kind of making sense
+[60:07] roughly. Yeah.
+[60:14] Mhm.
+[60:21] So the question is do we apply this to
+[60:23] self attention and cross attention? I
+[60:25] don't want to spoil
+[60:27] uh the show. So I'm going to talk about
+[60:29] something later on. But um
+[60:33] where is my trans? So if you take a look
+[60:35] at the transformer architecture,
+[60:38] we're going to see soon that what we
+[60:41] care about most is what is in the
+[60:43] decoder because we actually forgo of the
+[60:47] encoder in nowadays models. We we have
+[60:50] not seen this yet, but I'm just telling
+[60:52] you and so this typically comes into
+[60:55] play for the masked self attention in
+[60:58] the decor.
+[61:01] But this technique can be applied in all
+[61:03] attention layers. But I guess what I'm
+[61:05] telling you is
+[61:08] modern LLMs, they're decoder only models
+[61:12] which basically only have the decoder
+[61:15] part of the transformer.
+[61:17] We're going to see this in a second,
+[61:20] which is the masked self attention. So
+[61:22] I'm not going to say too much because
+[61:24] Shervin is going to cover that, but
+[61:25] yeah, just a quick peak of of what we're
+[61:28] going to see.
+[61:30] Cool. Yeah.
+[61:36] >> Yeah.
+[61:41] >> Great question. So question is when do
+[61:44] you know which one you should use? I
+[61:46] would say the choice is always driven by
+[61:49] a few factors. One is how well it
+[61:51] performs. Second is how how much do you
+[61:54] care about things like latency costs? Um
+[61:58] and so it really depends how big is your
+[62:00] model, how much you want to save on
+[62:02] let's say compute uh like you know how
+[62:05] is your uh input length like for
+[62:07] instance if you have like a shorter
+[62:08] input length. So here what we want to do
+[62:10] is to avoid having to do all these
+[62:12] things for the whole you know O of N squ
+[62:15] uh thing. So I guess all of these come
+[62:17] into play. So I would say it's not
+[62:19] straightforward as to what the answer
+[62:20] should be. But I would say a lot of
+[62:23] recent models they tend to share to
+[62:27] share projection matrices. So typically
+[62:29] I would say GQA is what you would see
+[62:31] but um it's not necessarily the case for
+[62:33] all models.
+[62:37] Cool. We're running out of time so I'm
+[62:39] going to have Shervin here for the
+[62:40] second part. Thank you.
+[62:43] Okay. Great.
+[62:45] Thank you. So we're going to continue uh
+[62:48] this lecture with uh some deeper dive
+[62:51] into the kinds of models that we have in
+[62:54] the transformer landscape. Um and then
+[62:57] we're going to do a deep dive into one
+[62:59] specific architecture that is very
+[63:02] useful for classification settings.
+[63:05] So
+[63:08] so first we're going to come back to the
+[63:10] architecture that we saw together last
+[63:13] time. So this traditional encoder
+[63:15] decoder architecture where you have both
+[63:18] components
+[63:19] and so you have the original transformer
+[63:22] paper from 2017 that had this
+[63:25] architecture but also later on you see
+[63:28] more architectures that built on top of
+[63:31] it. So here we talk about the T5
+[63:36] family of models. So T5 is a paper
+[63:40] that's like so so it's an abbreviation
+[63:43] of like multiple T's. So the first one
+[63:45] is transfer and then it's texttoext
+[63:48] transformers. So this is where the T5
+[63:52] naming comes from and then it's derived
+[63:55] into multiple versions. So the T5 is
+[63:58] like the vanilla paper and then it had
+[64:01] MT5. M stands for multilingual. uh where
+[64:06] um like there was some more work on the
+[64:07] data it was trained on as well as uh
+[64:10] like the vocabulary that it was computed
+[64:13] uh over and then you have a by T5 which
+[64:17] is some sort of tokenizer free method of
+[64:21] all of this where you forgo
+[64:25] the fact of tokenizing and instead of
+[64:27] that you basically operate at the bite
+[64:31] level. So like by is like bytes and
+[64:34] basically you have a vocabulary size
+[64:37] that is much smaller. So instead of
+[64:39] having like a o of 30k
+[64:42] you have two to the power of eight. So
+[64:45] like a bite is eight bits and then you
+[64:48] can represent every character in two
+[64:51] bytes. So that's what they do.
+[64:55] Um okay great. And then one thing I want
+[64:58] to mention regarding the T5 family is
+[65:00] that the objective function changes a
+[65:03] bit with what the original transformer
+[65:06] did. So the original transformer did
+[65:10] next token prediction for the training
+[65:12] task but the T5 family what they did is
+[65:15] that um they operated on the so-called
+[65:20] span corruption task.
+[65:23] So basically you would have your
+[65:25] sentence as an input to the encoder
+[65:29] and instead of putting everything to the
+[65:32] encoder you would leave blanks and this
+[65:35] is what we call you know span corruption
+[65:39] and then the span corruption could be
+[65:41] one or multiple tokens missing.
+[65:44] So if I want to give an example so for
+[65:48] example
+[65:49] my teddy bear is cute and reading. So
+[65:52] you could have my teddy bear span
+[65:56] corrupted and then is reading. So that
+[65:58] could be one potential
+[66:00] um encoder input and then you could have
+[66:04] up to n
+[66:06] uh I mean n is the parameterization of
+[66:09] the number of spans that are corrupted.
+[66:10] So you would have like n such tokens
+[66:13] here and then the t5 family calls them
+[66:17] sentinel tokens. So if you see sentinel
+[66:19] tokens, they represent a span of
+[66:22] corrupted tokens. So you have them here
+[66:25] in the encoder. And then the decodor's
+[66:27] work is to find each of these spans um
+[66:32] in series. So you start with a token
+[66:35] that denotes the first corrupted spam
+[66:38] and then you start the decoding process
+[66:41] until it hits a prediction that predicts
+[66:44] the next uh sentinel token up to the N
+[66:49] plus1 one where um the kind of tokens
+[66:53] that are decoded between two consecutive
+[66:56] Sentinel tokens corresponds to the
+[66:59] corrupted spans that are recovered.
+[67:02] Yeah. So like this parenthesis is
+[67:04] basically a shift from the next token
+[67:07] prediction objective function. Yep.
+[67:27] >> Yeah. So the question is can you
+[67:28] elaborate with the decoding process? So
+[67:31] what you said regarding reconstruction
+[67:33] is exactly right. So you have sent
+[67:34] tokens that denote some missing text. So
+[67:39] what you want to decode is that missing
+[67:40] text. So the decoder output will be
+[67:43] exactly like each span reconstructed.
+[67:47] Yeah. And then if you want to know how
+[67:49] training works, you do a teacher forcing
+[67:53] um mechanism where you like input
+[67:56] everything in the decoder and then try
+[67:58] to reconstruct everything at once. So,
+[68:01] uh,
+[68:03] any other questions?
+[68:07] Great.
+[68:10] Um, and then now we're going to talk
+[68:11] about another class of transformers
+[68:14] where uh, basically you have this
+[68:17] encoder decoder structure where you just
+[68:21] forget about the decoder and then just
+[68:23] deal with the encoder.
+[68:25] So you might tell me okay hey you cannot
+[68:27] do um gener generation with this and
+[68:30] then I would I would respond to you you
+[68:32] know yes that's exactly the points uh so
+[68:34] this encoder and has so it has encoder
+[68:38] representations that can be used for u
+[68:41] like tasks that might be more geared
+[68:42] towards classification so um like
+[68:46] sentiment extraction uh token
+[68:48] classification like all of these things
+[68:50] that used to be done with specific
+[68:52] language models
+[68:54] they can be done with the encoder part
+[68:57] of the transformer and we're going to
+[69:00] dive deeper a bit later into three um
+[69:04] like key encoder only models. So BERS
+[69:07] which is uh like the central one I would
+[69:10] say in this landscape and then two other
+[69:13] architectures distill and Roberta that
+[69:16] are uh investigating on axis of uh
+[69:19] improvement. So it's going to be good to
+[69:22] see.
+[69:24] So okay great and then uh there is one
+[69:29] last class. So as I've just mentioned uh
+[69:32] like today's LLMs they remove the
+[69:36] encoder part al together and then when
+[69:39] you have no encoder you don't have your
+[69:41] encoded embeddings at the ends of your
+[69:44] stacked encoders that could be uh be fed
+[69:48] to the cross attention. So this module
+[69:50] disappears disappears altogether. So
+[69:52] each decoder that is stacked just has
+[69:56] masked self attention and an FFN uh as
+[70:00] part of it. Sorry.
+[70:02] And uh yeah that's basically um you know
+[70:05] something that has uh caught up uh since
+[70:08] then because when you look at the
+[70:10] popularity of each of these models so
+[70:12] you used to have this like transformer-l
+[70:15] like architecture that was popular
+[70:17] towards the beginning where the main
+[70:20] hypothesis was that like the encoder
+[70:21] part is very useful for like getting to
+[70:25] the like decoded representation but as
+[70:29] time went people realized that your
+[70:32] computes budget could be best invested
+[70:36] in the decoder only. uh and then um you
+[70:39] know you had there there has been more
+[70:42] investment into the kind of task that is
+[70:45] I would say easiest to scale up and
+[70:48] generalize next word prediction as
+[70:51] opposed to the task I just mentioned for
+[70:53] T5 which might be uh kind of more
+[70:57] bespoke so you need to like corrupt
+[70:59] things and then you know so it's more
+[71:01] complex whereas like next word
+[71:02] prediction is I would say like the
+[71:04] simplest thing you can do and it showed
+[71:06] uh like it proved to wonders and well
+[71:09] aligns with the task of being a a
+[71:12] helpful kind of chatbot which is like
+[71:16] today's applications mainly
+[71:19] and then the decoder only architectures
+[71:23] so I'm not going to talk about them
+[71:25] today uh but it's going to be the
+[71:28] central part of the next lectures uh
+[71:30] when we're going to talk about LLMs more
+[71:33] and more
+[71:35] okay awesome So now we can dive deep
+[71:39] into you know as promised into encoder
+[71:42] only architectures and with birds.
+[71:46] So first we're going to start by you
+[71:48] know seeing what does BERT mean. So BERT
+[71:53] it's an acronym that denotes birectional
+[71:57] uh encoders representations from
+[71:59] transformers. and we're going to see
+[72:02] together how does each section of this
+[72:05] acronym what does it correspond to. So
+[72:08] let's just start with uh the encoder
+[72:11] part which is like the easiest to to
+[72:14] grasp. So as we said we just drop the
+[72:17] decoder. So like this encoder from
+[72:20] transformer is basically exactly what it
+[72:22] means.
+[72:24] Now on the other part so uh so why do we
+[72:29] talk about birectionality?
+[72:32] So it's a way um so so the paper's
+[72:37] result is kind of remark remarkable
+[72:39] because we are able from a given input
+[72:43] to get um like output representations
+[72:46] that have attended to everything you
+[72:49] know for each token.
+[72:51] And um this is the case because since we
+[72:54] only have the encoder, we have this self
+[72:57] attention layer that truly attends to
+[73:00] every other token.
+[73:02] And this is in contrast with the masked
+[73:07] self attention that you have where we
+[73:09] said that the mask is making the
+[73:11] attention mechanism causal. So every
+[73:14] token can attend to itself and to the
+[73:18] tokens before it. And this is by the way
+[73:21] something that the authors
+[73:23] like discuss a lot in the paper saying
+[73:25] that you know GPT came out GPT they're
+[73:28] not truly birectional and then these
+[73:31] encodings that can be used for
+[73:33] classification task they truly are.
+[73:37] Any questions?
+[73:40] Yep.
+[73:50] Yep, that's right. So, uh the question
+[73:52] is when you don't have the mask, each
+[73:54] token can attend to each other. You
+[73:55] know, that's exactly right. And then the
+[73:57] mask is exactly there to prevent links
+[74:00] from tokens to like those that that kind
+[74:03] of come after them. Yeah.
+[74:07] Okay. Great.
+[74:09] So I just want to put this paper in
+[74:11] context and you know the field of NLP
+[74:14] was booming back then. So you had
+[74:17] another landmark paper that same year
+[74:19] which was called Elmo. So embeddings
+[74:22] from language models and I would say
+[74:25] that the timing of that uh paper was a
+[74:28] bit unfortunate because it truly had new
+[74:32] insights of also building birectional
+[74:36] representations but it just turns out
+[74:38] that it came the same year as a
+[74:40] transformer like as as a kind of
+[74:42] transformer-based like same line of
+[74:45] work. So it got a bit masked by it. So,
+[74:49] Elmo just to give the main lines, it was
+[74:52] based on a birectional
+[74:55] LSTM where you had multiple layers um
+[74:59] you stacked on top of each other and
+[75:01] basically you were able to build a
+[75:05] birectional representation for each word
+[75:08] thanks to this um architecture. And so
+[75:12] why didn't it uh get you know why didn't
+[75:15] it become as popular as BERT? It's
+[75:18] because you had the same downsides as
+[75:20] the previous models where basically it's
+[75:22] hard to scale uh because of this
+[75:24] recurrence.
+[75:26] Um and um you know I think a lot of you
+[75:30] you know when you think about Elmo and
+[75:32] Bert you don't think about these papers
+[75:35] you know at first because they are part
+[75:37] of like their characters in Sesame
+[75:39] Street and you know I grew up in a place
+[75:42] where I I did not know about Sesame
+[75:45] Street. So like for me Elma and Berts is
+[75:47] like a paper names but you know it might
+[75:48] be you know what represents to you um
+[75:51] you know at first so I thought that was
+[75:53] quite funny and then you know
+[75:54] researchers they're generally quite um
+[75:57] you know playful they have u like they
+[75:59] try to fit their acronyms into like
+[76:02] themes. So if you look at paper names
+[76:05] you you'll get um entertained.
+[76:11] Okay great.
+[76:13] So to dive deeper into what I mentioned
+[76:16] to be the goal of encoder only models.
+[76:19] So you have your set of tokens as input
+[76:23] and the goal here is to perform tasks
+[76:27] that might be uh focused on projecting
+[76:30] some representation somewhere. So
+[76:32] typically classification tasks and here
+[76:35] the uh like the way BERT works is very
+[76:40] specific. So you have two kinds of
+[76:42] tokens that you will see uh are kind of
+[76:44] structural here. So you have first this
+[76:48] CLS token which is which stands for
+[76:51] classification
+[76:53] and it's basically a placeholder token
+[76:55] that is put at the beginning of the
+[76:57] sequence that will then uh at the end of
+[77:01] the whole attention and then projection
+[77:04] and you know the whole encoder mechanism
+[77:07] be projected into an embedding that we
+[77:10] can then uh use for classification.
+[77:13] So yeah, CLS is just some kind of
+[77:15] placeholder that will uh carry the
+[77:18] birectional information of your whole
+[77:20] input.
+[77:23] And another uh token that might be you
+[77:25] know useful to see is this SEP token. So
+[77:27] it's like separator. Um and then you
+[77:30] will see uh very soon we're we're going
+[77:33] to see the objective functions that it
+[77:35] operates on. It's uh it aims at
+[77:38] separating uh two sentences.
+[77:41] Uh yeah.
+[77:43] So this is the very high level and then
+[77:46] um so one thing that is very interesting
+[77:50] to see with this model is that you you
+[77:52] have this concept of multi-stage
+[77:55] training. So you don't train the model
+[77:58] you know in one shot. You do it in
+[78:00] multiple stages. So the first stage is
+[78:04] aimed at being aligned with the task of
+[78:07] interest. And uh so this is what we call
+[78:09] pre-training
+[78:11] and this pre-training we will see in
+[78:13] detail is done with two objective
+[78:16] functions that are respectively MLM and
+[78:20] NSP. So MLM stands for masked lang
+[78:24] language model and NSP is the next
+[78:27] sentence prediction.
+[78:30] So masked language model it's a way for
+[78:33] the model to learn the internal
+[78:35] structure of the uh of the inputs and
+[78:39] then NSP it might be um seen as a way to
+[78:42] see like if the ordering of sentences
+[78:45] make sense. So we're going like to go
+[78:47] like a bit deeper into each but it's a
+[78:50] combination of objective function that
+[78:52] the authors
+[78:55] um you know assume to be helpful for
+[78:57] learning like general uh general
+[78:59] embeddings of high quality.
+[79:03] Okay. So the second thing that I want to
+[79:05] mention is that once you have all of
+[79:06] this you have a further stage where you
+[79:10] keep the embeddings that you have
+[79:12] learned and then you attach to it some
+[79:15] other network like typically a linear
+[79:17] projection to then fine-tune
+[79:21] uh what's like the embeddings that you
+[79:23] have learned into some target task. So
+[79:26] this is what we call fine-tuning.
+[79:29] Yep.
+[79:46] So yes, so so the question is um do we
+[79:50] still have just an encoder here? Because
+[79:52] a next sentence prediction is, you know,
+[79:55] could be seen as a decoder task. So it's
+[79:57] actually I'm going to go in detail. The
+[79:59] next sentence prediction task is
+[80:01] actually us putting two sentences one
+[80:04] after the other and predicting whether
+[80:06] they're truly consecutive.
+[80:09] Uh yeah, so it's a classification task.
+[80:12] Yeah, great points and yeah, we're going
+[80:14] to see that in detail very soon.
+[80:17] So before we see that in detail, um I'm
+[80:21] going to discuss the pros and cons uh
+[80:25] that this method usually has. So um
+[80:30] so regarding uh like on the pros side,
+[80:32] like this pre-training um mechanism can
+[80:35] be done on like fairly unlabelled data.
+[80:38] So you still have this like next
+[80:40] sentence prediction task, but this is
+[80:42] something that you control because you
+[80:43] know which sentences follow each other.
+[80:46] So it's something that you kind of you
+[80:48] know you know you know it's kind of
+[80:49] self-s supervised
+[80:51] and the masked language model task.
+[80:54] We're going to see how it um you know
+[80:56] how it consists but um but it's also
+[81:00] something that is unsupervised. So this
+[81:02] is a very interesting way to learn
+[81:05] interesting embeddings out of unlabeled
+[81:07] data. And then uh in practice is that we
+[81:12] see that this unlabeled data leads to
+[81:14] helpful representations being learned
+[81:17] and then you need very little data to
+[81:19] build on top of it. So at the finetuning
+[81:22] stage you just start from these very
+[81:26] nice embeddings that you have learned
+[81:27] and you just have a few weights to tune
+[81:30] and then this usually leads to um
+[81:33] performance that exceeds
+[81:34] state-of-the-art back then
+[81:37] and um and then regarding uh you know
+[81:40] downsides we have uh you know of course
+[81:42] all the text generation uh kind of tasks
+[81:45] that are out of reach because we don't
+[81:47] have a decoder and also we can see this
+[81:50] two-stage process and the fact that we
+[81:52] need to further tune embeddings as
+[81:56] something that that can be you know over
+[81:58] hurdles. So it might be uh you know when
+[82:01] you compare this kind of methodology
+[82:04] with respect to more traditional methods
+[82:06] that can be you know one shot this could
+[82:08] be seen as a downside.
+[82:11] Okay, great. And uh you know I have some
+[82:15] uh you know names regarding uh variants
+[82:18] here. We're going to dive deep into two
+[82:20] of them a bit later on.
+[82:24] Okay. So I want us to focus on the
+[82:26] original transformer and we're going to
+[82:28] go step by step into what happened to it
+[82:31] and then how we get the BERT
+[82:33] architecture.
+[82:35] So this is what we had in the original
+[82:37] transformer paper that we saw last week.
+[82:40] And what BERT did is extract the encoder
+[82:45] part of it and attach basically this new
+[82:50] um objective functions that I just
+[82:52] mentioned alongside some new set of
+[82:55] tricks uh when it comes to representing
+[82:58] uh tokens.
+[83:01] So I think we're going to go uh
+[83:05] you know we're going to go through them
+[83:06] one by one. So first of all one uh
+[83:10] interesting note is that it uses a
+[83:12] specific tokenizer called word piece. So
+[83:15] you can see it as a tokenizer that
+[83:18] learns on your training set based on uh
+[83:23] you know merge rules that maximize the
+[83:26] likelihood. So basically you have some
+[83:28] huge training set and you train a
+[83:30] tokenizer that merges atomic tokens
+[83:33] together to build uh your target
+[83:36] vocabulary
+[83:38] and there's some order of magnitudes I
+[83:40] mentioned of 30k so it's typically you
+[83:43] know uh I think this is the size that
+[83:44] they chose in this paper and in general
+[83:48] um like vocabulary sizes in this sort of
+[83:51] paper are in the order of magnitude of
+[83:53] 10 to the^ of four 10 to the^ of
+[83:57] Except for our token free method that we
+[83:59] saw like by T5 which is like this very
+[84:03] restricted set of tokens like two to the
+[84:06] power of eight which is like 256 you
+[84:08] know apart from this specific case you
+[84:11] you always have um kind of this order of
+[84:13] magnitude
+[84:16] and
+[84:17] uh okay and basically we are going to
+[84:20] make use of the tokens that I mentioned
+[84:23] um like at the beginning. So you have
+[84:25] the saleless token that is going to
+[84:28] carry the birectional representation of
+[84:31] all your uh sequence and then you have
+[84:34] SIP tokens to separate the two sentences
+[84:38] towards the next sentence prediction
+[84:40] task
+[84:42] and there is something that I haven't
+[84:44] talked about just yet. Uh so I think
+[84:47] maybe we can talk about it at the time
+[84:50] of the deep dive. So basically in order
+[84:53] so in order to have this like masked
+[84:55] language model task so of course you
+[84:58] need to mask some token. So we're going
+[85:00] to see the technique that is uh
+[85:03] basically applying the sort of mask and
+[85:06] where and at each fre at which frequency
+[85:09] and we're going to see with respect to
+[85:11] the output what is going to be our task
+[85:15] based on the resulting representation.
+[85:17] So I'm just going to like pass quickly
+[85:20] on it here, but we're going to come back
+[85:22] very soon.
+[85:24] Okay, great. Um, so one big piece of
+[85:28] news regarding your input embeddings. So
+[85:32] like what stays the same. So you still
+[85:34] have this huge dictionary lookup of
+[85:37] embeddings for each token that you're
+[85:40] going to learn and you're going to
+[85:42] additively add the positional encoding
+[85:45] that we saw at last lecture um and Afin
+[85:49] talked about earlier in this lecture
+[85:51] which can either be hardcoded or
+[85:54] learned. Uh I think the authors here
+[85:58] just uh use an a hard-coded version
+[86:01] here. Uh but I'm not too sure like but
+[86:04] it's roughly the same performance
+[86:05] usually.
+[86:07] But there is something new.
+[86:09] There is the introduction of a new kind
+[86:13] of encoding called segment encoding that
+[86:16] is going to still be additively added to
+[86:20] tokens
+[86:21] uh with the exception that we just have
+[86:23] two uh two possible encodings there. So
+[86:26] you have segment A that represents the
+[86:29] first sentence and then segment B that
+[86:31] represents the second sentence. And it's
+[86:34] supposed to help with the NSP task to
+[86:37] represent you know what could be
+[86:40] features that can helpfully represent a
+[86:43] sentence that precedes another one. Uh
+[86:46] so at least that was the hypothesis
+[86:48] emitted by the authors. We're going to
+[86:50] see it has been challenged later on but
+[86:53] uh you know this is one of the key
+[86:55] concepts that was introduced here.
+[86:59] Any questions so far?
+[87:02] >> Yep.
+[87:28] Yeah. So great point. So the question is
+[87:31] what does segment encoding like do at
+[87:34] all? So it's basically something that is
+[87:35] learned. So you have two indices like
+[87:38] two basically embeddings that you can
+[87:40] learn. you just additively add them uh
+[87:43] you know segment A for like tokens in in
+[87:46] the first part of the sentence and then
+[87:48] segment B in the second part and you
+[87:50] just learn uh you know you just learn it
+[87:52] with gradient descent so you do nothing
+[87:54] with it
+[87:56] I think there was another question here
+[88:07] that's right so the question is uh is
+[88:10] every token in the same sentence going
+[88:11] to have the same segment encoding the
+[88:13] yes. Yep.
+[88:16] Okay. Awesome. So I'm seeing I might
+[88:19] need to speed up a tiny bit. Um so yeah
+[88:23] the second thing that I want to
+[88:24] highlight here is that we take the
+[88:26] encoder parts of the transformer and uh
+[88:30] you know nothing new here. It's just
+[88:31] like the same. We have self attention
+[88:34] followed by uh this like FFN. Uh so this
+[88:38] is where you're going to get your
+[88:39] birectional uh nature of your encodings.
+[88:43] Um and then basically we're assuming
+[88:45] that training both MLM and NSP on it is
+[88:50] going to help us uh like learn helpful
+[88:53] projection matrices in this encoder that
+[88:56] can be suited for any classification
+[88:58] task.
+[89:01] Okay, great. And then I you know as
+[89:03] promised I talked about you know
+[89:06] detailing more about like what this MLM
+[89:08] task was going to do. So when you uh
+[89:13] look at the input you're going to uh
+[89:16] basically have your input sentence and
+[89:20] replace at random some tokens. uh so it
+[89:24] will be replaced either with the token
+[89:26] mask so it's in 80% of the time in 10%
+[89:32] of the time the tokens selected for this
+[89:34] like MLM uh objective function are not
+[89:38] going to be replaced at all so we just
+[89:40] say you know it's the same token just
+[89:41] predict the same token and then 10% of
+[89:45] the time it's going to be changed to
+[89:46] some random other world uh word so at
+[89:49] the end of it you have this subset of
+[89:52] tokens you're going to perform your MLM
+[89:55] task on. And then this is, you know, how
+[89:56] it's composed.
+[89:58] Uh, okay, great. And so basically the
+[90:02] intuition here is that when you want to
+[90:05] predict what a token is, you need to
+[90:08] know about its context. So you're going
+[90:10] to force the model to learn about what
+[90:14] surrounds it left and right. So kind of
+[90:16] this is the birectional
+[90:18] um, you know, property of this
+[90:20] architecture put into action.
+[90:24] Okay, great. And now we're going to talk
+[90:26] about like the next sentence prediction
+[90:28] task where um basically the process here
+[90:32] is to put is to select two sentences
+[90:35] from a given corpus and then present
+[90:38] them um you know side by side in order
+[90:42] 50% of the time and in some random order
+[90:46] the other um kind of part of the time.
+[90:49] And the goal is for some classification
+[90:52] head on top of the CLS token to
+[90:55] determine whether A and B are
+[90:57] consecutive. So that's all it does.
+[91:02] And yeah, so the assumption is that it
+[91:04] also helps uh learn some useful
+[91:06] embeddings.
+[91:10] Okay, great. And uh here I'm going to
+[91:12] present the notation that is used in the
+[91:15] paper. So the paper is something I
+[91:17] recommend reading. It's a very nice
+[91:19] read. Alongside the attention is all you
+[91:21] need. I would say it's like a landmark
+[91:24] paper. I think it has like 170k
+[91:26] citations. Something really impressive.
+[91:30] Um and uh basically what we called N in
+[91:34] the original transformer paper is now
+[91:36] called L. H that was called D model is
+[91:41] the dimension of our embeddings and A is
+[91:45] uh the number of attention heads which
+[91:47] was called a little h. So here I'm just
+[91:51] showing these new notations for
+[91:53] information just to like give you the
+[91:54] mapping but of course together with Afin
+[91:57] we're going to stay consistent with the
+[91:59] original notations we had. So just like
+[92:01] for information
+[92:04] and uh one interesting note is that you
+[92:06] will see that the bird model uh when you
+[92:09] look at some um repository of models
+[92:12] such as hugging face so usually it's
+[92:14] it's given in several versions uh so you
+[92:17] will see sometimes like cased uncased.
+[92:20] Uh so this denotes what kind of
+[92:22] pre-processing was done to the data
+[92:24] whether you only have lower case um
+[92:27] words in there or whether casing
+[92:30] matters. So based on your task of
+[92:33] interest it might be you know one thing
+[92:35] you want to choose from.
+[92:38] Okay, great.
+[92:41] And uh you know I give some orders of
+[92:42] magnitude from the paper on um you know
+[92:46] what values were chosen for uh for for
+[92:49] each of these. So if I remember
+[92:53] correctly I think the original
+[92:54] transformer had like 12 stacked encoders
+[92:58] and decoders. Um yeah so I think it's
+[93:01] like some some numbers here were kind of
+[93:04] taken from there and um yeah so yeah or
+[93:09] order of magnitudes is 100 million
+[93:12] parameters.
+[93:16] Any questions so far?
+[93:21] Okay, great.
+[93:23] Um, and then now we're going to talk
+[93:25] about the fine-tuning stage where the
+[93:31] goal is to basically
+[93:33] take whatever we have learned at
+[93:35] pre-training stage and then freeze those
+[93:38] weights and instead of training again on
+[93:41] the same weights, you have some
+[93:43] classification
+[93:45] linear layer that is put on top of
+[93:47] either the CLS token or on top of tokens
+[93:49] of interest. And you're going to learn
+[93:52] about the linear embeddings there.
+[93:54] You're going to have some classification
+[93:57] task. So you can either you know freeze
+[93:59] all these like pre-trained weights and
+[94:01] just you know train on these small
+[94:02] weights or you can just retrain the
+[94:05] whole thing. I think there's like a
+[94:07] multiple classification schemes and some
+[94:09] of it will be influenced by your
+[94:12] willingness to retrain a lot of the
+[94:14] network and how different the
+[94:17] classification task is with respect to
+[94:19] the original pre-training task.
+[94:22] Um okay great and then just to give some
+[94:26] examples of what could be fine-tuning
+[94:29] tasks for you know tasks of interest you
+[94:32] can have a sentiment extraction where
+[94:34] you build a classification layer on top
+[94:37] of the CLS token and we give some other
+[94:41] um you know example a question answering
+[94:43] where basically you are given some
+[94:46] inputs and the goal of the model is to
+[94:48] detect
+[94:50] beginning and end spans of the response.
+[94:53] So it's basically some objective
+[94:55] function that is at the token level.
+[94:59] Okay, great. So now I propose that we do
+[95:04] some deep dive into one specific uh
+[95:07] example uh you know our favorite
+[95:09] example. Um this teddy bear is so cute.
+[95:13] Let's just see how um BERT works in
+[95:16] practice.
+[95:17] So basically what you would do in an
+[95:19] uncased setting is take the sentence
+[95:24] like pre-process it like just put
+[95:26] everything lower case
+[95:28] then you apply the word piece algorithm
+[95:32] on whatever tokenization mechanism that
+[95:35] your uh like tokenizer has learned. So
+[95:38] for example here you know apparently it
+[95:40] had all these merge rules. So this is
+[95:42] kind of the tokens that appear in the
+[95:44] vocabulary.
+[95:46] And then as I promised, we add the CLS
+[95:49] token at the beginning. And then we add
+[95:52] the SE token. And you also have these
+[95:56] like um you know pads tokens that are
+[95:59] basically
+[96:01] um used to fill out the the sequence
+[96:04] until the end. cuz when you train, you
+[96:06] train by batch and then batches are
+[96:09] composed of matrices that have a fixed
+[96:11] length.
+[96:13] Uh yeah,
+[96:15] so let's just have like this deep dive a
+[96:17] bit the same as uh like what we had in
+[96:20] the transformer uh deep dive last time.
+[96:23] So you have the embeddings that are
+[96:25] learned. So it's like some huge uh
+[96:27] lookup table uh between the index of
+[96:30] each token and a learn representation.
+[96:33] So you add to it the position embedding
+[96:36] of the token and something that's new
+[96:39] here the segment embedding. So exactly
+[96:42] as we said it's an embedding that is
+[96:44] added to each token and the same
+[96:47] embedding is added to the same tokens.
+[96:50] So to all the tokens of the same uh
+[96:52] segment A and then some other embedding
+[96:55] B is added to all the tokens of the
+[96:58] segment B.
+[97:01] Okay, great. So now you have you
+[97:04] similarly as a transformer something
+[97:06] that is position aware and context aware
+[97:09] um so not context aware just yet but uh
+[97:12] segment aware here
+[97:15] uh okay great and uh basically um it's
+[97:19] it goes through this encoder
+[97:21] architecture and then at the end of it
+[97:24] for the case of sentiment extraction we
+[97:27] do not care about the embeddings that
+[97:29] are uh corresponding to each token.
+[97:32] that is not the CLS token because what
+[97:35] we care about is the output embedding of
+[97:39] the CLS token where we plug a linear
+[97:43] layer uh that will learn some uh
+[97:46] classification task.
+[97:50] So any question here?
+[97:55] So, does the fact that we drop all the
+[97:58] output embeddings apart from the CS
+[98:00] token make sense?
+[98:02] Yep.
+[98:11] Yep.
+[98:21] >> Yes. So the question is uh what does
+[98:23] this uh you know FFN is that right? What
+[98:26] does this FFN correspond to? So
+[98:28] basically you have a map between the
+[98:30] dimension of the output embedding and
+[98:33] your task of interest. So it might be
+[98:35] classification of um you know you know
+[98:38] either either positive or negative. So
+[98:41] you have some hidden layer with some
+[98:43] with some length. So you have like
+[98:45] typically two matrices to learn the
+[98:46] projection from one to that hidden layer
+[98:49] and then the hidden layer to the output
+[98:51] and then you learn these weights in
+[98:53] order to do the classification task
+[98:55] based on the embeddings that it has
+[98:56] learned here.
+[99:00] Yeah, great question. So that was the
+[99:01] question I was waiting for. So the
+[99:03] question is why do we throw away all
+[99:05] these other uh you know output
+[99:08] embeddings so we don't need them need
+[99:10] them here. So we are in a classification
+[99:12] task. we have put as uh convention to
+[99:17] operate on top of some token like the
+[99:20] CLS token and then the magic of this
+[99:22] token is that all these self attention
+[99:24] mechanisms that are in the encoder has
+[99:27] mixed the representation of each of the
+[99:30] other tokens in that representation
+[99:33] such that the output embeddings they are
+[99:37] context aware. So basically it's a it's
+[99:40] an embedding that is geared towards
+[99:42] classification and this is what we say
+[99:45] you know will be what we plug in to that
+[99:48] uh you know linear layer
+[99:51] and um so when I say you know we throw
+[99:54] out all the other embeddings
+[99:56] it's actually something that we do for
+[99:58] the case of classification but if we do
+[100:00] classification at the token level then
+[100:02] each of them may be used so for example
+[100:05] when I said question answering if you
+[100:07] want to detect whether
+[100:09] um you know like a given token is the
+[100:12] beginning of a of an answer uh beginning
+[100:15] of end of an answer. You would typically
+[100:17] have two FFNs that respectively predict
+[100:21] the start and end of the answer and you
+[100:23] would apply it on each of these
+[100:25] embeddings.
+[100:29] Any other questions? Yep.
+[100:37] So the question is what is query key and
+[100:39] value for CLS? So it's going to be the
+[100:42] same process as all the other tokens. So
+[100:45] you learn here a representation for the
+[100:47] embedding for the token CLS.
+[100:50] It gets projected to uh you know query
+[100:53] it gets projected to key it gets
+[100:54] projected to value. it does all its
+[100:57] attention computation and at the end you
+[101:00] get this embedding that is basically um
+[101:03] you know that has intended to all the
+[101:05] other ones. So it's like the answer is
+[101:07] it's the same as for the other tokens.
+[101:11] So yeah, so just treat it as one token,
+[101:14] you know, could be any token and and
+[101:16] it's the same.
+[101:18] Okay, awesome. So I see we have five
+[101:20] more minutes and I'm going to uh you
+[101:23] quickly go through the end of it and um
+[101:27] you know one thing that was great with
+[101:29] birds and it was also you know great
+[101:31] with Elmo is that you have embeddings
+[101:33] that are contextual
+[101:35] um and here uh you can see that it's
+[101:38] very easy to learn any classification
+[101:41] task that you want based on this learn
+[101:43] embeddings. So this is a flexibility
+[101:45] that was greatly appreciated here
+[101:48] and it's widely used in the industry. So
+[101:52] anything that comes with sentiment
+[101:54] detection or like other classification
+[101:56] related tasks, it's very common to use a
+[101:59] BERT like model for it nowadays
+[102:03] and um I'm going to talk a bit about its
+[102:07] limitations now. So um as you see in the
+[102:11] original paper I think the context
+[102:13] length was of size 512. So it was
+[102:17] typically limited in this um kind of
+[102:19] early paper
+[102:21] has mentioned of techniques as to how we
+[102:24] can further grow this context size
+[102:27] without making the complexity go
+[102:30] completely you know basically like high.
+[102:35] uh and then you have some uh
+[102:37] approximation methods where you compute
+[102:39] local attention and so on and then the
+[102:41] use of these tricks helps you grow the
+[102:44] size of the context while staying within
+[102:46] reasonable uh computation requirement
+[102:49] bounds and I'm going to talk about two
+[102:52] other limitations that we're going to
+[102:54] see what other models try to remedy. So
+[102:58] there is one where um you know the
+[103:01] latency could be seen as high. You have
+[103:02] a still 110 million parameters for a
+[103:06] bird base. So it's quite a lot you know
+[103:08] is there a way to make this you know
+[103:10] smaller and faster and then the second
+[103:12] one is basically you have these two
+[103:16] objective functions of MLM and NSP. Are
+[103:20] those two truly helpful? Is there any
+[103:22] way we can simplify the pre-training
+[103:23] process? So we're going to see uh in a
+[103:26] second how.
+[103:29] Um so first regarding this second
+[103:32] limitation that we had this uh basically
+[103:36] um
+[103:37] this basically uh you know sensitivity
+[103:40] to cost. So so who here has heard of
+[103:45] distillation?
+[103:49] Okay great few people. So I just want to
+[103:53] like flash this quote from uh Hinton uh
+[103:57] Vinas and Jeff Dean uh which I think is
+[104:01] very uh informative and kind of it's a
+[104:04] good mindset to have to see that the
+[104:07] distribution that is output by a given
+[104:09] model is actually super helpful to know
+[104:12] what it has learned. So it's the soft
+[104:15] targets contain almost all the
+[104:17] knowledge. So it's like some lecture
+[104:19] from from them that contain this these
+[104:21] quotes and I feel so so basically they
+[104:24] were at the origin of the concept of
+[104:27] distillation later on and you quickly
+[104:30] see in practice that basically learning
+[104:32] the distribution of a model is more
+[104:36] helpful than directly learning the hard
+[104:38] labels.
+[104:41] So you have this concept of teacher and
+[104:44] student models where basically um you
+[104:47] know the goal in distillation is going
+[104:49] to be to map this output distribution of
+[104:53] a smaller model directly to your more
+[104:56] complex model rather than the hard
+[104:58] labels.
+[105:00] And the um you know the objective
+[105:04] function that you use for this to
+[105:05] minimize this is the KL divergence
+[105:08] which basically says in a world that is
+[105:13] described by the teacher the teacher T
+[105:18] how bad is it to model with the student
+[105:21] S. So it basically kind of tries to
+[105:24] assess how close the student
+[105:27] distribution is going to be to the
+[105:28] world's t. And um one interesting note
+[105:32] that you will see here is that you find
+[105:34] the cross entropy loss if your yt
+[105:38] distribution is just a hard label. So if
+[105:41] you have just a one at one position and
+[105:44] then zero everywhere else you have minus
+[105:47] log of you know ys which is very
+[105:51] interesting.
+[105:52] And then when the distilled bear forks
+[105:54] have done so by the way it's a very
+[105:56] clean paper it's like four pages but
+[105:59] super impactful. So it says that you
+[106:02] know if you reduce the number of layers
+[106:04] by two you have a lot of gains and
+[106:08] almost the same performance
+[106:10] uh which is kind of very remarkable and
+[106:13] they basically used distillation as a
+[106:15] way to retain that performance. So this
+[106:18] has been like the key alongside the the
+[106:20] like diminishing the number of layers.
+[106:23] And last I'm going to talk about Roberta
+[106:27] that uh studied the fact that removing
+[106:29] the NSP
+[106:31] um objective function led to no decrease
+[106:35] in performance almost. So they just
+[106:37] dropped it. And they added some tricks
+[106:39] such as um you know dynamically doing
+[106:43] the masking. So for example for a given
+[106:45] piece of text at each epoch so every
+[106:48] time you see the same kind of text you
+[106:50] would change the masking and they also
+[106:52] had some data strategy where they saw
+[106:56] that the model was vastly undertrained.
+[106:58] So they increased the diversity and the
+[107:01] size of the data a lot and they saw that
+[107:04] uh kind of benchmark performance
+[107:06] increased uh quite a bit on the same
+[107:08] benchmarks.
+[107:10] And that's it for today. Thank you
+[107:12] everyone. Have a great weekend.

@@ -1,0 +1,2143 @@
+[00:05] Hello everyone and again welcome to
+[00:08] lecture six of CME295.
+[00:11] Uh so today is actually an exciting day
+[00:13] because we're going to uh cover a topic
+[00:16] that has been trending over the past
+[00:18] year or so which is LLM reasoning.
+[00:23] And it's actually a good segue compared
+[00:25] to what we talked last time which was uh
+[00:29] preference tuning because a lot of the
+[00:31] methods that we used in lecture five are
+[00:34] going to be the ones that we'll be using
+[00:36] as kind of the foundations for this
+[00:39] lecture.
+[00:40] So before we start as usual we're going
+[00:44] to uh just cover quickly what we saw in
+[00:47] the last lecture.
+[00:49] So if you remember lecture four and
+[00:52] lecture five were all about learning how
+[00:56] we can train a model. So in lecture four
+[00:59] we saw the first part which was the
+[01:03] pre-training part which is the most
+[01:06] compute intensive step where we
+[01:10] basically teach the model the structure
+[01:13] of text the structure of codes and we do
+[01:16] this very large large scale training.
+[01:20] So at the end of this first step which
+[01:22] is the pre-training we get a model that
+[01:25] knows about code that knows about
+[01:27] language but it only knows how to
+[01:31] autocomplete a sequence and so that's
+[01:34] why we also saw uh the second step which
+[01:37] was the finetuning step where we take
+[01:41] our pre-trained model and we try to make
+[01:44] it useful.
+[01:46] So one use case that we saw was for
+[01:48] instance uh you know an assistant. So we
+[01:51] tried to tune it in a way that it can
+[01:53] respond to questions and so here we have
+[01:58] uh this work of preparing the SFT data
+[02:01] which which is what we call the SFT data
+[02:04] uh which is a high quality created data
+[02:08] set that we can use to teach our model
+[02:10] on how to behave. So at the end of this
+[02:14] second step we have our model that is
+[02:17] tuned for a specific task which can be
+[02:20] um responding to queries. And then last
+[02:24] lecture we saw this third step
+[02:28] which was the preference tuning step.
+[02:30] And here the goal is to align our model
+[02:35] with human preferences.
+[02:38] So we saw in particular RHF which was a
+[02:42] common method to do that and we saw that
+[02:45] there was two steps to it. So there was
+[02:48] the first part learning to distinguish
+[02:52] good from bad using human preference
+[02:55] data
+[02:57] and then there was this second step
+[02:59] which was this RL stage which is going
+[03:02] to be useful today.
+[03:05] So in particular, if you remember, we
+[03:08] had drawn a comparison between the RL
+[03:11] setup that you may be familiar with uh
+[03:15] outside of this class where we have uh
+[03:19] an agent that is interacting with the
+[03:22] environment
+[03:23] and the way that it interact with it is
+[03:26] that given a given a state that it is
+[03:30] in, it can take an action following ing
+[03:34] a policy
+[03:36] which is nothing else than just a
+[03:38] probability distribution over actions.
+[03:41] So given
+[03:43] a state our agent can take an action
+[03:48] following this policy and at the result
+[03:50] of this it receives some reward.
+[03:55] And we saw last lecture that we have
+[03:58] this nice comparison between the
+[04:00] traditional RL setup and the LLM setup.
+[04:05] And so here our quote unquote agent is
+[04:08] just simply the LLM.
+[04:10] Um the environment that it interacts
+[04:13] with is just the set of tokens that it
+[04:15] can predict over.
+[04:18] So given an input that it has received
+[04:22] so far,
+[04:24] it can predict what the next token could
+[04:27] be which is the action and it does that
+[04:31] using the probability distribution
+[04:34] that is the result of uh I guess the LM
+[04:38] prediction. And we saw that we can
+[04:41] obtain human preferences
+[04:45] for each completion.
+[04:49] So you have a prompt, you have a
+[04:51] completion and you get those human
+[04:54] preferences.
+[04:56] And this is the one that you then use in
+[04:59] order to tune the LLM because here this
+[05:03] step is about aligning the model with
+[05:07] human preferences. And here the human
+[05:09] preferences is encapsulated in the
+[05:12] reward.
+[05:13] And so we saw that the loss function
+[05:15] during the RL stage is composed of two
+[05:19] parts.
+[05:21] So the first part is this advantage
+[05:25] maximization
+[05:27] and we saw that that advantage was based
+[05:30] on the rewards uh and it has some
+[05:33] baseline to just reduce the variance of
+[05:38] the gradient. Uh so we have that part
+[05:40] but we also saw
+[05:43] another part
+[05:45] which was that we don't want our model
+[05:48] to deviate too much from either the
+[05:52] previous iteration. So we don't want the
+[05:54] model to change too much from iteration
+[05:57] to iteration.
+[05:59] But we also don't want our model to
+[06:01] change too much compared to our initial
+[06:03] model like our base model. And here it's
+[06:07] the SFT model. And the reason why we
+[06:10] don't want to change too much is because
+[06:13] our model has already learned a lot.
+[06:17] It's already quite performant in what it
+[06:20] does. And what we want is to just align
+[06:23] it with human preferences which is not
+[06:26] something for which we want the model to
+[06:28] change completely.
+[06:30] And I think that was the part that um I
+[06:33] think was a little bit scary which was
+[06:34] the actual loss functions. So if you
+[06:37] remember the main algorithm that is
+[06:40] typically used in the RHF setting is PO
+[06:45] which stands for proximal policy
+[06:47] optimization
+[06:49] and there is this one variant that's
+[06:50] called PO clip
+[06:54] which is such that it clips the updates
+[07:00] from one iteration to another. So here
+[07:03] if you remember R is actually not the
+[07:07] reward it is the ratio and I know it's a
+[07:09] confusing confusing notation.
+[07:13] So it's the ratio between the current
+[07:16] policy and the old policy and the old
+[07:19] policy here is the policy that is at the
+[07:23] previous RL iteration.
+[07:26] So what we do is that we have a clipping
+[07:28] mechanism
+[07:30] such that the ratio cannot go beyond
+[07:33] some certain thresholds
+[07:36] such that we do not want to incentivize
+[07:39] the model to make too big of an update.
+[07:44] And we saw another variant of PO which
+[07:47] is called PPO kale penalty.
+[07:51] And this variant
+[07:54] uses the kale divergence
+[07:56] to penalize the model from changing too
+[07:59] much.
+[08:01] So if you remember in the original PO
+[08:04] paper uh you we used the old
+[08:08] quoteunquote old version of the model
+[08:11] which is the one at the previous RL
+[08:12] iteration.
+[08:14] But in modernday RHF training, this
+[08:19] scale divergence is typically applied to
+[08:21] the base model, which is the SFT model.
+[08:25] So I guess long story short is we have
+[08:28] these two PO variants that were variants
+[08:32] that were introduced in the original PO
+[08:34] paper.
+[08:36] But in modernday RLF training, we
+[08:40] typically have some combination, some
+[08:45] mix of these two loss functions.
+[08:50] Cool.
+[08:51] So, up until now, we've seen what I want
+[08:55] to call vanilla LLMs, which are LLMs
+[08:59] that take something as an input, let's
+[09:01] say a prompt, and just respond with some
+[09:04] answer.
+[09:06] And so those vanilla LLMs, they have a
+[09:09] lot of strength that we can enjoy. So,
+[09:11] first of all, we had seen that those
+[09:14] LLMs, they know a lot about structure of
+[09:16] the text. They know a lot about codes.
+[09:19] So in particular, if you want to debug
+[09:21] your code, I guess they're great to find
+[09:24] where the error is. They are great to
+[09:26] generate codes. They're also great to
+[09:29] generate, I don't know, essays or poems.
+[09:31] They're really, really good at that.
+[09:34] But I do want to call out some
+[09:36] weaknesses.
+[09:38] So the first, I guess, weakness that I
+[09:41] want to call out in these vanilla LLMs
+[09:44] is that they have quote unquote limited
+[09:47] resoning.
+[09:49] So typically if you kind of have it have
+[09:52] uh some sophisticated let's say math
+[09:55] problem it will not really um kind of
+[10:00] come up with I guess the solution
+[10:02] because maybe it will like uh get lost
+[10:05] in the in the way um because up until
+[10:08] now our model has been really trained to
+[10:11] I guess given a prompt respond to it
+[10:15] using the kind of next token prediction.
+[10:18] So I guess here there is not like really
+[10:20] a big reason why it would be able to
+[10:22] solve I guess complicated problems. So I
+[10:26] guess that is one.
+[10:28] So second weakness is that the LLM that
+[10:33] we have has been pre-trained on a huge
+[10:36] amount of data which is static
+[10:40] meaning that the knowledge that the LLM
+[10:42] has acquired is bound to the cutoff date
+[10:46] what we call the cutoff dates at which
+[10:48] we cut and formed our pre-training data.
+[10:53] So I know a few days ago we had an
+[10:57] election. So if let's say we trained our
+[11:00] LLM based on data before the election
+[11:02] and let's say today we ask it okay who
+[11:05] is the I don't know elected official of
+[11:07] let's say X it will not be able to
+[11:10] answer us because it does not have
+[11:12] access to knowledge after that date.
+[11:17] So a third weakness is so far it's uh
+[11:21] all talk no action. So you just uh
+[11:23] prompt your LLM but I guess if you want
+[11:26] to let's say I don't know um like place
+[11:29] an order or I don't know do some action
+[11:32] you just cannot do it.
+[11:35] And then I guess the last weakness which
+[11:37] by the way is not an exhaustive list is
+[11:41] contrary to traditional NLP models LLMs
+[11:45] they generate free form text
+[11:48] and it's hard to evaluate them in the
+[11:52] framework that we I mean by we is the ML
+[11:55] community has adopted up until a few
+[11:58] years ago. So if you're familiar with
+[12:00] it, let's suppose if you worked in the
+[12:02] translation world, you would use
+[12:05] rulebased metrics like blur or for
+[12:08] summarization rouge to evaluate your
+[12:11] outputs. But then here LLMs, they can
+[12:14] really do more than just that. So it's
+[12:17] very hard to evaluate them.
+[12:20] So what I want to say is that this is
+[12:24] let's say a subset of all the weaknesses
+[12:26] that LMS can have. And the last three
+[12:30] are going to be topics that we will
+[12:32] cover in the next lecture and in the
+[12:34] lecture eight.
+[12:36] And as I mentioned before, the focus of
+[12:40] today is reasoning. So we'll see how we
+[12:43] can improve the way our LLM reasons.
+[12:48] Cool. And again, um this is a topic
+[12:52] that's been very new and by new I mean
+[12:55] roughly a year. So almost everything
+[12:58] that we will see is uh either from 2024
+[13:02] or 2025.
+[13:04] And I guess we're lucky because now we
+[13:06] have kind of enough hindsight to just
+[13:09] know which piece is more important than
+[13:11] other things. And so the goal for today
+[13:15] is going to be to know what reasoning
+[13:18] models are.
+[13:20] And the second big goal is to know how
+[13:23] they are trained.
+[13:25] So hopefully at the end of this lecture
+[13:27] if you have a good answer to these two
+[13:30] questions that means that we have done a
+[13:33] good job.
+[13:34] Okay. So let's start with reasoning
+[13:36] models. What are they? Well to answer
+[13:41] this question we first need to I guess
+[13:44] define what reasoning is. And the bad
+[13:48] news here is there's not a commonly
+[13:50] agreed upon definition out there of what
+[13:54] reasoning is. So I will try to define it
+[13:58] um I guess to the best of my ability. So
+[14:01] here we define reasoning as the ability
+[14:05] to solve a problem.
+[14:08] And here by problem we typically think
+[14:11] more of math problems or let's say
+[14:15] coding problems.
+[14:17] But hopefully these abilities can also
+[14:19] kind of spread to other fields as well.
+[14:24] And in order to solve this problem,
+[14:29] we typically need a multi-step reasoning
+[14:32] process. like a little bit like you when
+[14:35] you take an exam when you have a
+[14:38] question that's not trivial you
+[14:40] typically break that down into several
+[14:42] steps and then kind of go through them
+[14:44] and then come to the final answer. So I
+[14:47] guess the idea is problems that are
+[14:50] reasoning problems they would have some
+[14:52] pattern of that.
+[14:56] So to illustrate this let's uh just make
+[14:58] sure we're all kind of thinking the
+[15:00] same. So a non-reasoning question would
+[15:04] be something like what is the course
+[15:06] code of Stanford's transformers and LM
+[15:09] class. So this one know it's a knowledge
+[15:11] thing. Everyone knows it's CME 295.
+[15:15] But then um as opposed to that in
+[15:18] contrast to that a reasoning based
+[15:20] question would be maybe a math question.
+[15:23] So for instance let's suppose we have a
+[15:25] bear that was born in 2020. How old is
+[15:28] that bear now in 2025? So that that
+[15:30] would be the kind of question that we're
+[15:32] looking at. Of course, this is super
+[15:35] easy. Can think of like something
+[15:36] that's, you know, much harder than that
+[15:38] and this would qualify.
+[15:42] Cool. Okay. So now that we know a little
+[15:47] bit what reasoning is, now we're going
+[15:50] to look at how we can I guess obtain a
+[15:54] model that can deal with these kinds of
+[15:57] prompts.
+[15:59] So the core idea here is to leverage a
+[16:03] concept we saw earlier in the class.
+[16:08] So I'm not sure if you remember but back
+[16:10] in lecture maybe two or three we saw a
+[16:14] technique called chain of thought.
+[16:18] So who remembers what chain of thought
+[16:20] is?
+[16:22] Yeah. Yes. Do you want to say what what
+[16:24] that is?
+[16:31] Yeah. Yeah. Exactly. So the answer is
+[16:33] you know thinking in steps be instead of
+[16:36] just giving just a blanket answer. So
+[16:38] great great answer. So here just to
+[16:41] illustrate. Yeah.
+[16:46] Yep.
+[16:58] >> Oh yeah, great point. So the question is
+[17:01] uh for some questions you need to have
+[17:03] some element of context. So for instance
+[17:05] here you need for your LLM to know that
+[17:09] this year I don't know today's November
+[17:12] 7th 2025. So yes, great points. Um so
+[17:16] there are two parts of that for that
+[17:19] specific question. So typically LLMs
+[17:21] they have a something that that we call
+[17:24] preamble. So something that tells you
+[17:26] about some context uh and typically the
+[17:29] date is something that we put in the
+[17:31] preamble. So for this very specific case
+[17:34] the date would be uh an information that
+[17:37] would already be uh I guess available to
+[17:40] the LM. But for some other problems, you
+[17:43] can very well have information or
+[17:46] context that you do not have. And um in
+[17:49] lecture 7, we will see how we can uh
+[17:52] kind of fetch that. And it's definitely
+[17:54] something that that will be very useful.
+[17:57] Um but for the sake of today, we will
+[18:01] consider this more as being an extension
+[18:04] of reasoning models as opposed to
+[18:06] something that is foundational to how
+[18:08] they work. But we'll respond to to this
+[18:11] part I guess next lecture.
+[18:15] Cool. And so here we were about to
+[18:18] illustrate what a chain of thought look
+[18:20] like. And so here um instead of having
+[18:24] as you mentioned just a blanket answer
+[18:26] what we want is to explain also the
+[18:29] reasoning.
+[18:31] So the way Chenn thought did that was by
+[18:35] having some in context learning examples
+[18:39] that explicited the reasoning
+[18:42] to encourage the model to also do that
+[18:46] before providing the answer.
+[18:49] So that's the rough it's not a rough
+[18:52] idea it's the the idea behind chain of
+[18:54] dots.
+[18:56] And here what we want to do is to do
+[18:59] that but at a much larger scale.
+[19:05] So I just want to build an intuition as
+[19:08] to why this may help us.
+[19:13] So LLMs they're basically trained with
+[19:16] this next token prediction objective.
+[19:20] And so the way they respond to questions
+[19:23] that we ask is typically to sound
+[19:26] plausible
+[19:28] in a way to maximize or optimize for the
+[19:31] probability of the tokens that you want
+[19:33] to generate to happen.
+[19:36] So if you have a very hard problem that
+[19:39] you're presenting to the LLM,
+[19:42] there are very few chances that that
+[19:45] problem appeared in the training sets.
+[19:49] And so here the idea is to have the LLM
+[19:53] decompose the problem into tractable
+[19:55] ones
+[19:57] and then rely on the patterns that it
+[20:00] has seen during training to solve all
+[20:04] these more tractable problems. And it's
+[20:07] a little bit like uh you or when we were
+[20:10] students, right? Like when we give you a
+[20:12] problem, you try to kind of link it back
+[20:16] to something that you know that you have
+[20:18] seen at training time like during your
+[20:20] studying
+[20:22] to solve them in order to find the
+[20:24] answer.
+[20:26] So I guess that's the intuition. Um I
+[20:29] guess another reason that you can think
+[20:31] of is when you let the LLM generate more
+[20:35] tokens,
+[20:37] you're just giving it more compute. If
+[20:39] you think about it,
+[20:41] because at each generation step, you
+[20:43] have this whole forward path pass.
+[20:47] And when you do that more, you just give
+[20:51] it more compute.
+[20:53] And we will see there is a term that is
+[20:56] dubbed compute budgets,
+[20:59] which is I guess the budget that you
+[21:01] want your L&M to have to generate your
+[21:03] response that we will see later on. Uh
+[21:06] but yeah, so that also plays a role.
+[21:09] So, is everyone uh clear on the overall
+[21:13] idea of what the reasoning model is?
+[21:17] Yeah.
+[21:19] Okay. Perfect. So, just to make sure
+[21:21] again that we're all clear on this. So,
+[21:23] up until now, we had quote unquote
+[21:27] vanilla LLMs
+[21:29] that had some prompt, some question as
+[21:32] input, and they were responding with
+[21:35] something as output.
+[21:38] And in our case what we want is given a
+[21:43] question as input
+[21:45] we don't want to directly generate an
+[21:48] answer we first want to think and here I
+[21:54] guess we think by first outputting a
+[21:56] reasoning chain
+[21:58] and then we provide the answer.
+[22:03] So here the LLM output is not just the
+[22:07] answer, it's the reasoning
+[22:11] plus the answer.
+[22:18] And I guess yeah, I was saying that this
+[22:20] uh topic has been very hot and trendy
+[22:23] for the past year. So this is a little
+[22:26] bit of a preview of the timeline of
+[22:28] reasoning models. Um so reasoning itself
+[22:32] is a topic that has been studied for
+[22:34] more than a year but reasoning models
+[22:38] have started popping out
+[22:41] starting from OpenAI's release of 01
+[22:45] preview and this one was uh September of
+[22:48] 2024
+[22:50] and then after that uh you basically
+[22:53] have everyone just wondering how OpenAI
+[22:55] did it and so you had you know all this
+[22:58] AI labs trying to kind of see what we
+[23:02] can do to um I guess increase the
+[23:06] reasoning abilities of the model. So you
+[23:07] would have everyone working on this and
+[23:10] then you had uh Google's Gemini 2.0
+[23:13] uh flash thinking that was I think
+[23:16] released in December
+[23:18] and then starting in 2025
+[23:21] uh there was this uh DeepSync R1 paper
+[23:24] that was published in January which made
+[23:27] a lot of noise because what they were
+[23:30] able to do was to match OpenAI's
+[23:35] reasoning ability performance
+[23:38] with a method that they were actually
+[23:41] you know describing ing in their paper.
+[23:44] So that was a big moment January 2025
+[23:48] and then after that you know all these
+[23:51] other models also had uh reasoning
+[23:54] abilities added. So you had um some
+[23:57] models from XAI from anthropic with
+[24:00] clouds and then from uh other labs as
+[24:04] well also from um uh Mistral. So this
+[24:07] timeline is not exhaustive but it's just
+[24:09] to show you I guess how recent these
+[24:12] models are and I guess one thing to have
+[24:14] in mind is it basically started at the
+[24:18] end of 2024.
+[24:22] Cool. So I know a lot of you if not all
+[24:26] of you are using uh LLM every day as you
+[24:29] know chatbots like let's say chat GPT or
+[24:31] Gemini and so I want you to know when
+[24:36] the model that you're interacting with
+[24:38] is a reasoning model. So I have a
+[24:41] question for you.
+[24:43] I was having a discussion with Chad GPT
+[24:46] the other day and I was wondering is
+[24:48] this
+[24:50] using a reasoning model
+[24:52] because guess uh what do you think if
+[24:54] you kind of stare at the screenshots?
+[24:58] Yeah. Why?
+[25:01] Right. Exactly. So the key word here is
+[25:04] thinking. Actually they they put it
+[25:06] everywhere. But um when these UIs show
+[25:11] you the thinking process
+[25:13] so what they do is actually so they
+[25:17] don't show you actually the full
+[25:18] reasoning process and we're going to see
+[25:20] why. But they tell you that they spend
+[25:24] time thinking
+[25:26] and that time thinking is actually the
+[25:29] time that is needed to produce the
+[25:31] reasoning chain that can be I guess more
+[25:34] or less something that takes time. Uh
+[25:36] and so for instance for chip you have
+[25:38] this uh thinking that you can also
+[25:41] change from standard to extended etc.
+[25:44] And you have this for other models as
+[25:46] well.
+[25:48] And in particular, the thought that you
+[25:52] the quote unquote thought summary that
+[25:53] you see is not the raw reasoning chain.
+[25:59] It's a summary of it.
+[26:02] And the reason why they do that, I mean,
+[26:04] I'm hypothetizing is one because the raw
+[26:08] chain maybe may not be something that is
+[26:11] fully intelligible from a human
+[26:13] standpoint.
+[26:15] Second is because maybe you as a user
+[26:17] you don't want to read pages and pages.
+[26:21] And then third, this is going to be what
+[26:22] we see. But
+[26:25] if you have the reasoning chains, if you
+[26:27] have the reasoning chain, you can
+[26:30] maybe uh train a model that you know is
+[26:34] trained on these chains. So it can
+[26:37] basically mimic those abilities as well.
+[26:40] So this may be the reason the reasons
+[26:42] why you would typically not see the raw
+[26:44] chain
+[26:47] and when it comes to pricing so we saw
+[26:50] that the output of reasoning models are
+[26:53] not only the answer but also the
+[26:55] reasoning itself and so you will see in
+[26:59] I guess all of these APIs that you're
+[27:01] actually getting charged for it so
+[27:04] you're not necessarily getting all the
+[27:06] reasoning chain but uh if you look at
+[27:09] the the ducks there's always I guess a
+[27:12] sentence or two uh I guess that
+[27:14] specifies that you're actually being
+[27:16] charged for output tokens and those
+[27:19] output tokens they also include
+[27:22] reasoning tokens so I think that's also
+[27:24] a good thing to know
+[27:27] um and I guess from a user standpoint
+[27:33] this also gives an incentive to have the
+[27:38] maximum imum reasoning ability for a
+[27:41] minimum amount of reasoning token
+[27:43] because you don't want to pay a lot,
+[27:47] right? So, we're going to see later on
+[27:49] how we can deal with that, but this is
+[27:51] just one thing that's good to note.
+[27:55] Cool. So, we talked about what reasoning
+[27:58] was or at least tentative definition. We
+[28:02] saw I guess the core idea behind
+[28:04] reasoning models. So now we're going to
+[28:06] talk about some of the benchmarks that
+[28:09] people use to quantify reasoning
+[28:11] abilities.
+[28:13] So the first one as I previously
+[28:15] mentioned is about assessing the coding
+[28:18] abilities.
+[28:20] And so here the goal is typically to
+[28:23] solve a coding problem or to fix a bug.
+[28:27] So you typically have the following
+[28:29] setup.
+[28:30] So given a problem,
+[28:34] you want to produce a solution
+[28:37] that
+[28:38] is able to pass test cases.
+[28:43] So if you have a solution that you that
+[28:45] passes all test cases, then you have a
+[28:48] solution that works.
+[28:50] And this is our way of verifying that
+[28:56] a response that was generated is
+[28:58] actually a correct one.
+[29:01] So that's for coding.
+[29:04] Um okay so just giving you an overview
+[29:06] of the kinds of benchmarks that are out
+[29:08] there. So we have uh human eval which is
+[29:12] uh the screenshots here which I believe
+[29:15] is a set of 100 something coding
+[29:17] problems that were human written which
+[29:20] is why it's called human evil. But you
+[29:23] have then code forces uh which is coming
+[29:26] from a website of competitive
+[29:28] programming that some of you may know
+[29:31] and there is also swbench uh which is I
+[29:34] believe a set of problems that were
+[29:36] derived from GitHub issues. So these are
+[29:39] like real practical problems. So you
+[29:41] will see that these reasoning models
+[29:44] in the reports they typically have
+[29:48] results along these benchmarks.
+[29:52] So this is for coding.
+[29:55] Now for math
+[29:57] the goal is to you know solve a problem
+[30:00] and the way it works here is given a
+[30:03] problem you want the answer and of
+[30:06] course you're letting your model you
+[30:08] know generate some reasoning.
+[30:12] And so here what you would do to verify
+[30:15] that your solution works is by parsing
+[30:19] the answer
+[30:21] like like so and then comparing it with
+[30:25] some ground truth.
+[30:27] So here you can really know if the
+[30:31] answer that your model is producing is
+[30:33] true by comparing the two.
+[30:37] So you will ask me okay how do you parse
+[30:39] that? So you can force your model and by
+[30:42] force I mean in the prompt to output the
+[30:45] answer in a way that can be parsible.
+[30:49] Sometimes people they just put it in
+[30:51] some box in the box brackets. So there's
+[30:54] a number of different ways to do that
+[30:59] and uh this is uh how the problems look
+[31:01] like. So uh you have some problem and
+[31:04] then you can let your model uh you know
+[31:06] generate some reasoning chain along with
+[31:08] the answer and then you have the answer
+[31:10] here that you can compare to. Um so I
+[31:13] just want to add that um the kinds of
+[31:17] benchmarks that are out there are based
+[31:20] typically on problems that are actually
+[31:23] not that trivial. So a name that you
+[31:27] will see a lot is AIM.
+[31:29] So I'm not sure if you're familiar with
+[31:31] it. It's um a math exam to qualify for
+[31:36] the US math olympiads.
+[31:39] Um so there is a bunch of models that um
+[31:42] I guess um quantify their performance
+[31:45] based on that. There's also GSM 8K which
+[31:49] is a grade school kind of math problem.
+[31:54] And I guess now your question maybe okay
+[31:58] it's great we have all these benchmarks
+[32:00] but what is the metric that you will use
+[32:04] to quantify that what you're doing is
+[32:06] good or not
+[32:09] and so there is one metric that you will
+[32:11] see a lot and we're going to see that
+[32:14] right now because it's not that obvious.
+[32:17] So that metric is called pass at K.
+[32:22] So pass at K is by definition a metric
+[32:27] that tries to estimate the probability
+[32:31] that at least one of K attempts
+[32:36] succeeds.
+[32:38] So here what we're saying is let's
+[32:40] suppose we're I don't know having some
+[32:43] coding problem. We tell our model to
+[32:46] generate K answers
+[32:50] and pass at K is the probability that at
+[32:53] least one of these K answers
+[32:56] passes
+[32:58] the tests.
+[33:01] Does that make sense?
+[33:03] So, by the way, why would you have pass
+[33:05] at K? Like why why would that make
+[33:07] sense?
+[33:12] Okay, so it's not super trivial. Um, so
+[33:16] you may have use cases where
+[33:20] you can afford to spend more time
+[33:23] to generate more answers.
+[33:26] If you know that you will get more
+[33:28] chances to get it right,
+[33:30] then you can spend more time to generate
+[33:32] more answers so that you can can have
+[33:33] like the right one.
+[33:36] So in a problem like coding,
+[33:39] the good thing is you can check whether
+[33:42] your answer is correct or not.
+[33:45] And so here the idea is if you are in
+[33:48] cases where you can afford to generate
+[33:50] not just one answer but multiple answers
+[33:54] then it may be worth it to just spend
+[33:56] more time spend more compute to generate
+[33:58] more answers if it means that the
+[34:00] probability of getting it right in one
+[34:02] of them is going to be higher.
+[34:06] So there is one technique that we saw
+[34:08] last lecture that
+[34:11] is kind of familiar with this best of n.
+[34:15] Do you remember?
+[34:18] Yeah roughly. Okay. So best of n is this
+[34:21] method that we saw last last week which
+[34:24] was you generate n answers and you use
+[34:28] your reward model to score everything
+[34:32] and you take the best best of all of
+[34:34] them. So here you can think of it as
+[34:36] being kind of the same
+[34:38] just that we do not have a reward model.
+[34:40] We have a deterministic verifiable way
+[34:44] of checking whether something is
+[34:45] correct.
+[34:47] So it's very similar to that.
+[34:51] And okay so now we're going to spend
+[34:53] just a few minutes just um aligning our
+[34:57] understanding on
+[34:59] um how we can estimate such a quantity.
+[35:03] Yep.
+[35:07] That's a great question. So question is
+[35:09] uh do you uh choose a particular
+[35:11] temperature? So I have a slide on that.
+[35:13] So I I'll just hold your question for a
+[35:15] few slides. Cool. Wait. By the way, if
+[35:18] there is any other questions uh you know
+[35:20] happy to Is there any other questions on
+[35:22] this?
+[35:26] Everyone is super clear. Okay. Cool. So
+[35:29] what we want to do here is to estimate
+[35:32] this probability.
+[35:35] But you may tell me okay just generate k
+[35:37] attempts and just count the number of uh
+[35:40] of the attempts that are um correct to
+[35:44] estimate that.
+[35:47] But the problem is if you only do this k
+[35:50] times your estimate can be very noisy
+[35:53] because by pure chance I don't know you
+[35:55] may have uh one instance that has I
+[35:58] don't know three correct out of five and
+[36:01] the other one one. So you want to have
+[36:03] an estimate that doesn't have that much
+[36:06] variance. So what you do is you
+[36:09] typically generate not k but n answers
+[36:15] and out of these n answers
+[36:18] you are going to have c of them that are
+[36:21] going to be successful and then n minus
+[36:24] c that are not going to be successful.
+[36:29] And the question here that you ask
+[36:30] yourself
+[36:32] is out of these n attempts
+[36:36] you want to quantify
+[36:39] your the probability of having at least
+[36:42] one out of k attempts that is right. So
+[36:46] the question here if you have those n
+[36:49] observations
+[36:51] if you were to select let's say k
+[36:56] what is the probability of having at
+[36:58] least one of those k passing?
+[37:03] That's the question.
+[37:05] So we're short on time. Uh I'm going to
+[37:08] actually uh derive that right now. Um,
+[37:13] and the reason why I want to do that is
+[37:16] because the answer is not necessarily
+[37:17] trivial and I don't want you to be uh
+[37:20] too uh you know uh surprised of how how
+[37:24] it looks like without uh kind of knowing
+[37:26] where it comes from.
+[37:28] So we're going to derive that. So we
+[37:31] want to derive the probability that at
+[37:35] least one attempt out of k that we
+[37:37] select out of these n samples
+[37:41] is correct.
+[37:43] So in order to do that I'm just going to
+[37:47] write that down. So pass k. So we want
+[37:50] the estimate for that.
+[37:54] So, it's going to be the probability
+[37:57] that at least one attempt
+[38:07] out of K
+[38:10] is correct.
+[38:14] So if you've done some probability there
+[38:16] is like a very common trick which is if
+[38:19] you have a probability of at least one
+[38:22] it's one minus the probability of having
+[38:26] all of them being incorrect.
+[38:29] Do you all know that trick? Okay. So
+[38:31] we're going to use that trick. So it's
+[38:33] going to be one
+[38:35] minus the probability
+[38:38] of having all
+[38:42] k attempts
+[38:48] uh incorrect.
+[38:53] So far so good. Yeah. Okay. So now we're
+[38:59] going to try to quantify this
+[39:01] probability.
+[39:04] So what is the probability of you
+[39:08] finding
+[39:09] an unsuccessful attempt among this n?
+[39:13] You have n minus c unsuccessful.
+[39:17] you have n observations
+[39:21] is going to be
+[39:23] n minus c
+[39:27] over n.
+[39:29] Right? So it's your first it's your
+[39:31] first unsuccessful attempt.
+[39:35] So now what is the probability that you
+[39:37] have another unsuccessful attempt
+[39:39] knowing this one?
+[39:42] So you have n minus c minus one other
+[39:46] unsuccessful attempts
+[39:51] over
+[39:53] n minus one because you already took one
+[40:01] and you continue that k times
+[40:07] n - c - k + 1
+[40:12] over n - k + 1.
+[40:19] Does everyone agree with me?
+[40:22] So here we are quantifying the
+[40:26] probability that if we take k
+[40:29] samples randomly among these n that all
+[40:33] k1s are incorrect.
+[40:36] So here
+[40:38] we compute this by computing the
+[40:40] probability that the first attempt is
+[40:42] incorrect and then the second one is
+[40:46] incorrect knowing that the first one was
+[40:48] incorrect and so on which we have for
+[40:52] which we have this uh formula.
+[40:55] So if you uh saw that in probability
+[40:58] class, it's basically the same as
+[41:00] sampling without replacement.
+[41:06] And now the nice thing with this is that
+[41:09] you can express that with a nice
+[41:12] mathematical notation. So for people who
+[41:16] know
+[41:20] so n choose k
+[41:24] is equal to factorial n
+[41:28] factorial k
+[41:30] factorial n minus k. So this is by
+[41:34] definition of what this quantity is
+[41:36] about. So we're going to use that here.
+[41:40] So here we have
+[41:43] a series of products. So here we can
+[41:45] express that as factorial over another
+[41:48] factorial. So here it's factorial n
+[41:52] minus c
+[41:55] over factorial
+[41:58] n minus c minus k.
+[42:05] And then this quantity we can also
+[42:07] express express that with factorials.
+[42:10] So it's factorial n and then numerator
+[42:14] is factorial n minus k.
+[42:20] Everyone agrees with the math here.
+[42:25] I take that as a yes.
+[42:27] And so here we're going to somehow
+[42:31] pop the expression above up. So it's
+[42:34] going to be equal to 1 minus
+[42:39] um so
+[42:41] n minus c factorial over n - c minus k
+[42:46] factorial
+[42:49] and then k factorial
+[42:51] and then here we're going to say it's
+[42:54] this one
+[42:56] k factorial k factorial
+[43:00] over n factorial. So here I did a a
+[43:05] trick. What I did was
+[43:09] I basically multiplied the numerator and
+[43:12] the denominator by k factorial.
+[43:15] And so here I have 1
+[43:19] minus. So this is
+[43:23] n minus c over
+[43:28] n. So n minus c choose sorry n minus c
+[43:31] choose k
+[43:35] over
+[43:36] n
+[43:40] choose k.
+[43:45] So this
+[43:48] this is our estimate
+[43:51] of pass at k.
+[43:55] Does everyone agree?
+[43:58] Yeah.
+[43:59] Okay.
+[44:01] So, the reason why I derived it is uh
+[44:04] because that this formula can be a
+[44:06] little bit daunting to look at, but it's
+[44:09] actually quite um natural because it's
+[44:13] only using some sampling without
+[44:16] replacement
+[44:18] um considerations.
+[44:20] And so, you will see in papers that
+[44:24] people have this pass K metric. So if
+[44:27] you were to compute it, this would be
+[44:29] the formula to use.
+[44:33] Cool. And uh special K of pass at K is
+[44:36] pass at one
+[44:39] and pass at one is defined as the
+[44:42] probability of a single attempt
+[44:45] succeeding.
+[44:48] So this is something that is more uh
+[44:50] something that you you commonly know. Uh
+[44:53] so if suppose you have a model that
+[44:56] produces an answer what is the
+[44:57] probability that is correct.
+[45:00] So if you replace K with one you will
+[45:04] see that this formula will simplify a
+[45:06] lot and it will be just a proportion of
+[45:09] successful attempts which also makes
+[45:11] sense just intuitively.
+[45:15] Cool. Everyone clear with this?
+[45:18] Yeah.
+[45:20] Great. Um so now to your question um so
+[45:24] what do you do with the temperature and
+[45:26] you're exactly right
+[45:28] when you generate these solutions
+[45:31] multiple times something that will
+[45:34] influence your results is how diverse
+[45:37] the solutions that you will generate
+[45:39] will be and this is something that you
+[45:41] indeed
+[45:43] use the temperature for.
+[45:46] Now, okay. So, what is the relationship
+[45:49] between temperature and pass K? Do do we
+[45:53] want low temperature? Do we want a high
+[45:56] temperature? Or do we want something in
+[45:58] the in between?
+[46:00] Well, if you take a very low
+[46:03] temperature,
+[46:05] you know that your solutions will be
+[46:08] good, but they will not be diverse.
+[46:11] So if you increase the number of number
+[46:14] of samples that you generate that
+[46:16] quantity would not change which is seen
+[46:19] with uh this graph with the t equal to0
+[46:22] it doesn't change but then when you have
+[46:24] t equal to 0.2 two. Now it increases
+[46:27] because you have some diversity.
+[46:31] But if you increase this temperature too
+[46:33] much,
+[46:34] then you will have the diversity that
+[46:36] you want, but they will also harm the
+[46:39] performance of your predictions because
+[46:41] maybe the tokens that were not that
+[46:44] likely would become likely. And so here
+[46:47] on the opposite side, we have I don't
+[46:49] know t= 1.2 two here which is extreme in
+[46:52] this in this example which is not the
+[46:55] best. So I guess to respond to you uh
+[46:58] typical temperature choice would be
+[47:00] something that is not too large not too
+[47:02] small and I believe in this example is t
+[47:04] equal to8
+[47:06] that I think produces the best results
+[47:09] towards the bigger samples but then here
+[47:12] I guess it's not clear maybe 04
+[47:16] so that's why you will see that in
+[47:18] papers
+[47:19] people always specify the temperature
+[47:23] that they choose to produce the
+[47:25] benchmark results.
+[47:28] So that's why it's uh good to have have
+[47:30] that in mind.
+[47:33] Cool. So these are the main metrics that
+[47:36] people use but not the only ones.
+[47:38] There's another one that you may see
+[47:40] which is called consensus at K
+[47:44] which is the answer that is coming from
+[47:50] the highest number of times that the
+[47:52] answer appears among your generations
+[47:56] and you can think of the
+[47:57] self-consistency technique as being very
+[47:59] related to that.
+[48:01] Um so yes so you may see that and then
+[48:03] the other metrics that you will see in
+[48:05] those benchmarks are typically the ones
+[48:07] that you're familiar with uh like
+[48:09] accuracy exact match and so on.
+[48:14] Cool. Okay. I took a lot of time on this
+[48:17] first part. I think I need to go a bit
+[48:19] faster. But does that roughly make sense
+[48:21] so far?
+[48:24] Yeah. Okay. So right now I hope you know
+[48:28] what a reasoning model is. So now we're
+[48:31] going to go into the most interesting
+[48:33] part of the lecture which is how can we
+[48:36] build such a reasoning model. So we know
+[48:39] we want our reasoning model to produce a
+[48:42] reasoning chain but right now we don't
+[48:45] really know how to do that at scale
+[48:48] and this is going to be the main focus
+[48:51] in this part. So here the idea is to
+[48:56] somehow incentivize the model to produce
+[49:00] a chain of thought a reasoning chain
+[49:03] before answering.
+[49:06] So the problem with that is that
+[49:11] reasoning chains writing is a very tough
+[49:15] task especially for I guess long
+[49:19] reasoning long reasoning chains
+[49:22] and for that let's suppose if we were to
+[49:25] go look into our toolbox of the
+[49:27] techniques we have learned so far you
+[49:29] know maybe we can think okay we can use
+[49:32] SFT to do that but the problem with SFT
+[49:35] is you need high quality data and in
+[49:37] particular you would need to write all
+[49:40] these reasoning chains.
+[49:43] Let's suppose you do not have these
+[49:44] reasoning chains. So how do you do that?
+[49:46] You would typically write them from
+[49:48] scratch but that is very hard.
+[49:52] So that's one uh I guess one vote one
+[49:55] vote to not do SFT if we don't have any
+[49:57] reasoning chains.
+[50:00] So the second reason here is or the
+[50:03] second fact is that the way the model
+[50:06] reasons may be different from the way we
+[50:11] reason
+[50:12] and for that
+[50:14] maybe a human written human written
+[50:17] reasoning may not be the best way to
+[50:20] teach the model on how to reason.
+[50:25] So that's the second fact which is uh
+[50:27] going against having some human written
+[50:30] human written reasoning chains as SFT
+[50:32] data.
+[50:34] And then the third fact that I want to
+[50:36] say is we just saw that these reasoning
+[50:39] tasks they have a very natural
+[50:43] rewards which is actually verifiable.
+[50:47] So for coding you know if your thing
+[50:49] works if it passes some test cases if it
+[50:52] compiles
+[50:54] and for math you know if it works if the
+[50:56] answer is the same as your ground truth.
+[51:01] So naturally you do have a reward
+[51:03] signal.
+[51:05] So we saw there's a reward signal sft is
+[51:10] not the great way to start from scratch.
+[51:13] Well what do you do? Well, let's uh try
+[51:16] RL then. And the good thing is last week
+[51:21] we saw how RL works in the case of LLMs.
+[51:26] So I guess that's great timing.
+[51:30] So how would we do that?
+[51:32] So just as a reminder, we want to teach
+[51:36] our model to solve these more
+[51:40] complicated problems and we also want to
+[51:43] teach it to reason before.
+[51:48] So in order to do that, we first want to
+[51:50] have a reward
+[51:53] that checks whether the reasoning chain
+[51:56] is there.
+[51:58] So here you can do that by simply
+[52:00] checking whether the model has produced
+[52:03] a reasoning chain and you can check that
+[52:05] by checking the presence let's say of
+[52:08] the think start and end token
+[52:12] that you can instruct your model to use
+[52:14] to insert its reasoning chain.
+[52:18] And then the second reward that you want
+[52:20] to have is to check that the solution
+[52:24] that it produced actually works. And so
+[52:28] here as we mentioned this is something
+[52:29] that you can actually do for the
+[52:31] benchmarks that we we care about. So for
+[52:33] code you would check that it works for
+[52:36] all cases. For math you would just
+[52:38] verify with respect to the you know
+[52:41] answer being the same as the ground
+[52:42] truth. So we also have that.
+[52:47] So in summary, we will run RL and we
+[52:53] will run RL using a reward that is a
+[52:57] combination of checking whether the
+[53:01] think tokens are here are here
+[53:04] and that the end result is correct. And
+[53:08] we saw that both of them we can do this
+[53:10] easily. No need for a model.
+[53:15] Cool. So let's suppose you do that.
+[53:17] Let's suppose you you do RL on such
+[53:20] rewards.
+[53:22] Well the nice thing that you see is if
+[53:26] you plot the performance of the model
+[53:29] with respect to one of those benchmarks
+[53:31] that I mentioned. So here it's aim. So
+[53:33] if you remember it's the math benchmark.
+[53:35] You see that as you
+[53:38] perform your RL steps,
+[53:41] the performance of the model on those
+[53:44] benchmarks, they actually increase and
+[53:46] they actually increase quite
+[53:47] significantly.
+[53:49] So the graph here is actually coming
+[53:51] from uh the training of deepseek R1
+[53:54] actually R10 here which we will see a
+[53:57] little bit more in detail with Shervin
+[53:59] how it actually works. But you can see
+[54:02] that if you incentivize the model to
+[54:05] think and produce the right answer, it
+[54:09] can actually learn quite meaningfully
+[54:12] only with these two like verifiable
+[54:15] rewards.
+[54:19] Cool. But now you may wonder, okay,
+[54:22] let's suppose I'm teaching my model to
+[54:24] think. Well, not all prompts are equal,
+[54:28] right? like there are some prompts that
+[54:30] do not need the model to think too much
+[54:34] as opposed to other prompts which would
+[54:37] need a little bit of thinking.
+[54:40] So there's been a lot of uh I guess work
+[54:43] happening in the the community as to how
+[54:47] to control the amount of thinking that
+[54:48] the model does.
+[54:51] So you have things like dynamic uh
+[54:55] budget that you will see out there you
+[54:56] know uh how can we make sure that the
+[54:58] model does not overthink on overthink on
+[55:03] questions that do not need too much
+[55:05] thinking. So for this you can have
+[55:07] something like a quick classifier let's
+[55:09] say uh that runs on the prompt and tells
+[55:12] you whether it's something that is kind
+[55:14] of a highinking kind of problem or a
+[55:17] lowinking one. uh but this is more of an
+[55:20] open problem but this can be one
+[55:21] solution.
+[55:24] So the second one is
+[55:26] those LLMs
+[55:28] they have a limited context window.
+[55:32] So when the LLM thinks
+[55:35] it needs to also be aware of how much
+[55:39] context length is left.
+[55:42] It cannot think too much also because of
+[55:45] that limitation.
+[55:47] So you need to also have that context
+[55:50] awareness.
+[55:51] Uh so there has been some work to also
+[55:54] force the model to either think more or
+[55:58] stop. So there is this term budget
+[56:01] forcing uh that I think was introduced
+[56:04] in this paper uh S1. So the idea here is
+[56:09] if you want your model to continue
+[56:11] thinking, you're going to introduce some
+[56:14] tokens midway to force it to think more.
+[56:18] And such tokens are for instance uh
+[56:22] weights. I think there's another
+[56:24] solution. Um so actually it's a slide
+[56:26] that I have not really talked about. Um
+[56:29] so if you look at this reasoning chain
+[56:31] sometimes the model will output
+[56:32] something like oh wait wait wait uh I
+[56:35] think I found something else and
+[56:36] typically the model would go again on
+[56:39] another uh kind of reasoning path and
+[56:42] this can be one way to incentivize your
+[56:46] model to think more.
+[56:48] Uh or another term can be uh okay your
+[56:52] time is up now my answer is and it will
+[56:54] force your model to respond
+[56:58] and then if you think about it
+[57:01] um
+[57:02] your model gives tokens in its reasoning
+[57:07] chain but
+[57:10] models may think on some other on some
+[57:13] other space maybe not in the language
+[57:14] space. So there is uh also a line of
+[57:17] work around having some continuous
+[57:20] thoughts
+[57:21] uh basically having this uh thinking
+[57:24] token actually not be tokens but be
+[57:26] hidden representations that can be more
+[57:29] meaningful but also more compressed. Uh
+[57:32] so you have a bunch of papers on this.
+[57:34] So there's one that I that we linked uh
+[57:37] which is actually from 2024 but I think
+[57:39] even like a few days ago I also saw
+[57:41] another paper on that. So it's a very
+[57:43] much research active area of research
+[57:49] and
+[57:51] I guess just like that I guess we saw
+[57:53] that the way that we want to scale our
+[57:58] model is with RL.
+[58:01] I guess is everyone convinced of that?
+[58:03] Did I convince you well with those
+[58:05] arguments or does anyone have any
+[58:07] questions on this? And I guess here I
+[58:10] want you to take away to have a takeaway
+[58:13] which is we want to use RL
+[58:17] to incentivize our model to think more
+[58:21] if we start from scratch meaning we
+[58:24] don't have reasoning chains.
+[58:27] So is everyone good with this?
+[58:31] Yeah.
+[58:34] Yeah. Kind of. Yeah. Okay. So I'll take
+[58:36] this as a yes. So now we're going to see
+[58:39] the algorithm that we use
+[58:42] to perform that oral step and you may
+[58:46] have heard this acronym a lot. So this
+[58:50] uh algorithm that we will see is called
+[58:52] GRPO
+[58:54] and GRPO has been released in 2024
+[58:58] and it has been kind of the go-to RL
+[59:02] algorithm for all these reasoning tasks
+[59:05] or for these reasoning training tasks.
+[59:09] So what is GRPO?
+[59:11] So, GRPO stands for group relative
+[59:15] policy optimization
+[59:18] and
+[59:19] it is a an RL algorithm which very much
+[59:23] like PO aims to do these two things we
+[59:27] talked about. So the first one is to
+[59:31] maximize advantages.
+[59:35] And if you remember, advantage is
+[59:38] something that tells you whether what
+[59:40] you're producing as an answer is better
+[59:43] than what you would expect.
+[59:47] So
+[59:48] this is the first part. And then the
+[59:50] second part is that you do not want
+[59:53] to deviate too much from either the old
+[59:59] model which is the model at the previous
+[60:01] RL iteration
+[60:04] or the base model
+[60:06] which is the model at SFT stage.
+[60:10] So GRPO is also doing the same thing as
+[60:14] PO in that sense. But then there's a key
+[60:17] difference
+[60:19] and that difference lies in how it
+[60:21] computes the advantage.
+[60:24] So if you remember
+[60:26] PO
+[60:28] estimated the advantage by taking the
+[60:31] rewards which is at the completion
+[60:33] level. So you know you have your prompt
+[60:36] and you have a response a full response
+[60:40] and then based on those two elements you
+[60:43] have a reward.
+[60:45] So what PO did was take that into
+[60:48] consideration along with something else
+[60:52] that it was training jointly at training
+[60:55] time which was called the value
+[60:56] function.
+[60:59] And the value function objective was to
+[61:03] try to predict what that reward was if
+[61:07] we were to continue generating the
+[61:10] tokens following the policy.
+[61:14] And if you remember the advantage here
+[61:16] is actually in the case of PO was
+[61:19] something that we obtained based on a
+[61:22] very complex formula that we did not see
+[61:24] actually but that's called a generalized
+[61:28] advantage estimation that is a method
+[61:31] to estimate those advantage
+[61:35] and the big limitation with that was
+[61:37] that you had to train a value function
+[61:40] jointly with your policy. So this was
+[61:43] this big bottleneck.
+[61:45] And in contrast to that, GRPO says,
+[61:50] well, we're not going to do that.
+[61:53] We're going to take a completion.
+[61:56] We're going to compute its reward
+[61:59] and we're going to compare it with the
+[62:02] average of rewards
+[62:04] of completions for that same prompt.
+[62:09] So I'll give you an example. So let's
+[62:11] suppose we have a math problem.
+[62:15] So what we're saying here is we're going
+[62:18] to generate multiple completions for
+[62:21] that same prompt
+[62:25] and for each prompt
+[62:27] and completion and the prompt is shared.
+[62:30] So for each completion,
+[62:33] we're going to measure I guess a
+[62:36] relative
+[62:38] um measure of the reward for that
+[62:41] completion and all the other rewards of
+[62:44] the other completions.
+[62:47] So this will give us an idea of how much
+[62:50] better or how much worse is it from I
+[62:54] guess the rest of the group. And so this
+[62:57] is going to be our advantage.
+[63:02] So the big benefit here is that we do
+[63:06] not use value functions. We do not use
+[63:09] that. The only thing we do is
+[63:12] we sample not just one but
+[63:15] [clears throat] multiple completions in
+[63:17] order to compute the average of the
+[63:20] rewards of the group.
+[63:25] Does this make sense?
+[63:29] Oh yeah.
+[63:38] So what what would you do instead?
+[63:46] So the question is why would you do
+[63:47] that? Well, the traditional RL
+[63:50] algorithms just for reference they have
+[63:53] been developed before all these LLMs
+[63:56] became a thing. So for instance, PPU was
+[63:59] a method that I believe is from 2017.
+[64:03] So these quantities they may make a lot
+[64:06] of sense in some setups but maybe not in
+[64:08] the language world. And I guess here the
+[64:12] idea is let's try to think of something
+[64:16] that tells you how good your completion
+[64:20] is just in the relative sense. But here
+[64:23] I guess what the authors want to do is
+[64:25] to not have to have this very expensive
+[64:29] joint model that they have to train and
+[64:32] think of another relative way of doing
+[64:35] that. So I think that's the high level
+[64:37] intuition and I guess here the idea is
+[64:43] let's just sample multiple times and see
+[64:46] how one response is comparing to the
+[64:49] others and then use that as some kind of
+[64:52] baseline to to put this reward into
+[64:57] context. So for instance, you may have a
+[65:00] math problem that's kind of easy and if
+[65:05] you have a high reward for that one,
+[65:07] maybe it's because the problem was easy
+[65:09] to start with.
+[65:11] But if you have let's say um very hard
+[65:14] problem, if you have the correct answer,
+[65:17] then you want to make sure you're
+[65:19] incentivizing your model to upweight
+[65:22] those those tokens much more because
+[65:25] if you find a good solution, it's a good
+[65:28] solution to a hard problem. So you want
+[65:30] to somehow bake that in into your
+[65:33] advantage. So that's kind of the
+[65:35] intuition.
+[65:37] So, GRPO was developed a year ago and a
+[65:40] year ago, you know, LLMs were
+[65:41] everywhere. So, this is also taking into
+[65:44] consideration,
+[65:46] I guess, what LLMs are incentivized to
+[65:50] do in some sense. Um, so yeah, I would
+[65:53] thinking that way.
+[65:55] Does that help? Cool. Cool.
+[65:59] Any other question on this?
+[66:02] Well, don't worry if you have questions
+[66:04] because we will have a walk through of
+[66:06] exactly how it works. So, here we're
+[66:10] going to go through the exact same thing
+[66:12] but illustrate it.
+[66:15] So, in the GRPO case, we're taking a
+[66:20] query
+[66:22] and we're passing that through our
+[66:24] policy model which is our LLM that we're
+[66:27] trying to train.
+[66:29] And here what we said was we want to
+[66:31] generate not one
+[66:34] but multiple completions. Let's suppose
+[66:38] G g completions
+[66:41] and each of these query completions. So
+[66:46] you have G such pairs
+[66:49] you pass them through the reward model
+[66:51] that gives you G rewards.
+[66:56] And what you want is to compute the
+[66:58] advantage which puts all these rewards
+[67:01] into their context. So we saw it was uh
+[67:05] basically the reward minus the average.
+[67:07] But it's actually not exactly that. So
+[67:09] it's reward minus the average over the
+[67:11] standard deviation of those rewards.
+[67:13] This is how they defined it.
+[67:16] By the way, we will see that this it may
+[67:18] not be the the best way to do it, but
+[67:19] we'll see that in a second.
+[67:22] And we use those advantage those
+[67:25] advantages to then tune our policy
+[67:28] model.
+[67:30] And
+[67:32] while we do that we of course don't want
+[67:34] to deviate too much for from the
+[67:36] reference model. So we have the scale
+[67:38] divergence term as well over here.
+[67:42] So that is GRPO
+[67:45] and we're going to see right now exactly
+[67:47] how this worked with PO.
+[67:50] So with PO if you remember you have your
+[67:55] prompt you have your query
+[67:57] you pass that through your policy model
+[68:00] and you only only have one completion
+[68:06] and you pass your prompt and your
+[68:08] completion. So this pair you pass it
+[68:10] through the reward model
+[68:13] and this gives you a reward for that
+[68:16] whole completion.
+[68:18] Now there's one thing we did not see
+[68:20] last time which is more of a
+[68:23] implementation detail
+[68:25] but we also have a kale divergence term
+[68:30] that is comparing the probability of
+[68:33] each token with the probability of the
+[68:36] token for from the reference model.
+[68:39] And from an implementation standpoint,
+[68:42] we also typically incorporate that in
+[68:44] the rewards.
+[68:47] So we have something like a per token
+[68:50] rewards where only the last token has
+[68:54] the reward of the whole completion, but
+[68:57] then everyone has also a kale divergence
+[69:00] term. So that one is not super important
+[69:03] here to like have in mind but it's just
+[69:06] good to know that people implement it
+[69:08] that way.
+[69:10] So once you have those rewards you also
+[69:14] have a value function
+[69:18] that this one is per token.
+[69:21] This one tries to quantify the rewards
+[69:25] if you were to continue generating the
+[69:29] rest of the sequence following the
+[69:32] policy.
+[69:34] And we saw there is this method that
+[69:36] we're not going to see that is called
+[69:38] generalized advantage estimation that
+[69:41] takes in those two quantities and
+[69:44] computes the advantage. You can think of
+[69:46] it as some complicated formula
+[69:49] and you have your advantage that you use
+[69:53] to tune the policy
+[69:57] and that's it which is complicated
+[69:59] compared to this one. So GRPO you use
+[70:04] advantages that are a result of this
+[70:06] group computation but then PO you have
+[70:10] an advantage that is a result of
+[70:13] rewards
+[70:15] and the value function which is per
+[70:18] token.
+[70:20] Yeah.
+[70:24] Cool. Um
+[70:26] so what are the models at stake here? So
+[70:29] here we have some models that we use
+[70:31] that are quote unquote frozen that are
+[70:34] not the ones that we train. So for GRPO
+[70:37] we have the reference model that we do
+[70:39] the K divergence on and then we have the
+[70:43] reward model which we trained in the
+[70:46] past
+[70:47] and the same is the case for PPU.
+[70:52] Now one thing to note is that in the
+[70:56] reasoning case
+[70:58] we are actually not training a reward
+[71:00] model because we know how to tell
+[71:03] whether a solution is correct or not. We
+[71:06] actually have a verifiable reward. So in
+[71:09] the reasoning case we're actually not
+[71:11] having any reward model at all. It's the
+[71:14] same for both.
+[71:16] Now what is different is the models that
+[71:19] we train. So in the gRPO case we only
+[71:24] train the policy model whereas in the PO
+[71:28] case we train the policy model and the
+[71:33] value function the value model
+[71:36] and this is the key difference.
+[71:40] Okay so until now we've seen only uh
+[71:44] drawings and illustrations.
+[71:47] Uh so let's see some math. So you have
+[71:50] the GRPO loss function at the top and
+[71:54] the PO loss function at the bottom. They
+[71:57] look scary,
+[71:59] but we're going to see together some
+[72:03] similarities and some differences.
+[72:07] So what is one similarity?
+[72:11] Both of them they operate on the ratio
+[72:15] of the probability of the current policy
+[72:18] and the probability of the old policy.
+[72:22] So that's the first point in common.
+[72:26] The second point in common is that both
+[72:29] of them
+[72:31] they try to keep the updates
+[72:35] within some region
+[72:37] like not too uh wide and they do that
+[72:41] with the clipping mechanism that we saw
+[72:44] last lecture.
+[72:47] So I recommend that you just like go
+[72:49] through these charts that we saw
+[72:50] together. you know, when the advantage
+[72:52] is positive, how uh the loss looks like
+[72:55] uh and when the advantage is negative.
+[72:58] Uh so this clipping function just allows
+[73:02] you to not make updates that are too
+[73:04] big, that are too white.
+[73:08] But now, okay, what is different?
+[73:11] So in the gRPO case
+[73:14] the kale divergence is actually
+[73:17] something that is explicitly part
+[73:20] of the objective function
+[73:24] whereas for the PO case the scale
+[73:27] divergence is typically part of the
+[73:29] advantage.
+[73:32] So this is more of a technical detail
+[73:34] but
+[73:36] like a few minutes ago I had mentioned
+[73:38] that
+[73:40] from an implementation standpoint we
+[73:42] typically incorporate the K divergence
+[73:46] within the rewards that are considered
+[73:48] in the advantage computation.
+[73:51] So that's one
+[73:53] one difference and then the second
+[73:55] difference is the way we compute
+[73:57] advantages.
+[73:58] So we saw that GRPO we typically
+[74:03] compute rewards for each completions and
+[74:06] then we compare them with the other
+[74:07] completions from the group. Whereas for
+[74:10] PPO we use the rewards and the value
+[74:13] models.
+[74:17] So far so good.
+[74:20] I think I have some other things I want
+[74:23] to talk about, but before that I just
+[74:25] want to kind of open the floor if anyone
+[74:27] has any questions. This is very
+[74:29] technical by the way, a very technical,
+[74:32] probably the hardest part of the whole
+[74:33] class. So, it's completely normal to I
+[74:37] guess take some time to digest that. And
+[74:40] if no one has any questions, I actually
+[74:42] see this as more of an alarm for myself
+[74:45] because this is maybe uh I don't know.
+[74:48] So let let me know if there's any
+[74:51] any questions on this and uh yeah
+[74:55] absolutely no problem to have any kind
+[74:57] of questions.
+[75:00] Is everything super clear?
+[75:06] Super clear. Okay. So just tell yourself
+[75:09] that these algorithms
+[75:12] they're just there to tune your model in
+[75:16] the RL stage.
+[75:18] PPU is heavily used in the preference
+[75:22] tuning framework where you try to tune
+[75:26] your model to align it with human
+[75:27] preferences and GRPO is commonly used
+[75:31] for this reasoning based training.
+[75:36] So I think if you tell yourself that
+[75:37] then it's something and then the second
+[75:39] thing you need to tell yourself is GRPO
+[75:41] differs from PO
+[75:44] in that GRPO does not need a value
+[75:47] function.
+[75:49] it actually computes its uh advantages
+[75:52] by comparing the rewards with respect to
+[75:54] other completions
+[75:58] and then the PPO it takes in the reward
+[76:01] it takes in the value and then compares
+[76:03] the two to get the advantage.
+[76:08] So if this is making sense I think this
+[76:10] is already a very good thing. So is this
+[76:13] making sense?
+[76:16] Yeah. Okay,
+[76:19] cool. Uh, I would also recommend to just
+[76:21] rewatch the recording. So, we're
+[76:23] recording this. Um, this is, you know,
+[76:26] very heavy and, uh, can be technical.
+[76:28] So, yeah, just like re-watching it a few
+[76:30] times, I think, can help. So, we have 11
+[76:34] minutes before giving it to Shervin. And
+[76:37] what we're going to see now is some
+[76:40] extensions of the GRPO work that was
+[76:45] done last year that people have done in
+[76:48] the past uh few months. So this research
+[76:51] is going back to early 2025 but it has
+[76:54] gained enough traction for us to talk
+[76:57] about it in this class.
+[77:00] So if you remember what I mentioned in
+[77:03] the beginning of the lecture,
+[77:06] reasoning tokens are being charged to
+[77:09] you as a user. So you don't want to pay
+[77:13] a lot, right? You don't want to pay too
+[77:16] much. So you want your model to do what
+[77:20] you want, but you do not want it to
+[77:22] generate too much so that you're getting
+[77:24] charged for it.
+[77:26] and also from the provider sides I guess
+[77:28] it's much better to be more efficient.
+[77:31] So there is an incentive to see what we
+[77:35] can optimize from the output length
+[77:38] perspective.
+[77:40] So if you see the training of these
+[77:43] models,
+[77:45] one thing that you notice is that as you
+[77:49] train it in the RL stage, the output
+[77:54] increases in length.
+[77:56] So here this graph shows as a function
+[77:59] of the RL step the average length per
+[78:03] response.
+[78:05] So you see like from an empirical
+[78:07] perspective that the answer that the LLM
+[78:11] is outputting is getting longer and
+[78:13] longer.
+[78:15] And this is mainly coming from the
+[78:17] reasoning chain that is being more and
+[78:20] more sophisticated.
+[78:23] And when you compare this graph with
+[78:26] respect to how the performance of the
+[78:28] model improves,
+[78:30] you see that you know this increase here
+[78:33] in length
+[78:35] is actually correlated with an increase
+[78:38] in performance.
+[78:40] And you might say okay it's good.
+[78:43] But then there comes a stage over here
+[78:48] where the performance so it's on the on
+[78:50] the left. the performance of your model
+[78:53] tends to stabili stabilize,
+[78:57] but then your output length still
+[78:59] continues increasing.
+[79:02] And so a lot of people have looked at
+[79:03] these charts and they're like, okay,
+[79:05] there's something going on.
+[79:09] So here what we're going to do is to
+[79:11] look at this phenomenon
+[79:14] and see how people have tried to
+[79:17] mitigate it.
+[79:19] So little warning this is also a little
+[79:22] bit technical so please bear with me
+[79:25] there is one formula that I will try to
+[79:28] explain to the best that I can but there
+[79:31] is some amount of math
+[79:34] so in order in order to understand
+[79:36] what's happening
+[79:37] we need to look at the GRPO loss and the
+[79:42] GRPO loss is the one that I just
+[79:44] mentioned here seems like a very
+[79:46] complicated formula but it it's not
+[79:48] really a complicated one. I'm going to
+[79:49] just explain in plain terms what this
+[79:52] means. So J of GRPO J means objective
+[79:56] function. So the objective function of
+[79:59] GRPO
+[80:01] is to maximize
+[80:04] this quantity which is a function of how
+[80:09] much your model changes with respect to
+[80:11] the old one. So it's these ratios that
+[80:13] you see in the in the slide and you have
+[80:16] this clipping mechanism that prevents
+[80:19] your updates from being too wide.
+[80:23] And then you have uh the kale divergence
+[80:26] on the right which prevents your model
+[80:29] from being too far from the base model,
+[80:32] the reference model.
+[80:35] And then you have these summations here.
+[80:38] And the summations here, they correspond
+[80:41] to you going through that process for
+[80:45] all completions in your group. Because
+[80:48] remember, if you have a prompt, you
+[80:50] sample it several times, you have
+[80:52] several completions.
+[80:55] And then you do that for every token of
+[80:57] your output.
+[81:00] So here the first summation is over the
+[81:03] indices of your group. The second
+[81:05] summation is over the indices
+[81:08] that are with respect to the token
+[81:10] number in your sequence.
+[81:14] And so here I guess let's just kind of
+[81:17] think for a second. Okay, if we were to
+[81:19] swap I'm not sure if you see uh what I
+[81:22] did here. I just swapped the one over
+[81:26] length of output number I. I just
+[81:28] swapped it here.
+[81:30] I'm going to explain why I did that. So
+[81:33] if you look at this,
+[81:36] this is a factor that is only a function
+[81:40] of which output you're in.
+[81:45] So if you're in a very long output,
+[81:49] this will be one over a very long
+[81:51] output, it will be a small number,
+[81:54] right? If it's in it's a short output,
+[81:57] it's going to be one over a short
+[81:58] number. It's going to be a big number.
+[82:03] Right? And the term on the right on the
+[82:06] right of this is token specific.
+[82:11] So in other words, the contribution of a
+[82:14] token with respect to the objective
+[82:17] function
+[82:19] depends on the output that it is in.
+[82:24] So if the token is in a short sentence,
+[82:28] it's going to have a higher weight,
+[82:30] bigger weight than in a longer sentence
+[82:36] until now. Is everyone agreeing with me?
+[82:40] Yeah.
+[82:43] Okay. So with that being said, I'm just
+[82:46] going to rephrase what I just said.
+[82:50] If you are in a short sentence,
+[82:53] your weight will be bigger than if
+[82:55] you're in the bigger sentence.
+[83:00] Right?
+[83:01] Now,
+[83:03] let's try to think about this in terms
+[83:05] of of the advantage.
+[83:08] If you are in the case of a token being
+[83:12] in an output that is of advantage that
+[83:17] is positive that means that
+[83:21] we would want to upweight the
+[83:24] probability of this token happening
+[83:25] again much more for short sentences as
+[83:29] opposed to longer ones.
+[83:32] And at the same time,
+[83:35] you want when the advantage is negative.
+[83:39] So it's not you want, it's just that
+[83:41] this formulation
+[83:43] makes tokens that are in short outputs
+[83:47] be downweighted even more
+[83:51] compared to when they're in a long
+[83:52] output.
+[83:55] And so this is the problem. This is a
+[83:59] bad incentive because what you're
+[84:02] telling your model is if you have a
+[84:07] short bad sentence, it is worse than if
+[84:11] you have a long bad sentence.
+[84:16] So that's the idea here. So I'm just
+[84:19] going to just rephrase what we said
+[84:20] until now. The fact of dividing by the
+[84:24] length of the output is incentivizing
+[84:27] your model to downweight even more
+[84:30] tokens. If the same tokens in a short
+[84:33] output, it will it will be downweighted
+[84:35] even more than if it's in a long output.
+[84:38] So in other words,
+[84:42] what you're going to do is to prefer
+[84:46] longer bad outputs as opposed to shorter
+[84:48] shorter bad outputs.
+[84:51] And this is what people are
+[84:53] hypothesizing that is making the output
+[84:57] length
+[84:58] bigger and bigger. And we're going to
+[85:00] see that in a second. So what people did
+[85:05] was do something about this. So this one
+[85:08] over length of O people wanted to do
+[85:12] something about it.
+[85:14] So there is one paper that came out in
+[85:17] March DPO quite a popular paper now that
+[85:22] actually equalizes these token level
+[85:24] contributions
+[85:26] and so here this normalization factor is
+[85:29] now common to all tokens
+[85:32] and there is another paper that's called
+[85:35] uh so I think it's GRPO done rights but
+[85:38] it's Dr. GRPO. So I'm not sure how you
+[85:40] you pronounce it, but that paper
+[85:43] actually proposes to remove the factor
+[85:47] altogether.
+[85:50] And when you do that,
+[85:52] if you compare the GRPO
+[85:56] versus the one that equalizes the token
+[85:59] level contributions,
+[86:01] you see that if you plot reward as a
+[86:05] function of output length,
+[86:08] your model will stop increasing its
+[86:11] length again and again.
+[86:14] So if you actually look deeper
+[86:18] um samples that are correct
+[86:22] are actually having a length that is
+[86:25] matching with the GRP1 but for incorrect
+[86:28] solutions
+[86:31] here the corrected policy is having an
+[86:34] average length that's that's much lower
+[86:37] than the ones from GRPO. So that's the
+[86:40] bottom right chart
+[86:43] and that is actually making so this
+[86:45] adjustment is actually making the
+[86:47] intended
+[86:48] um consequence.
+[86:51] So that's one very important I think
+[86:53] very important one important
+[86:55] modification that people typically apply
+[87:00] and I'm looking at the time uh in one
+[87:03] minute I will just tell you about some
+[87:06] other modifications that people do. So
+[87:11] there is a modification with respect to
+[87:13] the standard deviation
+[87:16] uh that is within the advantage formula
+[87:19] that biases towards uh like
+[87:23] in terms of the difficulty of the
+[87:25] problem because if let's suppose you
+[87:28] have a very hard problem
+[87:31] most of your completions will be let's
+[87:33] say failures and so your standard
+[87:35] deviation will not be super large.
+[87:38] So this can cause problems.
+[87:41] And then there is another modification
+[87:44] that people typically also consider
+[87:47] which is having different epsilons.
+[87:51] And if you remember that epsilon
+[87:54] influences how much you're able to
+[87:58] change the policy from one iteration to
+[88:00] another.
+[88:03] And the idea here is that if the
+[88:06] probability of your token is very low,
+[88:10] it is kind of unfair to just give it a
+[88:13] small epsilon to grow because this
+[88:17] epsilon is multiplied, right? So I'm
+[88:19] just going to write that down and then
+[88:22] it's going to be uh shervin
+[88:25] uh where is this? Okay. So,
+[88:30] so we actually want
+[88:33] the ratio of
+[88:36] pi over pi all to be roughly you know
+[88:42] in between those bounds roughly.
+[88:45] So in other words it's 1 + epsilon * pi
+[88:51] of old. Right? So if this one is very
+[88:54] low,
+[88:56] you cannot really
+[88:59] change your value too much.
+[89:02] And you don't want to have an epsilon
+[89:03] that's too high because you don't want
+[89:06] big probabilities to suddenly go to
+[89:08] zero.
+[89:10] So you want to introduce an asymmetry
+[89:12] between the lower and the upper bounds.
+[89:17] Cool.
+[89:18] So this was a lot. Any questions on
+[89:21] this?
+[89:25] Okay, we're running short on time. We're
+[89:27] going to have uh some time after the
+[89:29] lecture in case you have any questions.
+[89:31] And uh with that, I'm going to give it
+[89:33] to Shervin.
+[89:40] Thank you for covering all the hard
+[89:43] parts. Now it's going to be a bit easier
+[89:46] because we're going to see how all of
+[89:48] this comes together. Um and in
+[89:51] particular we're going to focus at the
+[89:53] deepseek papers and exactly how they
+[89:55] used all these techniques that Afin
+[89:57] covered into uh building these reasoning
+[90:00] models.
+[90:03] So what we saw at previous lectures what
+[90:05] quote unquote traditional LLMs. So you
+[90:09] started from a pre-trained base model
+[90:12] where you did a next token prediction on
+[90:14] a bunch of text of the internet and then
+[90:17] out of this you proceeded to do your
+[90:20] alignments which was composed of SFT and
+[90:24] then RL. So like not the reasoning style
+[90:27] RL but like the regular one and then the
+[90:29] SFT was u like instruction tuning and
+[90:33] we're going to see how these newer
+[90:35] models are being trained and I think the
+[90:40] example of the deepseek R1 paper is a
+[90:42] great one because they go into multiple
+[90:45] stages. first into showing how powerful
+[90:50] can the RL stage be if you apply the
+[90:54] verifiable rewards that Afen mentioned
+[90:57] and then based on the observations
+[91:00] of like the performance that you get out
+[91:02] of it how to deise a full pipeline of
+[91:06] getting a super powerful model that they
+[91:10] called R1.
+[91:12] So yeah, respectively a proof of concept
+[91:14] and then a full reasoning model. Does
+[91:17] that sound good?
+[91:20] Okay, great. So now let's start with the
+[91:24] recipe that uh DeepSc folks use for the
+[91:27] R10 model. So they first started with um
+[91:32] like a pre-trained model uh like trained
+[91:35] on next token prediction on uh like the
+[91:39] latest architectures with all the bells
+[91:41] and whistles. So you recall from
+[91:43] previous lectures we talked about uh
+[91:46] mixture of experts. So they have this
+[91:48] and they reuse a trick called multi-
+[91:52] latent attenu attention MLA that they
+[91:56] had introduced in deepseek v2 and we had
+[91:59] talked about it uh as well you can see
+[92:01] in their architecture they use a porm in
+[92:04] their transformer blocks so they have um
+[92:07] like a typical baslm so they perform uh
+[92:11] next token prediction on it and then
+[92:15] this is where the fun starts so Instead
+[92:18] of going ahead with an alignment
+[92:20] strategy that consists of SFT, they just
+[92:24] start with this pre-trained model just
+[92:27] trained on next token prediction and
+[92:29] that hasn't seen any supervision so far
+[92:32] and they apply the technique that Afin
+[92:35] just mentioned
+[92:36] um on uh reasoning data. So they look at
+[92:41] rewards and all they incentivize the
+[92:45] model to do is to um increase the
+[92:49] rewards based on the output uh like
+[92:54] output answer that the model gives as
+[92:58] well as formatting. So if you have your
+[93:01] like thoughts think tokens that I've
+[93:03] mentioned then uh like the reward on the
+[93:06] formatting side would be uh would be
+[93:08] given
+[93:09] and the paper gives exactly the
+[93:13] templates over which they trained uh the
+[93:16] model. So it's a very simple one. um you
+[93:19] have like the first sentences that set
+[93:21] up the stage that say you know hey
+[93:23] you're discussing with the user you're
+[93:25] an assistant and then the reward uh that
+[93:29] I mentioned regarding formatting is
+[93:31] explained in plain text so it says
+[93:34] whatever you want to think about just do
+[93:37] it but put it into think um into think
+[93:40] boxes
+[93:42] uh and then uh you know once you're
+[93:44] ready to give your answer you should
+[93:46] wrap it under like an answer um
+[93:51] basically answer um blocks
+[93:55] and what you see here in red is what you
+[93:58] replace by the sample prompts and uh and
+[94:03] then at the end you give the opportunity
+[94:06] to the model to respond.
+[94:09] Does that make sense?
+[94:11] Okay, great. And I'm going to show you
+[94:14] again a graph that Afin had showed. So
+[94:16] it was uh done on R10 where they said
+[94:21] that without any prior supervision just
+[94:24] having this as a reward increases scores
+[94:28] on uh reasoning based benchmarks. So
+[94:30] this one I think is on AIM. It's like
+[94:33] math one. And you see that the accuracy
+[94:36] improves over time.
+[94:40] And you might think, you know, all is
+[94:42] solved. It's great. No SFT and we
+[94:45] already have the best performance
+[94:46] possible. Well, uh, not so easy because
+[94:51] the authors when they looked at the
+[94:53] reasoning chains, they saw some issues
+[94:56] with it of two kinds. So first when the
+[95:00] model was thinking about um like was
+[95:03] emitting distinct tokens sometimes it
+[95:06] would mix languages
+[95:08] and you had also syntax issues and uh
+[95:12] you could hypothesize that this might be
+[95:14] the case because you haven't really seen
+[95:17] any strong supervision uh just before
+[95:20] that and you give the opportunity to the
+[95:22] model to optimize
+[95:25] anything the anything it wants but it
+[95:28] doesn't really have uh like as a
+[95:31] background like a strong supervision
+[95:32] signal to anchor on. So this is one key
+[95:36] challenge that we're going to see
+[95:38] together how they try to resolve it.
+[95:42] Um does the R10 process make sense?
+[95:49] Okay, awesome. Uh so now that we have
+[95:52] seen what R10 tried to prove the the
+[95:55] fact that with RL only you can get
+[95:58] reasoning level performance now we're
+[96:01] going to see how to adjust the
+[96:03] challenges that we have seen into a full
+[96:06] uh pipeline. So that one they call it R1
+[96:10] and they start from the same um the same
+[96:13] basis. So they start from a v3 base
+[96:16] which is the pre-trained model that uh
+[96:19] deepseek had trained during their v3
+[96:22] paper. So it was the non-reasoning
+[96:24] version of of this model. uh so they
+[96:27] start from it and then instead of
+[96:30] starting directly to doing the RL um
+[96:34] stage that we have discussed they try to
+[96:37] align it in a way that will nicely
+[96:41] um like try to alleviate the issues we
+[96:44] have seen. So it starts from what they
+[96:46] called as cold cold start data. They
+[96:51] generated
+[96:53] u like coots
+[96:55] and um so the during the r zero stage
+[96:58] and these coots sometimes had issues. So
+[97:02] they used humans to rewrite some of
+[97:05] these so that all these coots are
+[97:08] compliant when it comes to formatting
+[97:11] you know language consistency
+[97:13] and then they used these pairs prompts
+[97:16] and then rewritten prompts
+[97:19] as data to train uh SFT on it. So uh you
+[97:26] know and I think there was no number
+[97:28] given on um on the number of samples
+[97:31] given to to that stage but uh from the
+[97:34] warning of the paper it could have been
+[97:36] several orders of magnitude less than
+[97:39] some of the other stages that we have
+[97:41] seen. So potentially in the O of case
+[97:44] of of input output pairs.
+[97:48] Okay. So now that we have this stage
+[97:51] ready, uh they continued with the RL
+[97:54] stage that uh R10 would do and then
+[97:58] we're going to explore
+[98:00] um you know the the reward function that
+[98:03] they used. So not only we have this uh
+[98:07] verifiable reward based on the response
+[98:10] of the reasoning model uh output that we
+[98:14] wanted to have. Uh but also we have the
+[98:17] formatting reward and there is something
+[98:19] new that they introduced as well to
+[98:22] counter the effect of having poor
+[98:25] readability in their uh in their
+[98:27] thoughts. There was something called a
+[98:30] language consistency reward where they
+[98:33] use um a very simple uh like huristic to
+[98:39] assess whether the model indeed doesn't
+[98:42] mix languages. So I believe it was the
+[98:44] ratio of the tokens in the target
+[98:47] language in the outputed chain. So they
+[98:50] just put that in order to maximize uh
+[98:52] the amount of correct language tokens.
+[98:58] Um
+[99:00] okay great. And after this first pass of
+[99:04] RL they continued on with SFT with a
+[99:09] very interesting uh strategy. So they do
+[99:12] it as like a larger scale than the cold
+[99:14] start one. And now they mix both
+[99:18] reasoning and then non-reasoning data uh
+[99:20] in order to make the model useful to the
+[99:24] span of cases that you as a user might
+[99:27] solicitate the model for.
+[99:30] And regarding non-reasoning data, they
+[99:34] uh recycled some of the data that was
+[99:37] used for their non-reasoning version of
+[99:40] the model for V3. So about 200k uh pairs
+[99:44] and it covers the domains that we have
+[99:47] mentioned during the instruction tuning
+[99:49] lecture. So like a broad array of
+[99:52] topics.
+[99:54] uh and then what they did is that they
+[99:56] added to it a lot of pairs that are
+[99:59] directed towards reasoning. So the ratio
+[100:02] was 3:1 and then the reasoning ones uh
+[100:07] were um generating uh with a method
+[100:11] called rejection sampling. So what they
+[100:14] did is that they um they took some
+[100:17] prompts covering these reasoning based
+[100:21] uh fields and they used the model that
+[100:24] had been trained so far to generate a
+[100:27] response and then based on the output
+[100:30] and on some with some judge they would
+[100:33] keep some answers and reject others such
+[100:36] that the resulting uh data sets would be
+[100:40] of very high quality. So this is what
+[100:42] they call by rejection sampling. It's uh
+[100:45] yeah just a fact of filtering out any uh
+[100:49] answers that are not you know perfect.
+[100:52] And the reason why I guess they did it
+[100:55] automatically with like some LLM judges
+[100:58] and so on is like given the scale of the
+[101:00] data and you know these were u huristics
+[101:04] that that worked pretty nice uh on that.
+[101:08] You had a question? No. Uh, okay.
+[101:13] So once they were done with that, they
+[101:18] uh went on to a last stage that was one
+[101:22] that you might u that might make you
+[101:24] think about the ones that u occur in
+[101:27] non-reasoning model training pipelines.
+[101:30] Uh so they mix this time not only
+[101:33] reasoning data but also non-reasoning
+[101:35] ones. So for the reasoning data you know
+[101:38] same kind of reward as we have seen but
+[101:41] on the non-reasoning one um you try to
+[101:45] align the model on characteristics that
+[101:49] make an LLM a helpful assistant and a
+[101:52] harmless one. So you have this
+[101:54] helpfulness and harmlessness
+[101:57] components of that uh part of the
+[102:00] reward. And the harmlessness was a
+[102:03] reward that was applied on the whole uh
+[102:07] tokens that were outputed. So not just
+[102:09] the output because you want the chain of
+[102:12] thoughts in the think uh section of the
+[102:15] answer to be um to be harmless indeed.
+[102:19] And then the helpfulness one was uh more
+[102:22] focused on on what you saw at the user
+[102:25] at the user level.
+[102:28] Okay, great. And just to give some idea
+[102:31] of the results they got. Um so first you
+[102:36] notice that on uh reasoning based um on
+[102:40] reasoning based benchmarks you have two
+[102:42] clusters of result that appear you have
+[102:45] all these non-reasoning based models
+[102:47] that have uh some performance and then
+[102:50] the reasoning based ones have
+[102:52] unsurprisingly uh like reasoning uh like
+[102:56] a performance that is much higher. And
+[102:59] then the second thing that we observe
+[103:00] out of these results is that uh R1 was
+[103:05] pretty competitive with respect to
+[103:06] closed source models that claim to be
+[103:08] reasoning based and it was a pretty um
+[103:12] pretty interesting uh you know moment as
+[103:15] Afin had mentioned uh to reproduce such
+[103:18] um like such a level of of performance.
+[103:24] Okay, great. So I want to finish this
+[103:27] lecture on a interesting note of you
+[103:30] know let's say you don't have a 600b
+[103:35] at your disposal let's say you have a
+[103:37] smaller model but you want to have the
+[103:39] capabilities of this large uh reasoning
+[103:42] model you know how would you go about it
+[103:45] so I just want to give you a reminder of
+[103:48] how we had dealt with this topic a few
+[103:52] lectures ago when we talked about
+[103:54] distillation
+[103:55] So at that time we were just talking
+[103:58] about pre-training and then instruction
+[104:00] tuning where the data we were dealing
+[104:02] with was fixed. So for example for next
+[104:05] token prediction you know the text you
+[104:08] want the model to fit on. For SFT you
+[104:11] have fixed pairs. You know exactly what
+[104:12] you want to learn. And what you did was
+[104:16] look for each next token prediction at
+[104:20] the output probability distribution of a
+[104:23] teacher model. And on your student
+[104:26] model, instead of fitting a hard label
+[104:30] of the next token, you fitted instead
+[104:33] the whole probability distribution of
+[104:35] the teacher model in order to distill
+[104:39] the knowledge quote unquote of that
+[104:42] teacher model into the student model. Do
+[104:44] you all remember that? Yep.
+[104:49] So now u you know how could you go ahead
+[104:52] with this in this in this case? So here
+[104:55] as you have seen we don't necessarily
+[104:57] have SFT pairs based on reasoning out of
+[105:01] the box. So if you want to distill the
+[105:04] knowledge of a teacher model here uh the
+[105:07] authors have gone through an interesting
+[105:09] route that is still called distillation
+[105:11] but it's another flavor of it. So we use
+[105:15] the teacher model here R1 to generate
+[105:20] some sample responses and including
+[105:22] think thinking tokens.
+[105:25] So this is something that is done uh
+[105:27] like you know offline and then in a
+[105:30] second stage you run uh this SFT and fit
+[105:34] a smaller model on your distilled
+[105:38] uh on your distilled model which is
+[105:39] typically like much less weights than
+[105:42] than the teacher one. So instead of
+[105:45] fitting a probability distribution over
+[105:48] the next token, you just fit the entire
+[105:51] sequence. you just try to predict the
+[105:53] same sequence of tokens that the teacher
+[105:56] has outputed.
+[105:59] Does this um framing of distillation
+[106:02] here make sense? Yeah.
+[106:06] Okay. Awesome. And I'm going to conclude
+[106:08] here by looking at the results. So you
+[106:12] can see that the results once again are
+[106:14] very competitive with uh closed source
+[106:17] alternatives that claim to be uh like a
+[106:21] smaller version of a reasoning model. So
+[106:23] for example 01 mini you can see that the
+[106:26] numbers here are competitive with
+[106:27] respect to that. And then you could also
+[106:30] wonder but why did you go through the
+[106:32] trouble of um of like just distilling
+[106:37] when you could just like do the same RL
+[106:39] techniques?
+[106:41] Well actually uh the authors have seen
+[106:44] that at a smaller uh size level
+[106:49] distilling the knowledge is more uh
+[106:52] efficient in terms of performance than
+[106:55] uh directly learning from scratch.
+[106:59] All good.
+[107:02] And with that, have a great weekend.

@@ -1,0 +1,2102 @@
+[00:00] Cool.
+[00:06] Hello everyone and uh welcome to CME 295
+[00:10] transformers and large language models.
+[00:13] So my name is Afin and I will be
+[00:15] teaching this class with Shervin who's
+[00:17] in the back and uh before I start I'm
+[00:21] just going to introduce ourselves.
+[00:24] Um, so we're twin brothers and uh we
+[00:28] actually had kind of a similar
+[00:30] background. So we both went to a school
+[00:33] in France called Salbar and then we each
+[00:36] went our way. So on my end I went to MIT
+[00:39] and then Shervin went to Stanford to do
+[00:41] the ICME masters program
+[00:45] and after that I guess our um industry
+[00:49] background is very similar as well. So I
+[00:51] first went to Uber and then Shervin came
+[00:54] to Uber as well and then Sharvin left to
+[00:56] Google and I went to Google and then
+[00:58] very recently I joined Netflix and
+[01:01] Shervin joined Netflix as well and we've
+[01:03] been working on large language models.
+[01:06] Um so yeah I guess we have like
+[01:09] technical backgrounds and mostly
+[01:11] oriented towards LLMs.
+[01:14] Okay. So why are we doing this class? Um
+[01:17] so since 2020 uh Shervin and I have been
+[01:20] specializing in NLP and we've been
+[01:22] giving this class uh in a format of a
+[01:25] workshop that was done in a yearly
+[01:28] basis. So in 2021 2022, 2023, 2024, you
+[01:33] know, CH GPD came in 2022 and suddenly
+[01:37] there was a lot of interest for LLMs and
+[01:40] so uh it's actually last spring that we
+[01:44] started to offer this class as a
+[01:47] Stanford course that is now called CME
+[01:50] 295 and this is the second instance.
+[01:55] >> Boom. Um so what can you expect from
+[01:58] this class? So first of all are
+[02:02] basically uh everywhere now and I guess
+[02:06] our goal here is twofold. So the first
+[02:09] one is to learn about the underlying
+[02:13] mechanism that makes all this work and
+[02:16] we're going to see the transformer which
+[02:17] is the foundational architecture uh that
+[02:21] makes all this work. And then the second
+[02:23] thing is to know how these LLMs are
+[02:26] trained and where they are applied.
+[02:31] So in case you're still wondering if
+[02:33] this class is good for you, um I would
+[02:37] say that this class is great for people
+[02:39] who just in general have an interest in
+[02:41] this field either because you wanted to
+[02:44] make it your career goal. uh if you want
+[02:47] to be I don't know research scientists
+[02:49] or an ML scientist or if you want to uh
+[02:53] develop like a personal project that
+[02:55] relies on LLMs to some extent to just
+[02:59] like knowing the caveats I guess what
+[03:01] works what doesn't
+[03:03] or just if you're in a separate field
+[03:05] and you just want to know how this whole
+[03:08] AI geni LLMs thing works and how you can
+[03:12] apply it to your domain.
+[03:14] Okay. So now in terms of prerequisites,
+[03:17] I would say that at a very minimum um
+[03:21] you should have some foundations in ML
+[03:26] like basically know what a how a model
+[03:28] is trained, what a neural network is uh
+[03:31] and also some basics in linear algebra.
+[03:34] So basically how matrices are multiplied
+[03:37] for instance. Uh but even even if you
+[03:40] have kind of a developing um I guess
+[03:43] competency in these fields I guess it's
+[03:45] fine. We still be here to help you out.
+[03:48] But I guess this is like the ideal set
+[03:50] of prerequisites.
+[03:54] Cool. So still on the logistics. Um, so
+[03:58] this class will be held every Friday
+[04:00] from 3:30 to 5:20 and it will be held
+[04:05] here.
+[04:08] So this class is two units and you have
+[04:11] the choice to either take it as a letter
+[04:15] or credit nonredit.
+[04:18] So, as you could tell from the from the
+[04:20] setup, we're basically recording this
+[04:22] class. And if you cannot for some reason
+[04:25] attend this uh you know, this time this
+[04:27] slot, uh we'll make sure with to um make
+[04:31] the recordings available either tonight
+[04:34] like every Friday night or on Saturday.
+[04:38] So in terms of the grades um so what
+[04:41] we're doing for this quarter is to have
+[04:45] two exams.
+[04:47] So one is the midterm which will be
+[04:50] happening uh during our fifth instance
+[04:53] which is October 24th
+[04:56] and then the second exam will be the
+[04:58] final exam which will be held uh like in
+[05:01] the on the you know in the week of the
+[05:04] December 8th. So date is still TVD,
+[05:09] so we'll let you know.
+[05:12] Cool. Um, so every time we have a
+[05:16] lecture, we'll be posting the slides and
+[05:18] the recordings on the website.
+[05:21] And in case you're interested, we also
+[05:23] have the syllabus in there so you can
+[05:25] know a little bit what are the topics
+[05:26] that we'll be talking about.
+[05:29] uh and uh the class textbook is uh this
+[05:33] super study guide transformer LMS so we
+[05:36] have a copy here in case you want to
+[05:38] take a look um so yeah I guess a lot of
+[05:40] the concepts that we have in this class
+[05:42] will actually be in the book so I guess
+[05:45] it's a helpful way to follow this as
+[05:47] well
+[05:50] and also we did uh some kind of very
+[05:53] short condensed version of this whole
+[05:56] class that we called the VIP cheat sheet
+[05:58] so But this one is available on GitHub
+[06:00] in case you're um you're interested. Uh
+[06:03] and yeah, we we also translated it into
+[06:05] a number of languages now. Um by the
+[06:08] way, if your language is not there, uh
+[06:10] let us know and uh yeah, happy to work
+[06:12] on that as well together.
+[06:16] Okay, cool. Uh I think it's the last
+[06:18] things on the logistics part. So in
+[06:20] terms of announcements, we'll be posting
+[06:22] things on Canvas. In case you have any
+[06:24] questions, you can of course reach out
+[06:26] to us. Uh, but there's also a tab on
+[06:30] canvas that's called ED. Uh, I'm sure
+[06:32] you're familiar. Um, so yeah, just click
+[06:35] on that, just post your question and
+[06:36] then Shervin and I would be responding
+[06:41] and, uh, yeah, I guess to reach out to
+[06:43] us, you have this mailing list or just
+[06:45] like, you know, we're just two, so just,
+[06:48] uh, ping us.
+[06:51] Cool. So on the logistics, do we have
+[06:54] any questions so far? And one thing I
+[06:56] forgot to mention is that given that
+[06:58] we're recording this class, um I guess
+[07:02] if you're asking a question, it may not
+[07:05] be super clear for the viewer what your
+[07:07] question was. So I'm going to make an
+[07:09] effort to just repeat your question. It
+[07:11] will sound weird, but yeah, I try to not
+[07:14] forget.
+[07:16] But yeah, so yeah, any questions so far
+[07:18] on the logistics?
+[07:21] Yep.
+[07:29] So the question is whether there are
+[07:31] like coding parts in the exams. So the
+[07:33] answer is no. So the exams will purely
+[07:35] focus on concepts that we see in class
+[07:38] and actually it's not meant to you know
+[07:40] trap you. So I guess if you follow the
+[07:42] class if uh you know you see the slides
+[07:44] and like the concepts that we see should
+[07:47] be fine.
+[07:49] Yeah.
+[07:53] Oh yeah. Uh question is if you're weight
+[07:56] listed what do you do? Um I think so by
+[07:58] experience you know a lot of people will
+[08:00] kind of finalize their schedule. Some
+[08:02] people will drop some won't. In case
+[08:04] you're still weight listed uh you know
+[08:06] come talk to us but I'm pretty confident
+[08:08] uh you know it's going to be okay
+[08:10] because I think the weight list right
+[08:11] now is like six. So yeah I think you
+[08:13] should be fine. Cool.
+[08:16] Yeah.
+[08:19] Uh they will be on the website and we'll
+[08:21] make sure to um also post the link on
+[08:24] canvas. Yeah. Uh so the question was
+[08:27] where are the slides and they're on the
+[08:29] website.
+[08:31] Cool. Yeah.
+[08:40] So question is on the waiting of the
+[08:42] exams. So yeah there is no homework. So
+[08:45] 50% is midterm, 50% is final and no no
+[08:49] grades I mean no weights apart are from
+[08:51] that and in particular I mean if this
+[08:54] slot is conflicting with something just
+[08:56] uh keep in mind that we are recording
+[08:58] this so I mean it's fine if you if you
+[09:01] cannot attend let's say session yeah
+[09:06] sorry
+[09:11] oh um is a question that the final is
+[09:13] about just the second half of the class.
+[09:15] Um, we've not uh we have not uh written
+[09:18] the exam yet, but I think this is
+[09:20] something we're thinking of. So, yeah,
+[09:21] the final is probably going to be the
+[09:23] second half about the second half of the
+[09:25] topics.
+[09:29] Cool. Okay, long story short, 50%
+[09:32] midterm, 50% exam, final exam, and uh
+[09:36] yeah, it's a fun class.
+[09:39] Cool. So, with that, I'm going to just
+[09:42] slowly start the class. Um, so another
+[09:45] thing that I wanted to mention was every
+[09:47] time we're talking about something you
+[09:49] will see that at the bottom of the slide
+[09:51] there will be a source. It's mostly for
+[09:54] so first to credit whatever we're
+[09:56] quoting but also uh for you to kind of
+[10:00] dig into those material a little bit
+[10:02] more in case you're interested. Uh
+[10:04] because of course we have only like two
+[10:06] hours per week and we only have nine or
+[10:08] 10 weeks. So there's nowhere near the
+[10:12] you know enough time for us to cover
+[10:14] everything.
+[10:16] And the second disclaimer is you will
+[10:18] see that the field is full of
+[10:21] abbreviations. So I myself was
+[10:24] completely scared of them when I
+[10:26] started. Uh but hopefully by the end of
+[10:29] the class you will have a mental mapping
+[10:31] of what these abbreviations mean respect
+[10:34] to what they correspond to. Um so yes so
+[10:36] if you have that mental mapping towards
+[10:38] the end of the class then we'll know we
+[10:40] did a good job.
+[10:42] So with that
+[10:44] um let's start and I guess we will start
+[10:47] at the very high level because I would
+[10:49] just assume that um I guess we're
+[10:53] starting from scratch um and we're going
+[10:57] to talk about NLP in general. So NLP is
+[11:01] going to be our first abbreviation. So
+[11:03] NLP stands for natural language
+[11:06] processing and it is a field that is
+[11:09] around like manipulating text just
+[11:12] computing things with text
+[11:15] and at a very high level can basically
+[11:18] classify NLP tasks into three buckets.
+[11:22] So the first bucket is what we call
+[11:24] classification.
+[11:26] So we have an input text as an input and
+[11:30] then what we want is to predict
+[11:33] something. So one example is you have a
+[11:36] movie review and you want to predict
+[11:39] whether uh the sentiment is positive,
+[11:42] negative or neutral. Uh so that's one
+[11:44] example. You can also have intent
+[11:47] detection. Uh just you know knowing what
+[11:50] for instance the person want to do. So
+[11:52] let's suppose you say I want to create
+[11:54] an alarm for tomorrow. So the intent
+[11:56] here is create an alarm.
+[11:59] So also to detect a language. So for
+[12:01] instance, if you write in French, you
+[12:03] want to detect that that text is in
+[12:05] French. Topic modeling.
+[12:09] The second category is what we call
+[12:12] multi-classification.
+[12:14] So we still have a text that's input,
+[12:17] but this time we predict more than one
+[12:20] thing. So you have a number of tasks in
+[12:24] that bucket as well. So one that is very
+[12:26] popular is called named entity
+[12:28] recognition aka neer.
+[12:33] So what that task does is given an input
+[12:36] text we want to basically label some
+[12:39] specific words like for instance
+[12:41] identifying whether something is a
+[12:44] location or a time and so on.
+[12:49] And then you have some other tasks as
+[12:50] well that are a little bit more on the
+[12:52] linguistic sides. uh I think they're
+[12:54] less trendy now but I guess 10 years ago
+[12:56] it was something that people would study
+[12:58] a lot. Uh so part of speech tagging
+[13:01] which is about just figuring out which
+[13:04] word is you know noun a verb etc or some
+[13:08] parsing related tasks so dependency or
+[13:10] constituency parsing
+[13:13] and then the last bucket which is very
+[13:17] popular these days is the generation
+[13:19] bucket.
+[13:21] So you have an a text as inputs and you
+[13:25] also have text as outputs and here the
+[13:28] length can be variable meaning you don't
+[13:31] know what the length of your output text
+[13:33] will be beforehand. So here you have
+[13:36] several tasks. So for instance, you have
+[13:38] machine translation. So for something in
+[13:41] English and I wanted to let's say uh
+[13:43] German
+[13:45] question answering. So typically you
+[13:46] know the chat GPT Gemini that you're
+[13:48] using you know the assistant. So you ask
+[13:51] a question and you have a response
+[13:54] and then you have like other um tasks as
+[13:57] well like summarization. You want to
+[13:58] summarize an article let's say or just
+[14:01] generate something. So something can be
+[14:03] generate codes, generate a poem, can
+[14:07] also be a lot of things.
+[14:11] Cool. So now what we will do is go
+[14:14] through these tasks one by one to just
+[14:17] illustrate what people typically handle
+[14:20] with. So we're going to start with the
+[14:23] first bucket, which is the
+[14:26] classification bucket. And here we're
+[14:28] going to illustrate this with the
+[14:30] sentiment extraction task.
+[14:32] So let's suppose we have a sentence this
+[14:35] teddy bear is so cute. We want our model
+[14:38] to predict you know this to be a
+[14:40] positive sentiment.
+[14:43] So typically what you would use is you
+[14:45] know data sets that are around know
+[14:47] sentiment extraction data set. So I
+[14:49] mentioned movie reviews. So this is IMDb
+[14:51] critics but you also have reviews about
+[14:54] products. So Amazon reviews or you know
+[14:57] tweets now I guess it's called X. or
+[15:00] exposts
+[15:03] and the way you would evaluate such
+[15:06] outputs would be by typically using
+[15:09] traditional classification metrics. Um
+[15:13] so you have accuracy which is you know
+[15:15] how many what is the percentage of the
+[15:17] observations that you correctly
+[15:19] predicted
+[15:21] but you also have two key metrics which
+[15:24] I'm just going to uh remind I'm not sure
+[15:26] if everyone knows about them. So one is
+[15:28] precision
+[15:30] which is out of all the positive
+[15:32] predictions that you made which ones
+[15:35] were correct
+[15:37] and then the second one is recall.
+[15:40] Out of all the true labels, how many of
+[15:44] them did you correctly predict as being
+[15:46] positive? And uh you have uh this metric
+[15:49] called the F1 score which basically
+[15:52] takes the harmonic mean of precision and
+[15:54] recall to just give you one number.
+[15:57] So now you may wonder you know why do
+[15:59] you need all these metrics? So the short
+[16:02] answer is that sometimes you have tasks
+[16:06] and data sets where your classes are
+[16:09] very imbalanced. So for instance you can
+[16:12] have I know 99% of your data set that is
+[16:15] a positive label and then only 1% of the
+[16:17] data set which is negative. And so here
+[16:20] if you take like a metric like accuracy
+[16:23] it would be very misleading because if
+[16:26] you have a model that would predict
+[16:29] everything as the majority class then
+[16:32] you would have a you know great
+[16:33] classifier but that's not the case. So
+[16:36] that's why precision and recall really
+[16:38] play a role.
+[16:41] So that's for the first one. Okay. So
+[16:44] now let's move to the second category of
+[16:46] NLP tasks. So this this one is the
+[16:49] multiclassification category. So you
+[16:51] have an input text and you predict
+[16:54] multiple things. And uh we're
+[16:57] illustrating this with the neer task
+[17:00] which as I mentioned is about
+[17:03] identifying the category of given words.
+[17:07] And so here for instance we want to
+[17:09] identify a teddy bear as being an
+[17:11] entity. Um I guess for that you would
+[17:14] use classification metrics but not at
+[17:19] the sentence level but more either at
+[17:21] the token level or at the entity type
+[17:24] level.
+[17:26] And but by by that I mean let's suppose
+[17:28] you have a category um let's say
+[17:31] location and you want to know how well
+[17:34] you're predicting words in that
+[17:36] category. So you would typically
+[17:38] aggregate these metrics
+[17:40] um as a function of that
+[17:44] cool
+[17:47] okay let's go to the last category which
+[17:49] is as I mentioned the most popular one.
+[17:51] So this one is text in text out.
+[17:56] So I'm illustrating this with the
+[17:58] machine translation task which is around
+[18:02] translating a text from a source
+[18:04] language to a target language. So here
+[18:07] you have the example with English to
+[18:09] French. So cute teddy bear is reading.
+[18:14] Um so for that I guess it's harder to
+[18:17] get data sets because here you you need
+[18:20] to have pairs of text. So you have a
+[18:24] very popular data set that's called WMT
+[18:28] which stands for workshop on machine
+[18:30] translation
+[18:32] and that one contains a bunch of paired
+[18:35] sequences in different languages. Uh so
+[18:38] for instance you have the English,
+[18:39] French, English, German coming from the
+[18:42] European Parliament data set for
+[18:44] instance. Um okay so to evaluate those
+[18:48] the to evaluate the performance of your
+[18:50] model it's actually a lot more tricky
+[18:55] because as you can imagine you can have
+[18:58] many different ways to translate
+[19:00] something I'm sure many of us in the
+[19:02] room are you know bilingual tri
+[19:05] trilingual um so yeah that's that's what
+[19:09] is making it this hard
+[19:12] so in the past people have used several
+[19:16] rulebased metrics to do that. So one
+[19:19] that you may have heard is blue. Blue
+[19:23] stands for bilingual evaluation under
+[19:26] study and it is a measure of how well
+[19:31] your translation stands with respect to
+[19:34] a reference text.
+[19:36] Same story for Rouge which is actually a
+[19:40] suite of metrics
+[19:42] um but kind of captures that in a
+[19:44] different way and you will see that the
+[19:47] machine learning community is funny
+[19:49] because blue I'm not sure if you know
+[19:51] French means blue but rouge means reds
+[19:54] so I guess they tried to kind of uh add
+[19:58] some some fun in this um but the problem
+[20:01] with these metrics is that you always
+[20:04] need a reference
+[20:06] So you basically need labels
+[20:09] and in practice having labels is very
+[20:14] cost expensive it takes a lot of time a
+[20:18] lot of money to uh get uh labels and we
+[20:22] will see later in the class that with
+[20:25] the progress that we have made in the LM
+[20:27] space or that the community has made in
+[20:29] the LM space we can actually forgo of
+[20:33] this reference based metric met and go
+[20:36] towards a more reference free
+[20:39] uh kind of metrics and we will see that
+[20:41] later on.
+[20:43] And then the last metric that I would
+[20:45] say that people sometimes use is called
+[20:47] perplexity and perplexity only looks at
+[20:51] the probabilities that are output by the
+[20:53] model and it basically quantifies how
+[20:57] surprised the model is by its outputs.
+[21:03] So, blue and rouge, the higher the
+[21:05] better. Proplexity, the lower the
+[21:07] better.
+[21:10] And I guess um LLMs have been a kind of
+[21:14] a hot topic since 2022,
+[21:19] but actually the field goes way back way
+[21:23] before that uh that year. So in the 80s,
+[21:28] we'll see it in a second, but uh there's
+[21:30] a class of models that were actually
+[21:32] kind of thought of even in the 80s and
+[21:35] the '9s, we had LSTMs that we will see
+[21:38] also in a second. Um but the problem was
+[21:42] during that time we didn't have the
+[21:44] internet, we didn't have a lot of
+[21:46] compute and I guess this was one of the
+[21:48] limiting factors which prevented these
+[21:51] models from like the the models from
+[21:54] today from being trained.
+[21:57] And then more recently uh we've had
+[21:59] several advances. So word tovec was
+[22:01] really one of the uh kind of pioneering
+[22:05] um work in just um computing meaningful
+[22:09] embeddings
+[22:11] and we'll see it in a second. And then
+[22:12] of course we had the transformers which
+[22:15] were part of a paper that was published
+[22:18] in 2017
+[22:19] which is basically at the foundation of
+[22:22] of the mouse that you see today.
+[22:25] And then uh you know these models they
+[22:27] just uh were scaled up both by compute
+[22:31] but also in in terms of like the data
+[22:33] that was used to train them and you know
+[22:35] that's how LLMs were dubbed and I guess
+[22:39] these are more like the 2020s but yeah
+[22:42] guess we'll see those.
+[22:46] Cool. Any questions on
+[22:50] I guess the high level?
+[22:53] Everyone good?
+[22:55] Cool. So I guess
+[23:00] the first question that I want to ask
+[23:02] ourselves is
+[23:04] what we want to do is to have a model
+[23:06] that handles text.
+[23:08] But models they understand numbers. They
+[23:11] don't really understand text. So we need
+[23:13] to somehow
+[23:15] do something with that text. to make it
+[23:18] more quantifiable, something that a
+[23:21] model can understand.
+[23:23] So if you look at a sentence, for
+[23:25] instance, a cute teddy bear is reading,
+[23:28] you first need to ask yourself, how can
+[23:32] you cut this sentence to pass it to a
+[23:36] model?
+[23:38] So this part is called tokenization
+[23:42] and what it entails is basically cutting
+[23:45] the text respect to some arbitrary unit
+[23:49] of text.
+[23:52] So there are several ways of doing this.
+[23:54] I guess the first way is doing it
+[23:56] completely arbitrarily.
+[23:59] So here for instance you would have a
+[24:01] that would be one unit of text
+[24:04] would be another unit of text teddy bear
+[24:06] would be another one and so on and by
+[24:09] the way the unit of test is called a
+[24:11] token which is why uh the method method
+[24:14] is called tokenization
+[24:19] another way would be to just separate by
+[24:21] words
+[24:25] but I guess we would have you know
+[24:27] always pros and
+[24:28] I guess um
+[24:31] one of the goals that we want to achieve
+[24:33] is for us to then be able to represent
+[24:37] these tokens in a meaningful way. So one
+[24:41] con with doing this at the word level is
+[24:45] you will end up with words that look
+[24:48] similar but that are actually considered
+[24:51] as different tokens. And I guess the
+[24:54] limitation here is you will need to
+[24:57] compute embeddings for these similar yet
+[25:00] different tokens
+[25:02] and somehow make their embeddings
+[25:06] similar. So I'll give you an example. So
+[25:09] let's suppose I have the word bear
+[25:12] and then you have another word plural
+[25:15] form bears.
+[25:17] So these two words they are very similar
+[25:20] just one is singular the other one is
+[25:21] plural. If we go ahead with the word
+[25:25] level tokenization
+[25:27] then we will end up with just two
+[25:30] different entities
+[25:32] which are basically yeah just considered
+[25:34] as different. Same with run and then
+[25:38] runs you know variations of verbs.
+[25:42] So for that reason,
+[25:45] people have uh kind of um dug into a
+[25:50] category of token tokenizers that are
+[25:52] called subword tokenizers
+[25:55] which is around leveraging roots of
+[25:59] words in order to find what are the
+[26:02] common roots that we can find is in
+[26:04] these words. So for instance for bear
+[26:06] and bears you would have the bear
+[26:08] particle that would be uh kind of shared
+[26:12] And so I guess the pro is that you get
+[26:15] to leverage the root of the words. But
+[26:19] then the con here is that your sequence
+[26:23] would be longer and we will see why this
+[26:27] is a con. Um I guess later on I guess I
+[26:30] can give you um a preview. Um so the
+[26:33] complexity of these models is also a
+[26:37] function of the sequence length.
+[26:40] So the more you have the more tokens you
+[26:43] have to process the more time it would
+[26:45] take for your models model to run
+[26:48] because it needs to basically process
+[26:50] all these tokens.
+[26:52] So that's one con. So pro is it
+[26:55] leverages the root of words. Con is it
+[26:58] just makes your sequences longer.
+[27:05] Okay. you have a last category of uh
+[27:08] kind of ways of tokenizing things which
+[27:09] is just going at the character level
+[27:11] just like taking all characters. So here
+[27:16] I guess uh you and I when we write I
+[27:19] don't know a message we typically have
+[27:22] uh sometimes the misspellings
+[27:24] and with the subword uh way of
+[27:27] tokenizing things. You may not uh be
+[27:32] able to recognize a word that has been
+[27:34] misspelled
+[27:36] and this is something that the character
+[27:38] level tokenizer can uh I guess take into
+[27:42] consideration. But here the problem is
+[27:44] you have a sequence length that's much
+[27:47] much longer which will make your model I
+[27:50] guess take much more time to process uh
+[27:52] this sequence. So that's one con. And
+[27:56] then uh the other con is I guess when
+[27:59] you want to represent each of these
+[28:01] tokens I guess it's very hard to know
+[28:05] what a representation of a letter really
+[28:07] means. Like what does the representation
+[28:11] of the letter U mean?
+[28:14] Very hard.
+[28:18] Cool. So I have just a a quick recap. So
+[28:22] word level is a super naive way, super
+[28:25] simple way of um I guess dividing your
+[28:29] text into arbitrary units. Um but then
+[28:32] the problem is as we mentioned we do not
+[28:35] leverage the root of words and uh I did
+[28:38] not mention this but there's a term
+[28:41] whenever you cut something and then um
+[28:46] at inference time when you want to make
+[28:48] a prediction I guess one uh prerequisite
+[28:52] that you have is that you need to have
+[28:55] the token that you saw at training time
+[28:58] you need to have it in your training
+[29:00] sets.
+[29:02] And the problem is let's suppose at
+[29:05] inference time you cut your text into
+[29:08] words and let's suppose you have not
+[29:10] seen a word at training time you will
+[29:13] need to mark it as unknown
+[29:16] and so this thing is called OV out of
+[29:18] vocabulary.
+[29:21] So luckily the subboard level tokenizer
+[29:24] mitigates that problem. Uh so you have
+[29:28] like a a lower risk of OOV but still you
+[29:32] you can have and as we mentioned in
+[29:34] terms of the pro uh you leverage the
+[29:37] root of the words
+[29:41] um and then character level uh you know
+[29:44] it's robust to our misspellings and our
+[29:47] casing errors uh but the problem is it
+[29:50] makes computations just like much slower
+[29:53] and uh your sequences would be like very
+[29:56] very long uh which will also make your I
+[29:59] guess inference time much higher.
+[30:03] Does that sound good? I guess this is
+[30:05] really the foundation of uh I guess how
+[30:07] to handle things with text. But yeah,
+[30:08] does that make sense overall?
+[30:13] Cool.
+[30:15] Okay. So now, okay, what we did is we
+[30:18] took an input text.
+[30:21] What we did is we cut it into parts that
+[30:24] are basically tokens.
+[30:26] So in order for our model to understand
+[30:29] it these tokens, we need to find a
+[30:32] representation for each of them. So here
+[30:35] uh we're going to take a look at this.
+[30:37] So that's called word representation or
+[30:39] more um I guess in a more correct way it
+[30:43] should be token representation. So we
+[30:45] want to find a way to represent each of
+[30:49] these tokens.
+[30:52] So the simple and naive way to do this
+[30:54] would be to just assign a one hot vector
+[31:00] for each word or for each token. So for
+[31:03] instance let's suppose if let's suppose
+[31:05] we have a vocabulary of three tokens
+[31:09] book soft and teddy bears. We would have
+[31:13] let's say soft that is a one 0 0 vector
+[31:16] teddy bear that is let's say a 0 1 0
+[31:19] vector and book that is let's say a 0 01
+[31:23] vector
+[31:25] so this is called one hot encoding oh e
+[31:30] we typically see
+[31:33] so cool yeah this is a a way to
+[31:35] represent of our tokens but um basically
+[31:39] what people want to do is compare these
+[31:42] tokens to basically see which ones are
+[31:45] more similar to what other ones.
+[31:50] So a common similarity measure that
+[31:52] people use is something called cosine
+[31:56] similarity. Not sure if you have heard
+[31:57] of it. Um so you can think of it as just
+[32:02] seeing what angle these vectors make in
+[32:06] the n dimensional space. And if I guess
+[32:11] they are pointing in the right in the
+[32:13] same direction then maybe they're
+[32:15] similar maybe if they're orthogonal
+[32:17] maybe they're kind of independent and if
+[32:20] they're completely opposite then maybe
+[32:22] they're opposite. That's basically the
+[32:24] mental model we want to uh go into.
+[32:28] So the problem is if you represent your
+[32:32] tokens in a one hot fashion, you will
+[32:35] end up with all your vectors being
+[32:38] orthogonal to one another.
+[32:41] So that's the problem.
+[32:43] So ideally what we want is for tokens
+[32:47] that mean the same or similar to
+[32:51] basically have a high similarity
+[32:54] and for tokens that are not similar like
+[32:58] on like about different things to be
+[33:01] more like or sodom.
+[33:03] So here I just for illustrative purposes
+[33:07] uh teddy bears are soft. So you want
+[33:10] teddy bear and soft to be I guess with a
+[33:13] high similarity and let's say teddy bear
+[33:15] and book which is kind of independent
+[33:17] you want them to be closer to zero.
+[33:21] So that's what you want. That's what you
+[33:23] have with one hot encoding and that's
+[33:25] what you want.
+[33:27] Yeah.
+[33:32] Sorry.
+[33:38] Oh, I see. Uh, the question is why do
+[33:41] you care about the norm? Um, so I guess
+[33:46] cosine similarity is actually normalized
+[33:49] by the norms. So it's um dot product.
+[33:53] Oh, you mean why did I just put dot
+[33:55] product here instead of the
+[34:01] Oh, I see. And your question is why do
+[34:03] we not care about the norm? Um, cool. I
+[34:06] guess the viewers know the question. Um
+[34:08] I guess these measures they all you know
+[34:11] measures they're all ways to try to
+[34:14] capture these uh kind of similarity uh
+[34:18] things. Um so I guess why do you not
+[34:22] care about the norm
+[34:24] h I guess it's how people have tried to
+[34:27] kind of quantify that. Um I I guess you
+[34:30] will need to see how your vectors are
+[34:33] trained and whether the norm would be
+[34:35] indicative of something.
+[34:38] Um I guess the best answer I can give
+[34:41] you is I guess this is a measure. This
+[34:43] is not the perfect measure. Um yeah
+[34:46] people may use also product as a as a
+[34:48] measure but yeah I don't have like a
+[34:50] great answer for you.
+[34:53] Cool. But as long as you capture, I
+[34:55] guess how these vectors they're um
+[34:58] they're pointing. I guess typically what
+[35:00] you care about is the angle between
+[35:02] them. Um but yeah, typically you don't
+[35:05] really take into consideration the the
+[35:07] no.
+[35:10] Cool. Any questions? Any other
+[35:12] questions?
+[35:13] Yeah.
+[35:22] Yeah.
+[35:39] It's a great question. So question is
+[35:41] around size of vocabulary and how that
+[35:44] would inform the choice with respect to
+[35:46] word, subword and how that changes
+[35:48] across languages. It's a great question.
+[35:50] Um, so I would say it really depends
+[35:52] first of all on the task that you're
+[35:53] trying to achieve. If your task is just
+[35:56] about one language, you will just uh
+[35:58] take that same language. You would
+[36:00] typically go with a subword tokenizer
+[36:03] just because of the reasons that we
+[36:05] mentioned here. Um, so I guess subwords
+[36:09] is a nice trade-off between being able
+[36:12] to identify uh words by their roots like
+[36:16] leveraging that but also running less
+[36:18] into the OOV uh risk. Um
+[36:23] so uh in terms of the size I know that
+[36:27] people they've uh you know like try
+[36:31] different things. I think uh typically
+[36:33] for English you would target something
+[36:34] on the order of tens of thousands of
+[36:38] vocabulary size uh but you know like
+[36:41] nowadays the models uh there are
+[36:43] multilingual they're also about codes so
+[36:46] you will see that the vocabulary size
+[36:48] now is sometimes on the order of
+[36:50] hundreds of thousands
+[36:52] uh okay so with respect to Chinese so I
+[36:54] guess you have this uh you know
+[36:57] difference in characters that you're
+[36:59] using so for Latin I guess so it's the
+[37:02] alphabet we're all accustomed to but of
+[37:04] course for the other ones uh you have
+[37:06] something similar but in uh I guess the
+[37:09] the target language character um so yeah
+[37:14] I would say order of magnitude tens of
+[37:17] thousands for one language hundreds of
+[37:19] thousands if it's like multilingual
+[37:21] um yeah these are the order of magnitude
+[37:24] that you want to target for
+[37:28] cool Yeah.
+[37:41] Great question. So question is how do
+[37:42] you get those embeddings? So it's
+[37:44] actually the next slide. So we're going
+[37:46] to talk about this.
+[37:49] Cool.
+[37:51] Great. So okay. So now that we know that
+[37:56] the one hot encoding is not a good way
+[37:58] to represent tokens, what we want to do
+[38:01] is to learn those embeddings from the
+[38:05] data.
+[38:06] So I mentioned that there was this um
+[38:09] you know um paper that came out in the
+[38:11] 2010s. So I think it was 2013 that was
+[38:14] called Vtovec.
+[38:16] And the reason why it was so popular is
+[38:19] because they showed a very intuitive and
+[38:23] interpretable way of seeing these
+[38:25] embeddings. Uh because they were saying
+[38:28] saying something like okay king is to
+[38:29] queen what this is to that like Paris is
+[38:32] to France what Berlin is to Germany. So
+[38:34] there was basically a way to make sense
+[38:38] of the embeddings. So now the question
+[38:40] is how did they do that?
+[38:43] So they had two ways of computing these
+[38:46] uh embeddings. So one way was called
+[38:49] continuous bag of words. The other one
+[38:51] was called skipgram. But they all rely
+[38:54] on the same idea
+[38:56] which is let's just leverage text that
+[39:00] we have and then try to predict
+[39:05] something that is part of the text based
+[39:07] on let's say the context.
+[39:10] So for instance, continuous pack of
+[39:12] words.
+[39:13] The goal is you take into consideration
+[39:16] the words that are around a given target
+[39:19] words and your goal is to predict that
+[39:23] target words.
+[39:25] And skip gram is kind of the opposite.
+[39:27] You go from uh a target word and you
+[39:30] want to predict the words that are
+[39:33] around it. So I guess this task is
+[39:36] commonly called a proxy task. Because at
+[39:40] the end of the day in this exercise,
+[39:43] what we care about is not necessarily to
+[39:46] predict the next word or at least not
+[39:48] yet. Our goal is to learn a
+[39:52] representation of these words that are
+[39:54] meaningful.
+[39:56] And so here the idea is if you have a
+[40:00] model that somehow knows how to predict
+[40:04] let's say the next word
+[40:07] then it means that your model has some
+[40:10] understanding of how language works
+[40:15] which is basically what you want. You
+[40:17] basically want an embedding that is
+[40:19] reflective of
+[40:22] uh I guess what languages
+[40:24] which is u you know king and queen or
+[40:28] you know or similar you know Paris and
+[40:30] France like this is the capital you want
+[40:32] to have these associations embedded in
+[40:35] the representation
+[40:39] and let's go through a very simple
+[40:43] example of what that looks Like
+[40:47] so here in our example,
+[40:49] let's suppose that our proxy task is
+[40:53] about predicting the next word.
+[40:56] So here what we take is a very vanilla
+[41:01] neural network model which basically
+[41:04] receives a vector of size V
+[41:09] has some multiplication and a bias term
+[41:12] to get like hidden state and then uh
+[41:17] another set of multiplications to get
+[41:20] our final vector.
+[41:23] So here it's basically a a very simple
+[41:26] neural network. Uh so the input is of
+[41:30] size V. The hidden layer is of size D
+[41:34] which is typically much smaller than the
+[41:36] vocabulary. So vocabulary is typically
+[41:38] like tens of thousands or hundreds of
+[41:40] thousands. So D is typically hundreds
+[41:43] like 768 for instance is is one example
+[41:47] of dimension.
+[41:50] So it's much much smaller. So what we're
+[41:53] trying to do is to learn the word
+[41:56] representation through this proxy task.
+[41:59] And what we're going to do is try to
+[42:02] consider
+[42:04] a word as input
+[42:08] and predict the next word.
+[42:12] So let's go with the first word of the
+[42:15] sequence. So by the way I use token and
+[42:18] words interchangeably.
+[42:20] Um so let's suppose we have the word a
+[42:24] and we want to predict the next word
+[42:26] which is the word cute.
+[42:29] So what we do is we take the word a
+[42:34] we take the one hot
+[42:37] encoding representation
+[42:40] and we pass it through the network. So
+[42:42] here if you're familiar with neural
+[42:44] networks so here you have I guess a
+[42:47] multiplication between I guess a matrix
+[42:49] and and this vector. So you have a
+[42:52] hidden state representation which is a
+[42:55] vector of size D. So here let's suppose
+[42:59] it's 2 1.9. So D equ= 2
+[43:04] and then you have I guess another pass
+[43:06] here. uh and then you get after softmax
+[43:10] a set of probabilities
+[43:12] which are around
+[43:14] seeing what is the next word. So in this
+[43:18] example we have uh a vocabulary of size
+[43:23] six. So the first word is predicted with
+[43:27] probability 02
+[43:29] second word 4 and then the other words
+[43:33] are all 0.1 in this example.
+[43:36] So let's suppose that we want to somehow
+[43:41] be able to maximize our prediction to be
+[43:44] the second word of the vocabulary which
+[43:46] is the point 4.
+[43:49] So we basically compare the prediction
+[43:53] with uh I guess 0 1 0 0 which is a
+[43:57] representation of the second word of the
+[43:59] vocabulary
+[44:02] and then we you know do the back prop we
+[44:04] you know update the weights. Not sure if
+[44:07] everyone is familiar with that part. Uh
+[44:09] but the idea here is once you obtain a
+[44:14] prediction you compute a loss. So
+[44:16] typically cross entropy
+[44:19] which will determine how far off you are
+[44:22] from the true answer and based on that
+[44:26] difference you're going to update the
+[44:29] weights in order to make your prediction
+[44:31] closer
+[44:33] to the truth.
+[44:36] So that's what you do and then you
+[44:38] repeat that process. Let's suppose you
+[44:40] take the word cute
+[44:42] which as we said is the second word in
+[44:44] the vocabulary. So the one hot encoding
+[44:48] representation is 0 1 0 0 0. So you go
+[44:52] through that uh you know network uh you
+[44:55] have a hidden state like the vector is
+[44:59] 8.4 before you do that again. And what
+[45:01] you want to do is to predict the next
+[45:04] token. And here's teddy bear.
+[45:08] And so you see now your model in this
+[45:10] example is predicting the next word to
+[45:13] be kind of like uniform, but you want to
+[45:15] somehow maximize the probability for
+[45:18] teddy bear. So you go about doing this
+[45:20] again and again for all the words. And
+[45:23] at the end of the day, you obtain a
+[45:26] model
+[45:28] that learns how to predict the next
+[45:31] words, which is basically the proxy
+[45:33] task. And what you're going to do is to
+[45:36] take the representation that the model
+[45:39] learns, which is the the green units.
+[45:43] So what happens now is every time you
+[45:46] have a word
+[45:48] you just represent that as a one hot
+[45:52] encoding representation and you just
+[45:54] like multiply this with these weights
+[45:57] and then you obtain the green
+[46:00] representation
+[46:02] and that is your world representation.
+[46:09] Does that make sense? Yeah.
+[46:28] Yeah.
+[46:33] Yeah. Great question. Yes. Great
+[46:36] question. So the question is about what
+[46:37] does V correspond to and why there's
+[46:39] only six. So yes, in this example, we
+[46:41] only have six possible words, which is
+[46:44] basically the vocabulary size, which is
+[46:46] like very um kind of a toy example
+[46:49] because in practice there's many more.
+[46:52] Um so I guess uh that's one of the
+[46:56] challenges with language. So you can
+[46:58] technically have many variation of words
+[47:00] which is why if you take a word level
+[47:04] way to divide your text into tokens you
+[47:07] can end up with the vocabulary that's
+[47:09] like very big because you need to
+[47:11] account for all the variations of given
+[47:13] words.
+[47:15] Uh and the other thing that I want to
+[47:17] point out is um let's suppose you have a
+[47:21] vocabulary size of six and it's the six
+[47:23] words that you saw at training time. But
+[47:25] what what happens if if at inference
+[47:26] time you have a word that you have not
+[47:28] seen at training time? And so the answer
+[47:32] for that is typically what people do is
+[47:35] they
+[47:37] reserve a spot for what they call an
+[47:40] unknown token or out of vocabulary token
+[47:44] which is basically
+[47:46] um can think of it as you know a bucket
+[47:49] for everything that we could not have we
+[47:52] we were not able to identify.
+[47:55] So if let's suppose at inference time
+[47:57] you have a token that you were not able
+[48:00] to identify, they will all take that
+[48:02] representation which is the unknown
+[48:04] token representation.
+[48:06] Um and it's by the way something that I
+[48:09] guess the
+[48:11] word level tokenizer has kind of trouble
+[48:15] to do because you will have a much
+[48:17] bigger chance of having out of
+[48:19] vocabulary tokens. word level subword
+[48:22] level will have a lower chance and then
+[48:24] character level uh I guess you yeah you
+[48:26] don't have that problem does that answer
+[48:29] your your question
+[48:33] >> any
+[48:53] Great, great question. So, first
+[48:54] question is when do you know when you're
+[48:56] done?
+[48:57] So the thing with the proxy task is when
+[49:00] you train your model I guess your true
+[49:02] objective is to not really learn I mean
+[49:06] in this case to learn how to predict the
+[49:08] next word your objective is to have
+[49:09] meaningful representations but what you
+[49:12] can do is to somehow track the loss
+[49:15] function for the proxy task that you're
+[49:18] pursuing but then also taking into
+[49:20] consideration that this is not
+[49:21] necessarily your end goal. So I guess
+[49:25] one uh you know very reasonable way of
+[49:28] going about doing this is just to wait
+[49:30] until your model converges. So here what
+[49:32] you do is you track the loss as a
+[49:36] function of so there's this term epoch
+[49:39] just how many times your model sees the
+[49:41] training set and so you compare this
+[49:44] this different curves and when this
+[49:46] converges this is typically like a good
+[49:48] time to you know stop start stop the
+[49:50] training process and like just see if
+[49:53] that makes sense depends on your
+[49:55] downstream task of course but that's one
+[49:59] um okay so your second question sorry
+[50:01] can you repeat the Second question.
+[50:04] Yeah.
+[50:08] Yeah.
+[50:17] Oh, great question. So, so the question
+[50:19] is how do you know when the generation
+[50:23] stops? I guess like otherwise it will
+[50:25] stop. Uh, it will never stop. So, yeah,
+[50:27] exactly. So, you have some special
+[50:28] tokens. Typically you have end of
+[50:30] sequence uh end of sequence. So
+[50:33] typically when you have the end of
+[50:34] sequence token generated then it's when
+[50:36] when it stops.
+[50:40] All right. So second question was um
+[50:43] what informs the size of the hidden
+[50:47] layer? Um, I would say it's a trade-off
+[50:51] uh because you want the embedding to be
+[50:54] rich enough that it can be informative
+[50:58] for your downstream task. So for
+[51:00] instance, if you want to somehow get an
+[51:02] embedding of let's say your sentence um
+[51:05] and if you want to let's say do a very
+[51:06] very specialized task super you know
+[51:10] like with a lot of different outcomes
+[51:11] maybe you want a vector that really
+[51:13] captures that. So maybe you want a
+[51:15] bigger vector. But if you have like a
+[51:17] very simple task, maybe a smaller vector
+[51:20] might make sense. Um, so I guess the
+[51:23] size of your hidden dimension
+[51:26] also impacts the complexity of whatever
+[51:30] you're running after because of course
+[51:32] if you have longer vectors, you'll have
+[51:34] more computation. So your inference will
+[51:36] be probably more uh expensive etc. So I
+[51:40] guess there's a lot of factors. So I
+[51:42] guess just to recap, one is how
+[51:44] complicated your desk task is. Second
+[51:47] one is how sensitive are you with like
+[51:50] latency, cost, all these things. So it's
+[51:53] really a trade-off, but out there you
+[51:55] would typically see embeddings of, you
+[51:57] know, of hundreds or thousands. Um, of
+[52:02] course, you know, these models, they've
+[52:03] been growing, so number may change, but
+[52:06] that's the the order of magnitude that
+[52:08] you're looking at.
+[52:12] Right. This is indeed empirical. Yeah.
+[52:14] Yeah. I guess you can also rely on like
+[52:16] what others found uh and just go from
+[52:18] that. Yeah. But 768 and Yeah. Like these
+[52:21] numbers are are things that people
+[52:23] typically take. Yeah.
+[52:27] Cool.
+[52:29] Yeah.
+[52:47] Good question. So, um the question is
+[52:49] how can you distinguish words that are
+[52:53] spelled the same but in different
+[52:54] context? So, you're way ahead of me. Uh
+[52:57] so this is basically the basics and
+[52:59] we're going to tackle uh methods that
+[53:02] can tackle these problems of just
+[53:04] contextualizing the word in the
+[53:06] sentence. So yeah, so we'll see that in
+[53:09] in a bit.
+[53:14] Cool.
+[53:16] I'm not uh uh I'm not on time, so I'll
+[53:19] I'll try to get moving. Um so okay so
+[53:23] now what we did was see how we could
+[53:26] learn representations of tokens
+[53:31] but I guess you may also want to get
+[53:35] representations of you know sentences or
+[53:38] you know pieces of text.
+[53:41] So one very naive way to do that with
+[53:45] what we saw before is to take something
+[53:48] like the average of words let's say the
+[53:51] word representations but the problem is
+[53:54] you you know lose a lot of meaning you
+[53:56] lose uh the order you lose um and I
+[54:00] guess here I think you pointed out very
+[54:01] well uh the representations that you
+[54:04] learn are token specific regardless of
+[54:07] where they're at.
+[54:09] So that's why we have a class of models
+[54:14] that aim at capturing the sequential
+[54:17] nature of you know how text appears. So
+[54:20] we're going to talk about RNN which
+[54:23] stands for recurrent neural network.
+[54:26] So what RNNs do is instead of processing
+[54:31] words one at a time, what they do is
+[54:35] they keep a hidden representation
+[54:38] of the sentence so far and they consider
+[54:43] tokens one at a time.
+[54:46] So as I mentioned before, this technique
+[54:48] was actually you introduced uh like a
+[54:52] fair amount of time ago. also in the
+[54:53] 80s. Um, and what this model does is it
+[54:59] takes into consideration the order at
+[55:01] which words appeared or tokens appeared.
+[55:05] And so in this example um you start the
+[55:10] I guess processing at the very beginning
+[55:12] of the sentence. you have some uh dummy
+[55:15] um hidden state that is called a
+[55:18] typically noted a or h it's called a
+[55:21] hidden state activation or even
+[55:23] sometimes a context vector
+[55:26] and you have some kind of a mod module
+[55:29] that takes into account the hidden state
+[55:33] so far and the word at time step t. So
+[55:38] here time step one.
+[55:41] So here what it does is it takes in the
+[55:46] meaning of the sentence so far and takes
+[55:48] into consideration the words that is
+[55:50] happening now and it produces an output
+[55:54] vector that here can be used to you know
+[55:58] try to predict the next word. So for
+[56:00] instance here we have this hidden state
+[56:02] and this um uh the representation of the
+[56:05] words that then you know you have some
+[56:08] matrix multiplications in this in this
+[56:10] blue box and you have an output vector
+[56:13] that you try to you know train on
+[56:17] predicting the next words
+[56:20] and then
+[56:22] you keep on doing that by
+[56:26] by keeping
+[56:29] this hidden state keeping track of this
+[56:31] hidden states
+[56:33] and so you repeat the process and I
+[56:36] guess the way you would interpret this
+[56:38] hidden states is it's a representation
+[56:43] of the se sequence process so far.
+[56:49] So the good thing with RNN is now the
+[56:53] word order matters
+[56:56] and you're also able to encode the
+[57:00] sentence in a more natural way.
+[57:04] So let's see roughly how it works. So we
+[57:08] have the same uh favorite example. So
+[57:10] cute teddy bear is reading. So you would
+[57:13] have the token A, you find the one hot
+[57:17] encoding vector, you pass it through
+[57:19] your network, you compute the hidden
+[57:21] states, you try to predict cute,
+[57:25] but then you keep track of the hidden
+[57:28] states
+[57:30] and then you input that into another uh
+[57:33] module and then you also consider next
+[57:36] words. So you consider not only the word
+[57:39] itself but also the hidden states of I
+[57:42] guess the sentence so far and you try to
+[57:43] predict the next word again
+[57:46] and again and again.
+[57:51] So this is RNN.
+[57:54] So, RNNs were used for a bunch of tasks
+[57:59] and just like mapping that straight to
+[58:01] the categories that we saw before
+[58:04] for classification purposes,
+[58:07] you can basically use the hidden states
+[58:10] of the last word in your sentence. For
+[58:14] instance, if you want to predict the you
+[58:16] know the review like the sentiment of a
+[58:19] review, you would take basically the the
+[58:21] last last vector here and try to project
+[58:24] it into the space of uh the predictions
+[58:26] or the labels that you want to predict
+[58:28] on. So for instance, if you want
+[58:29] positive or negative, we basically
+[58:31] project that vector into that space. You
+[58:33] can do that here for multi
+[58:35] classification. So you would basically
+[58:37] have the representation of the token of
+[58:40] interest and you would project that or
+[58:44] for generation
+[58:46] you would basically process the whole
+[58:49] source text
+[58:51] and then have
+[58:53] uh kind of the context vector aka
+[58:56] activation vector aka hidden state at
+[58:59] the end of your processing which will
+[59:02] then be used to decode
+[59:06] the output prediction.
+[59:09] So this is how you would use an RNN for
+[59:13] like each of these tasks. So the reason
+[59:16] why you have not really heard of RNN's
+[59:19] like this like these days is because
+[59:22] they had uh you know some pros but a lot
+[59:25] of cons. So one of the cons is that the
+[59:29] meaning of the sentence is basically
+[59:32] solely encapsulated into this hidden
+[59:35] state.
+[59:39] So you have this problem of long r long
+[59:41] long range dependencies which basically
+[59:44] um like impacts your ability to quote
+[59:48] unquote remember what the models saw in
+[59:52] the past
+[59:54] which is why you have another class of
+[59:56] models that try to build on RNN. So this
+[60:00] one is called LSTMs, long shortterm
+[60:04] memory.
+[60:06] And the goal of that extension is to
+[60:09] have a way to somehow keep track of the
+[60:14] things that are quote unquote important
+[60:16] to remember
+[60:18] on top of the hidden state that we
+[60:20] talked about. So here you have uh a of t
+[60:23] which is you know your activation
+[60:25] um like basically the the sequence so
+[60:28] far encoded in there and then you have
+[60:30] another
+[60:32] quantity that you track that is called
+[60:34] the cell states. It's noted C here.
+[60:39] So this architecture aimed at I guess
+[60:43] improving that piece but I guess it was
+[60:46] not perfect either.
+[60:49] But yeah so that was uh like the main um
+[60:54] issue of RNN based methods which is that
+[60:58] they have this issue of kind of
+[61:00] forgetting what was in the past. So you
+[61:02] will see in the literature that this
+[61:04] phenomenon is called vanishing gradient
+[61:08] and the reason why it's called that way.
+[61:10] So I know we're kind of running out of
+[61:12] time but I'm going to just explain that
+[61:13] part.
+[61:15] So in order for you to predict let's say
+[61:19] the last words
+[61:22] you're basically dependent on every
+[61:25] hidden state that came before that.
+[61:30] So far so good.
+[61:32] And so
+[61:34] whenever you want to update the weights
+[61:37] of your model to match the prediction
+[61:40] here with the actual prediction,
+[61:43] when you do the back propagation,
+[61:46] you somehow need to take into account
+[61:49] that the loss the value here is
+[61:53] basically not only a matter of this
+[61:56] computation but also this computation or
+[61:58] this computation that basically happen
+[62:00] in a sequential manner.
+[62:03] So you have this kind of uh um this
+[62:07] phenomenon of trying to I guess back
+[62:11] propagate through time.
+[62:13] But the problem is
+[62:16] in practice when you kind of write that
+[62:17] down. So it's a very ugly formula. But
+[62:19] when you write that down, it ends up
+[62:21] being
+[62:23] a product of of a bunch of quantities
+[62:28] that can so if it's greater than one,
+[62:30] then it's exploding. If it's less than
+[62:33] one, it's vanishing because if you
+[62:35] multiply a lot of things that are less
+[62:36] than one, it just goes to zero. So I
+[62:39] guess if you have something that you're
+[62:40] trying to update that goes to zero, you
+[62:44] basically have trouble just like, you
+[62:45] know, doing your updates. So that's a
+[62:47] high level intuition. This is not the
+[62:50] focus of this class which is why I'm not
+[62:51] going into the detail of these ugly
+[62:53] formulas. But I hope you get the idea
+[62:56] that uh for kind of remembering things
+[62:59] from the past, it's not doing a great
+[63:01] job because of this uh sequential
+[63:05] um I guess uh characteristic.
+[63:10] Does that make sense?
+[63:13] Okay. I hope the next thing will make a
+[63:16] bit more sense. But before that I'll
+[63:17] just recap what we saw. So our goal is
+[63:22] to represent text. So we first started
+[63:25] with represented representing words or
+[63:28] tokens which was what we tried to do
+[63:30] with word tove
+[63:33] and we saw that you know it was a good
+[63:35] way to leverage you know proxy test to
+[63:38] learn this representation but we had a
+[63:41] bunch of limitations and one of them
+[63:43] that you mentioned was that it was not
+[63:46] aware of the context and also the word
+[63:49] order didn't count. Um and so you have
+[63:52] this other class of methods that is able
+[63:56] to take into consideration uh the words
+[64:01] but then they have some trouble keeping
+[64:03] track of things when the sequence gets
+[64:06] very long and you have this problem of
+[64:08] vanishing gradients or long range
+[64:11] dependencies. So whenever you see this
+[64:13] term it's basically referring to that
+[64:16] and also another thing that I have not
+[64:18] mentioned but the computations are very
+[64:21] slow. So when you want to train these
+[64:23] models at training time in order to
+[64:27] predict this word you basically need to
+[64:31] compute all the hidden states before.
+[64:35] So where your when your sequence gets
+[64:36] very long just gets uh like it just
+[64:40] takes a very long time.
+[64:46] So for all of these reasons for for I
+[64:50] guess all these what reasons? So for
+[64:53] the fact that um the model has trouble
+[64:59] remembering things from the past.
+[65:02] People have tried having more direct
+[65:05] connections
+[65:06] between something and the thing from the
+[65:08] past. And this is the idea behind
+[65:12] attention.
+[65:14] So what attention does is it tries to
+[65:18] have a direct link between what we're
+[65:22] trying to predict and something from the
+[65:24] past.
+[65:26] So in this example, let's suppose I'm
+[65:28] trying to translate an English sentence
+[65:32] into a French one.
+[65:34] So here I guess the input sentence is
+[65:37] given. I'm you know computing the hidden
+[65:39] state. You know I'm processing words one
+[65:41] at a time. This is my traditional RNN.
+[65:43] So a cute teddy bear is reading. So here
+[65:46] I have a hidden state that I'm then
+[65:48] decoding.
+[65:50] And you can imagine that when wanting to
+[65:55] generate the next word of my
+[65:57] translation,
+[65:59] it would be great if I knew
+[66:04] what word I'm trying to predict.
+[66:07] Or in other words, it would be great if
+[66:09] I could take a peek at a certain area of
+[66:14] the input text.
+[66:16] So the idea behind attention is to have
+[66:19] a direct link between what you're trying
+[66:21] to predict and things before.
+[66:26] This is the idea behind attention. Um
+[66:29] and so it was introduced in 2014 and uh
+[66:33] yeah again this is trying to kind of
+[66:35] solve for these long range uh
+[66:38] dependencies issues
+[66:42] and so yeah this example want to do that
+[66:45] and this concept is going to actually be
+[66:48] key for this class because we're going
+[66:52] to see that the attention mechanism is
+[66:56] the thing that is going to make
+[66:57] everything I mean most of the things
+[66:59] work
+[67:02] and this is actually the main principle
+[67:05] that the transformer paper relies on.
+[67:08] So the transformer which is the core
+[67:11] architecture that we will see in this
+[67:13] class has been introduced like or was
+[67:16] introduced in 2017 in this paper named
+[67:20] attention is all you need. So even from
+[67:23] the title you can see that you know the
+[67:25] authors wanted to just rely on that on
+[67:27] that part. So what the authors tried to
+[67:31] do was to move away from these
+[67:35] sequential way of processing the text
+[67:39] and instead let the model just have
+[67:42] direct connections with all
+[67:45] parts of the text at once.
+[67:49] So that is called self attention. Uh so
+[67:52] they tried that on translation tasks and
+[67:55] they just realized that you know it was
+[67:57] uh giving great results.
+[68:00] So back to the example that we're still
+[68:02] using a cute teddy bear is reading here.
+[68:06] What we would say is that in order to
+[68:10] compute the representation of the token
+[68:13] teddy bear,
+[68:15] we're going to look at all the other
+[68:18] tokens in the sequence
+[68:21] at once
+[68:24] and directly with direct links.
+[68:27] So I guess back to your question here we
+[68:30] would have a representation of teddy
+[68:32] bear that would be unique to the context
+[68:34] that it is part of. So back to your
+[68:37] question about river bank and uh uh
+[68:40] robbing a bank like here the bank would
+[68:42] have different representations.
+[68:46] So this is the idea
+[68:49] I guess does the idea roughly make
+[68:51] sense?
+[68:55] And again this is called the self
+[68:57] attention mechanism.
+[69:00] How am I doing on time?
+[69:02] >> Late late. Okay cool. Um so okay so this
+[69:07] is the idea. Uh so now I'm going to just
+[69:10] introduce another
+[69:12] set of ideas which is more terminology
+[69:15] but it's going to be very important.
+[69:17] So when you want to express something
+[69:21] in terms of something else we use the
+[69:24] words key the sorry query key and value
+[69:28] Q K and V. So in this example our goal
+[69:34] is to figure out
+[69:37] what other tokens is the query teddy
+[69:40] bear more similar to.
+[69:43] So here the question is okay you have a
+[69:45] query and you want to see what other
+[69:49] tokens are most similar
+[69:52] and so what you're going to do is to
+[69:55] look at all the other tokens which are
+[69:58] basically composed of
+[70:01] keys and values. So you're going to
+[70:04] compare the query to the key to quantify
+[70:08] how similar your query is to that given
+[70:11] key
+[70:13] and take the corresponding value.
+[70:16] So we'll see that in this example. So
+[70:18] let's suppose you want to express teddy
+[70:19] bear as in terms of everything else.
+[70:22] What you're going to do is you're going
+[70:23] to take the query teddy bear and you're
+[70:26] going to
+[70:28] compare that query with all the other
+[70:30] keys to see which element is most
+[70:34] similar and then weight the more similar
+[70:37] ones and take their associated value.
+[70:41] So that's a very high level
+[70:44] uh idea of guess how these things are.
+[70:48] Of course, we're going to see exactly
+[70:49] how they work, but that's the general
+[70:51] idea.
+[70:55] Okay, cool. And speaking of quarantine
+[70:58] and value, we will also see that one
+[71:01] benefit of expressing things this way is
+[71:05] that we can express
+[71:09] doing this self attention computation
+[71:11] across the whole sequence in a matrix
+[71:14] format
+[71:16] and GPUs love matrices. So it's really
+[71:20] like made for the hardware that we have.
+[71:23] Um and I guess what I mentioned here can
+[71:27] be expressed in a form of soft max of
+[71:30] the query and the key which is basically
+[71:32] a way to get uh some kinds of weights of
+[71:38] which values would be more important. So
+[71:40] for instance if a value is more
+[71:42] important you'll have bigger weights and
+[71:43] another one will be less important
+[71:45] you'll have a smaller weight and you
+[71:47] basically uh multiply that by the value.
+[71:51] So don't worry, we'll have a detailed
+[71:54] example after. So if it still feels
+[71:57] very, you know, high level fuzzy, don't
+[71:59] worry. We'll have a a detailed uh walk
+[72:03] through.
+[72:05] And yes, so this is uh how it works.
+[72:08] Okay, cool.
+[72:11] Any questions on how self what self
+[72:15] attention is? Yeah.
+[72:41] Great, great question. So the question
+[72:42] is uh what is value? What is key? I
+[72:44] guess how do you get those what do they
+[72:45] mean? Um so first of all I just want to
+[72:48] say that these quantities they're
+[72:50] learned. So you are not fixing them. But
+[72:53] from an interpretation standpoint, you
+[72:56] can interpret that the key is there for
+[72:59] you to figure out which one is most
+[73:02] similar to the query and the value is
+[73:05] the actual value
+[73:08] that is associated with that with that
+[73:10] element. So here you will have something
+[73:13] like you want to express this in terms
+[73:16] of all the values. So the weights in
+[73:19] your weighted average will be basically
+[73:21] the dot product between basically
+[73:24] between the query and the key and the
+[73:26] value will be the actual vector that you
+[73:29] will use.
+[73:31] But again these things are learned and
+[73:33] there something I've not mentioned but
+[73:35] uh you mentioned it correctly. So we're
+[73:37] going to actually do projections
+[73:39] to obtain these quantities and these
+[73:41] projections are actually learned by the
+[73:43] model.
+[73:48] That's good.
+[73:50] Okay, cool. Uh so with that uh we have
+[73:55] uh 15 minutes right to u talk about the
+[73:59] architecture.
+[74:00] Um
+[74:02] okay so
+[74:06] at a very high level in order to make
+[74:09] this self attention mechanism happen the
+[74:12] authors propose an architecture that is
+[74:15] composed of two parts an encoder which
+[74:19] is on the left side and a decoder which
+[74:23] is on the right side.
+[74:26] So the application that they have is
+[74:28] translation.
+[74:29] So what will go through the encoder is
+[74:34] the input text in your source language
+[74:37] and what is going to go through the
+[74:38] decoder is the target language that
+[74:41] you're predicting.
+[74:43] So the high level idea is you're going
+[74:47] to compute
+[74:49] meaningful embeddings from your input
+[74:52] text by passing them through the encoder
+[74:57] and you want that self attention
+[74:59] mechanism to apply.
+[75:01] Meaning you want to compute
+[75:03] representations of each token as a
+[75:05] function of others.
+[75:08] And you do that by using a layer called
+[75:11] the attention layer. So multihead
+[75:14] attention layer but multi head is just
+[75:16] doing this computation
+[75:18] uh you know in different ways to just
+[75:20] allow the model to learn different
+[75:22] representations or different
+[75:24] projections.
+[75:26] But the idea here is you're going to
+[75:28] input
+[75:30] your
+[75:32] input text
+[75:34] and all the tokens in your input text
+[75:37] are going to attend to one another. So
+[75:40] for instance, a cute teddy bear is
+[75:42] reading. You are going to compute the
+[75:45] representation of all the tokens in this
+[75:48] text basically as a function of others.
+[75:52] And you're going to do that with the
+[75:53] encoder. So here with the multi head
+[75:56] attention uh and then you have a feed
+[75:59] forward uh layer which is just to kind
+[76:02] of let the model learn another kind of
+[76:04] projection and what what you're going to
+[76:07] obtain at the end of your encoding
+[76:10] process is
+[76:13] rich representations of the tokens from
+[76:16] the input sentence
+[76:19] so far so good. But now your goal is to
+[76:22] actually translate
+[76:25] the input sentence. So what you're going
+[76:27] to do
+[76:29] is to start your translation
+[76:32] with let's suppose the beginning of
+[76:34] sentence token. It's your first token.
+[76:37] And what you're going to do is use all
+[76:42] the representations from your input
+[76:44] sentence in order to figure out what to
+[76:47] predict next.
+[76:50] So this what I just said is the cross
+[76:55] cross attention layer which is the the
+[76:57] one that is the second
+[76:59] this one
+[77:01] which basically you know you see I'm not
+[77:04] sure if you see the arrows but there are
+[77:05] two arrows coming from the encoder one
+[77:08] arrow coming from the decoder can anyone
+[77:11] tell me what the error from the decoder
+[77:13] stand like represents is it query key or
+[77:22] I guess there is one over three
+[77:26] 33% chance. Who wants to try
+[77:30] is the king? Okay.
+[77:34] H query. Okay. So the way to think about
+[77:38] it is you're trying to ask yourself what
+[77:43] are the words from the input that matter
+[77:48] right
+[77:49] so basically you want to know given your
+[77:52] query what are the
+[77:56] elements from the input that matter. So
+[77:58] here this arrow is indeed the query
+[78:00] because this is the thing that you want
+[78:03] to figure out and the keys and values
+[78:06] are actually coming from the encoder
+[78:08] which are basically coming from the
+[78:10] input sequence.
+[78:14] Um, and then you have another attention
+[78:16] layer, which is this one. And that one
+[78:18] is trying to
+[78:22] figure out what other tokens of the
+[78:26] output sentence that you're decoding is
+[78:29] going to be useful to predict the next
+[78:31] token.
+[78:32] So let's suppose you you know started
+[78:34] decoding and you say uh
+[78:38] which is in French to predict the next
+[78:41] word you want to basically figure out
+[78:44] what are the tokens translated so far
+[78:47] that are going to be useful
+[78:50] to predict the next word. So this is
+[78:51] what this attention layer is about and
+[78:54] it's called masked
+[78:57] because it only looks at the tokens
+[79:00] translated so far.
+[79:03] It does not look at tokens that were not
+[79:06] translated because of course they were
+[79:07] not translated. So there's no way like
+[79:09] on the right side of the of the token
+[79:11] that you're trying to predict.
+[79:15] Cool. Um so at a very high level you
+[79:19] have this attention layer which is
+[79:21] present in the encoder which is present
+[79:23] in the decoder but it has several I
+[79:27] guess use cases. So the attention layer
+[79:30] here aims at computing embeddings from
+[79:37] the input sentence
+[79:39] as a function of themselves
+[79:42] and then the ones from the decoder. So
+[79:44] the first one, the mask self attention
+[79:46] layer aims
+[79:49] at expressing something as a function of
+[79:52] everything that has been decoded so far.
+[79:56] And the second one, the cross attention
+[79:58] layer tries to express things as a
+[80:01] function of what what has been seen in
+[80:02] the inputs.
+[80:05] So here given that
+[80:08] you are having direct links to different
+[80:12] tokens you don't have this sense of
+[80:15] order
+[80:17] right because in the in RNN you were
+[80:20] basically expressing things you know one
+[80:22] at a time so you had some sense of the
+[80:25] word order but here you don't have it
+[80:27] because it's like a direct link
+[80:30] which is why you have position encodings
+[80:34] which are there to inform on the
+[80:38] position of the word in the sequence. So
+[80:41] we're not going to dig into that today,
+[80:43] but I just want to call that out.
+[80:46] So at a very high level and we're going
+[80:48] to see this in a detailed example. Uh
+[80:51] what we do is in order to translate a
+[80:54] sentence from source language to target
+[80:57] language, we're first going to tokenize
+[81:00] the text. So you know divided into
+[81:02] arbitrary units. We're going to learn an
+[81:05] embedding for these tokens. So this is
+[81:07] what the input embedding is about. Then
+[81:10] we're going to have to add some encoding
+[81:12] with respect to the position. We're not
+[81:14] going to talk about it today but just
+[81:17] good to note. And then we go through the
+[81:20] encoder.
+[81:22] So the encoder tries to figure out how
+[81:26] to express things as a function of other
+[81:29] things from the inputs. So it does that
+[81:32] in the multi head attention layer and
+[81:35] then it goes through a fit for neuronet
+[81:37] network which is just a way to just
+[81:39] project uh the
+[81:42] uh the vectors to just like have some
+[81:44] more degrees of freedom to learn things.
+[81:48] And then once you have these
+[81:49] representations from the input, you're
+[81:52] then going to start your translation.
+[81:56] So you start with the BOS token. And
+[81:58] what you're trying to do is figure out
+[82:01] what the next word is. So you're going
+[82:03] to see, okay, what are the words that
+[82:06] were translated so far that are useful
+[82:08] for translation. So this is what the
+[82:10] masked multi head attention layer does.
+[82:14] And then you have another attention
+[82:16] layer which is about expressing things
+[82:19] as
+[82:21] um as a function of what was in the
+[82:23] input which is the cross attention layer
+[82:26] over there. And then you have a feed for
+[82:28] neural network uh to again give some
+[82:31] more degrees of freedom. And at the end
+[82:33] of the day, you have a vector that you
+[82:38] then go through softmax
+[82:40] and it just is a way for you to guess
+[82:43] what is the next words.
+[82:46] So you'll have a vector of size,
+[82:48] vocabulary size,
+[82:51] and you're going to use these values to
+[82:54] determine what is your next word.
+[82:59] Easy, right? Any questions on this?
+[83:04] Yeah.
+[83:09] All right, that's a great question. The
+[83:11] question is, what does head mean?
+[83:16] So, I guess I went too fast. I kind of
+[83:17] ignored that part. But when you do the
+[83:21] attention self attention computation,
+[83:25] you basically make queries interact with
+[83:29] keys and then take the corresponding
+[83:31] value. But nothing prevents you from
+[83:33] doing that several times.
+[83:36] So the term head is given to the
+[83:41] projection matrices that you use to
+[83:43] obtain the query key and value. And when
+[83:46] you have several heads, what you're
+[83:48] doing is you're allowing your model to
+[83:51] learn different projections.
+[83:55] So it's basically an additional degree
+[83:58] of freedom for your model to learn
+[83:59] different associations between your
+[84:01] vectors. So it's a great question. So
+[84:05] typically it will be noted lowerase h
+[84:09] number of heads and this is what this
+[84:11] corresponds to.
+[84:13] Does that answer your question?
+[84:16] Cool.
+[84:19] Very cool.
+[84:21] Um,
+[84:24] okay. We have a lot to discuss, but
+[84:28] here I had a slide actually for this.
+[84:30] So, this is the multi heads that you
+[84:32] were mentioning. So, we're basically
+[84:33] running the self attention computation
+[84:36] several times in parallel again with
+[84:38] different projection matrices that uh
+[84:40] the model learns.
+[84:42] So in case you have a computer vision
+[84:44] background, it is similar to
+[84:48] having multiple filters in your
+[84:50] convolution.
+[84:52] Uh so it's very it's the same idea but
+[84:54] um guess
+[84:57] different here. Yeah,
+[85:06] great question. So question is are the
+[85:08] projections different? So we're not
+[85:10] typically not constraining things. We're
+[85:13] just letting the model learn, but in
+[85:15] practice it just tends to learn
+[85:17] different ways of seeing the same thing.
+[85:21] Um so yeah, typically there's no
+[85:23] constraint. Of course you have, you
+[85:24] know, papers that dig into, you know,
+[85:26] how how about if you change this, but
+[85:28] typically you don't have any constraint.
+[85:34] Cool.
+[85:37] Uh great. Okay. I will just mention one
+[85:41] trick, another trick that uh transformer
+[85:44] uh authors use. So it's called label
+[85:47] smoothing.
+[85:49] Who has heard of label smoothing here?
+[85:54] Okay. So uh one new thing here is in NLP
+[85:59] when you want to predict what comes next
+[86:03] there's typically more than one way like
+[86:06] when you say what a great day what a
+[86:09] great lecture what a great book what a
+[86:12] great there's always multiple uh choices
+[86:16] like there's more than one way of
+[86:18] filling that gap. So label smoothing is
+[86:20] a technique that tries to intuitively
+[86:23] address that
+[86:25] and what it does is instead of saying
+[86:28] predict this word 100% is this one
+[86:31] there's no other words
+[86:33] what it does is it says okay predict
+[86:36] this word but there's a chance it's not
+[86:38] this word
+[86:40] and in practice what it does is it takes
+[86:43] the one hot encoding and instead of
+[86:45] saying it's a one 0 0 that you need to
+[86:47] predict it says it's
+[86:49] actually 1 minus epsilon and then
+[86:52] epsilon over v
+[86:55] minus one I guess um that you're trying
+[86:57] to predict.
+[87:00] So in practice, it's a a method that
+[87:06] tends to make your model be more unsure
+[87:09] like it would be less sure about this
+[87:11] prediction because you always tell it
+[87:12] okay uh try to predict this but actually
+[87:16] it's possible it's not it's not the
+[87:18] correct value but in practice the
+[87:20] authors see that it tends to improve
+[87:25] metrics like blue which is a kind of
+[87:27] proxy metric for translation tasks.
+[87:30] Yeah.
+[87:31] >> So yeah, I think this method is like
+[87:32] pretty general for NLP. So yeah, it's a
+[87:35] good good one to know. And with that, I
+[87:39] think there's about 20ish minutes left.
+[87:42] So yeah, Shervin is going to uh walk you
+[87:45] through an end to end example. And we
+[87:49] have you.
+[87:51] Yeah.
+[87:57] The L you. So I guess here you can think
+[88:02] of this as
+[88:04] um something I guess some quantity. It's
+[88:07] not defined. So some quantity
+[88:09] uh and uh yeah the delta is like the
+[88:12] like one hot if you want. Yeah.
+[88:17] Something like this. Yeah, it can also
+[88:19] be a constant. Yeah.
+[88:22] Yeah.
+[88:32] Uh so question is uh is there a relation
+[88:36] with explore and exploit? It's an
+[88:38] interesting one. Um
+[88:42] so where would soft mask give it for
+[88:44] free by the way?
+[88:48] Right. But I guess it was still
+[88:52] so I guess at the end of the day what
+[88:55] you're trying to do is to compare your
+[88:57] prediction with respect to the label. So
+[89:00] I guess the question here is do you want
+[89:02] to compare with one 0 0 or do you want
+[89:05] to compare with something that is one
+[89:07] not one 0 0. So I guess the softmax does
+[89:10] not allow you to do that.
+[89:14] Exactly. Yes. So I'm not sure if this
+[89:16] was super clear, but this is actually
+[89:17] the label. So what we're trying to
+[89:19] predict is not one 0 0, but we change
+[89:22] the label in a way that makes the model
+[89:25] uh I guess predict something as less
+[89:28] sure I guess.
+[89:30] Cool. Thanks. And with that, yeah, sure.
+[89:34] Okay, great. Thank you, Ashin. And uh
+[89:36] yes, so we saw basically how the
+[89:38] transformer worked and now we're going
+[89:41] to piece it all together with one
+[89:43] specific example.
+[89:45] Um okay great so let's take our favorite
+[89:48] example again so a cute tur is reading
+[89:51] and then we'll go um like all together
+[89:54] through each step um so first we start
+[89:58] with tokenization
+[90:01] um so as we said we we can use any uh
+[90:04] arbitrary decomposition to decompose
+[90:07] this into tokens
+[90:09] um and then as someone mentioned you
+[90:12] know you need to have some way to
+[90:14] indicate like the start and the end of a
+[90:17] sequence. So typically this is done with
+[90:19] the BOS and EOS tokens. So you add them.
+[90:25] Okay. So now let's focus on the
+[90:27] composition of each token
+[90:28] representation.
+[90:30] So you have its embedding that is
+[90:33] learned and then as a mentioned in order
+[90:36] to have an idea of what is the position
+[90:38] of the words or the token I should say
+[90:41] as part of the sequence you have some
+[90:43] added information that is in the form of
+[90:45] a position embedding
+[90:48] and here the original paper uses the
+[90:51] convention of some signs and cosiness
+[90:53] that it adds additively to the
+[90:57] representation. So it's like a element
+[90:59] wise addition.
+[91:02] Okay, great. So now you have a position
+[91:04] aware embedding for your token and you
+[91:08] repeat that for each of your tokens.
+[91:11] >> Okay, so now you can see all of these
+[91:14] embeddings in the format of a matrix
+[91:16] which is of size D model which is the
+[91:19] size of your embeddings and then the
+[91:21] other dimension is the length of the
+[91:24] sequence. Um so typically n
+[91:29] so all makes sense so far. Any questions
+[91:32] on the inputs?
+[91:34] Okay, great. So now we will send this
+[91:38] representation through the encoder.
+[91:41] Okay, so as I've shin said you have this
+[91:44] concept of self attention and the way
+[91:47] you perform self attention is that you
+[91:49] take this input and project it on three
+[91:53] spaces. So you project it to the space
+[91:58] WQ, you get queries. You project the
+[92:01] same embeddings in the space W K, you
+[92:04] get keys. And you do the same for
+[92:07] values, you get your values. And then
+[92:10] WQ, W K and WV are learned by the model.
+[92:14] They're like basically projection
+[92:16] matrices.
+[92:19] So far so good.
+[92:21] Okay. So now with all of that in mind
+[92:24] you can apply the formula that Ashin
+[92:26] mentioned that is the self attention
+[92:28] formula which is soft max of q krpose
+[92:32] over square root of dk * v uh which
+[92:36] gives you another matrix out of all of
+[92:39] these.
+[92:42] Now let's pause for a second and look at
+[92:46] how this computation is done in practice
+[92:48] and you know what every step means.
+[92:53] So let's look at Q. You know when you
+[92:55] compute Q that basically you project
+[92:58] your embeddings into that space. What do
+[93:00] you obtain? You obtain a matrix where
+[93:03] each row represents a given query.
+[93:07] When you say krpose, it's basically the
+[93:10] same kind of matrix but transposed where
+[93:14] each column represents the key
+[93:16] representation of each token.
+[93:19] Now let's mix them together with the
+[93:22] matrix uh multiplication. So when you
+[93:26] multiply each of them, you see that each
+[93:30] row represents the projection of the
+[93:32] query over each key
+[93:36] such that
+[93:38] when you take the
+[93:41] like matrix multiplication and get the
+[93:43] soft max of all of this, you get a
+[93:45] probability distribution of the
+[93:47] projection of the query over keys for
+[93:50] each query. Like each line will have
+[93:53] this
+[93:55] And yeah, I don't know if anyone asked
+[93:57] the question regarding you know why do
+[93:59] we scale by square root of dq dk. So it
+[94:03] could be dq as well because matrix
+[94:06] multiplication like the dot product here
+[94:08] enforces the fact that dq equals dk and
+[94:12] basically what you see is that this dot
+[94:15] products as the dimension of key and
+[94:17] queries grows it will tend to grow as
+[94:20] well. So you want to normalize uh this
+[94:22] dot product and this is why you divide
+[94:25] by square root of of the dimension of of
+[94:27] keys.
+[94:30] Okay, great. And then now you have your
+[94:33] soft max of all of this and then you
+[94:35] multiply with the matrix V and this is
+[94:39] what I've seen explained as having the
+[94:43] query uh projected on the space of keys
+[94:47] and then multiplied by the corresponding
+[94:49] value. So the value is the
+[94:51] representation of the corresponding key
+[94:54] that we project on. So you end up with a
+[94:57] weight sum of values for each query.
+[95:03] Okay, great.
+[95:05] Does that make sense so far?
+[95:12] Okay, awesome. And someone asked you
+[95:15] know what is the multi head stuff. So
+[95:17] you are right. So it's not just single
+[95:19] one one time that it's done. It's
+[95:21] actually done each times
+[95:23] and what you obtain is like all of that
+[95:26] is done in parallel and at the end you
+[95:29] obtain each such matrices and you
+[95:33] concatenate them with respect to the
+[95:35] columns
+[95:37] and at the end of this you have another
+[95:39] projection matrix that you call WO that
+[95:43] will project all of these back to the
+[95:46] original dimension of embeddings.
+[95:49] So it's a way for a network to basically
+[95:52] have a dimension invariant way to bless
+[95:55] you to go from uh like the the original
+[95:59] dimension back to the original one.
+[96:03] Any questions?
+[96:05] >> Yep.
+[96:15] So the question is regarding age. Is it
+[96:18] possible to get the same result each
+[96:20] time? I mean, if you concatenate the
+[96:22] same same thing, you know, will it be
+[96:23] helpful? Did I get the question right?
+[96:28] So, what makes it different? So, it's
+[96:29] the magic of gradient descent. So, the
+[96:32] network has an objective function at the
+[96:34] end. It has degrees of freedom. Its
+[96:37] incentive is to build the representation
+[96:39] that would be helpful to learn the next
+[96:41] word. So, it doesn't have an incentive
+[96:43] to copy the same thing or do the same
+[96:45] mechanism. And this is why in practice
+[96:48] you see the model converge towards
+[96:51] building different representations that
+[96:52] it can then concatenate and then project
+[96:55] into something useful. So what what
+[96:58] makes it such that you don't have the
+[97:00] same thing nothing like you don't have
+[97:02] any constraints but the nature of the
+[97:04] learning that you let the model have
+[97:08] makes it do so in practice.
+[97:14] Any other questions?
+[97:17] Yeah, and that is a great question. I
+[97:19] mean it's um like typically yeah
+[97:21] gradient descent does wonders.
+[97:25] Okay, great. So now that we have gone
+[97:29] through the self attention layer um you
+[97:31] have another component that is the FFM
+[97:34] and I think there was a question just
+[97:36] here regarding how to choose the
+[97:38] dimension of the hidden layer with
+[97:40] respect to the input and output. So when
+[97:42] Ashin mentioned word tovec typically you
+[97:45] have a smaller dimension than the input
+[97:47] and output but here actually the hidden
+[97:50] layer is of a bigger dimension than
+[97:52] input and output and the rational for
+[97:56] that is that you want to have enough
+[97:59] degrees of freedom for the model to
+[98:00] learn useful representations. So it's a
+[98:03] way to complexify the features that you
+[98:05] learn. Um and yeah just in
+[98:10] okay great and you don't have just one
+[98:14] encoder module you have actually n of
+[98:16] them big n uh in the original paper and
+[98:19] at the end of all of this you have an
+[98:22] encoded
+[98:23] uh context aware set of embeddings
+[98:27] and then each of these set of encoded
+[98:30] embeddings will be those that will be
+[98:32] fed to the n decoders. So you have like
+[98:36] a stacked um stacked like succession of
+[98:40] n encoders. You have a stacked
+[98:41] succession of n decoders. And the last
+[98:45] representation of the encoder is what
+[98:46] you will feed to the cross attention of
+[98:49] each decoder.
+[98:52] Um
+[98:54] so yeah we're going to see that more in
+[98:56] detail.
+[98:57] So how do we even start the decoding
+[99:00] process? So you start with the BOS token
+[99:03] basically saying to the model you know
+[99:05] hey we need to predict the next word uh
+[99:08] you know let's start. So what happens to
+[99:11] the BOS token at the very beginning? So
+[99:14] you feed it to the decoder and then
+[99:16] similarly as before for the encoder you
+[99:19] have a self attention layer and as I've
+[99:22] mentioned the self attention layer um is
+[99:25] koso.
+[99:27] So the attention will be done on the
+[99:30] same token and the tokens that precede
+[99:32] it. So on on this first Bos token you
+[99:35] don't see a difference because it will
+[99:36] just attend to itself. But when you have
+[99:39] uh like other tokens that you want to
+[99:41] decode, you will have this difference in
+[99:44] where you attend with respect to the
+[99:46] decoder.
+[99:48] Okay, great. goes through the self
+[99:50] attention layer and then you have what I
+[99:53] mentioned to be the um cross attention
+[99:57] that takes as keys and values these
+[100:01] encoded embeddings as inputs
+[100:04] and then the queries are those of the
+[100:07] that come out of the self attention
+[100:09] layer.
+[100:12] Okay, great. And then once you do this
+[100:15] cross attention, you have just like in
+[100:17] the encoder an FFN component that uh
+[100:21] makes the representation richer. Was
+[100:23] there a question there? No.
+[100:26] Um
+[100:28] and then at the very end, so you do that
+[100:30] all of that end times and at the very
+[100:32] end of the decoding process, you have a
+[100:35] linear projection and a soft max layer
+[100:37] to turn um the prediction of the next
+[100:40] word into a probability distribution
+[100:43] over the vocabulary.
+[100:46] Okay, great. So we saw how to do that
+[100:48] for the next word here. And uh basically
+[100:51] you do that again and again. So you have
+[100:55] found your next token and then uh which
+[100:58] is like a one hot one hot basically um
+[101:02] encoding of what you want and then you
+[101:04] take that embedding and then put it back
+[101:06] in the decoder and continue this
+[101:08] process.
+[101:10] And when do you stop?
+[101:13] It's a question for you all.
+[101:17] When you hit the EOS token. Yeah. Yeah.
+[101:20] Exactly.
+[101:23] Okay. rates. And with this process, it's
+[101:26] basically how the authors of this
+[101:28] original uh like landmark paper did
+[101:32] machine translation. So this is
+[101:34] typically the use case that was
+[101:35] presented.
+[101:37] Um yeah, any questions?
+[101:45] Okay, awesome.
+[101:47] And with that, thank you for your
+[101:49] attention.
+[101:52] [Applause]

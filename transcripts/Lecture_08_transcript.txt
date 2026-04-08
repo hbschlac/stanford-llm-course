@@ -1,0 +1,2191 @@
+[00:05] Hello everyone and uh welcome to lecture
+[00:08] 8 of CME295.
+[00:11] So today's topic will be LLM evaluation
+[00:16] and I think this class is probably one
+[00:18] of the most important classes of this uh
+[00:21] quarter because the idea is if we don't
+[00:24] know how to measure the performance of
+[00:26] our LLM, we don't really know what to
+[00:29] improve and so this class will focus on
+[00:32] how we can quantify how the LLM performs
+[00:36] in a bunch of different cases.
+[00:39] So with that said, we are going to start
+[00:41] the class as usual by recapping what we
+[00:44] saw last week. So if you remember last
+[00:48] week, we saw how our LLM could interact
+[00:53] with systems that are outside of the LM
+[00:56] itself. So we saw one core technique
+[01:01] that is called rag that allows our LLM
+[01:05] to fetch information from external
+[01:09] knowledge bases. And so here rag stands
+[01:12] for retrieval augmented generation
+[01:17] and we saw how we could uh improve the
+[01:20] retrieval system. So we saw uh that it
+[01:23] was composed of two main steps. So one
+[01:26] was candidate retrieval which is
+[01:28] typically something that is done with uh
+[01:31] a c by encoder kind of setup. So
+[01:35] sentence spurt was uh like a good
+[01:38] example of how people would design such
+[01:41] a model. Um and so this first step is
+[01:44] typically there to filter down the
+[01:47] potential relevant candidates for a
+[01:50] given incoming query.
+[01:52] And then we saw that there was a second
+[01:54] step which was um reranking and that one
+[01:59] was a bit more involved and involved
+[02:02] cross encoders which were most
+[02:04] sophisticated.
+[02:06] And we also saw some ways to quantify
+[02:09] how well our retrieval system performed.
+[02:13] And then we also saw something that was
+[02:15] called tool calling which is the ability
+[02:18] for our model to know which tool to call
+[02:22] with which argument.
+[02:25] So if you remember, if we give our LLM
+[02:28] the knowledge of the tools that are
+[02:30] available to to it, it can figure out
+[02:34] which arguments it needs to input to the
+[02:38] function as a function of the input
+[02:40] query and then run that function and
+[02:44] then output the result in natural
+[02:47] language to the user.
+[02:51] And then we also saw how agentic
+[02:55] workflows were composed of. So uh
+[02:58] spoiler alert is something that is a
+[03:00] combination of the two [snorts] previous
+[03:02] methods. So rag and tool calling and in
+[03:07] particular
+[03:08] given an input we're allowing our model
+[03:12] to make multiple calls
+[03:14] to call different tools to fetch
+[03:17] relevant data from uh other uh knowledge
+[03:20] bases and uh we saw one example that was
+[03:25] kind of successful uh from the current
+[03:27] applications which was AI assisted
+[03:30] coding which relies on this principle
+[03:34] And react is typically the framework
+[03:36] that people would use. So reason plus
+[03:38] act which is decomposing this into
+[03:42] observe, plan and act steps.
+[03:48] Cool. So this is what we saw last time
+[03:51] and we also started from this slide last
+[03:55] time. We, you know, if you remember, our
+[03:57] LLM has strength but also weaknesses
+[04:01] that we're trying to mitigate. So, in
+[04:04] particular, the focus of lectures six
+[04:07] and seven were on methods to improve
+[04:12] reasoning of the model and ways to for
+[04:16] the model to fetch knowledge from other
+[04:18] systems as well as performing actions.
+[04:24] And today we're going to focus on the
+[04:26] evaluation part. In particular, given a
+[04:30] response that the model is giving, how
+[04:33] can we quantify how well the LLM is
+[04:36] giving its response?
+[04:41] Cool. So first of all, I would like to
+[04:45] define the term evaluation and the
+[04:48] meaning that we will use for this
+[04:50] lecture. So when we say I want to
+[04:53] evaluate my LLM, it can actually take a
+[04:56] lot of different meanings.
+[04:58] So when you say let's evaluate the LLM,
+[05:01] it can mean let's evaluate the
+[05:04] performance, the output, let's evaluate
+[05:07] this based on coherence, factuality.
+[05:09] Let's evaluate it based on latency. So
+[05:12] more system related metrics or pricing
+[05:16] or how often it is up and so on.
+[05:20] So just to make sure we're on the same
+[05:22] page, this lecture will mostly focus on
+[05:26] the output quality parts and in
+[05:29] particular we'll focus on quantifying
+[05:32] how good the actual response is.
+[05:37] And here you will note that this is a
+[05:40] challenging problem because um as we saw
+[05:44] previously our LLM is a texttoext
+[05:48] model that can output basically
+[05:51] anything.
+[05:53] So it can be natural language, it can be
+[05:56] code, it can be math reasoning and so on
+[06:00] and so forth. So it's very hard to come
+[06:03] up with universal metrics to evaluate
+[06:06] that. So we will see how people do this
+[06:08] in practice.
+[06:12] Cool. So given the fact that our LLM
+[06:16] generates free form output,
+[06:20] one could imagine that the ideal
+[06:23] scenario for us to evaluate the LLM
+[06:26] output would be to every time ask a
+[06:31] human to rate the response.
+[06:34] So here the ideal scenario would be okay
+[06:37] I give a prompt to my LLM. It gives a
+[06:40] response. I ask a human to rate it and I
+[06:43] start again and again
+[06:46] and uh what I do is at the end of the
+[06:49] day I just collect all these human
+[06:51] responses and I try to quantify the
+[06:54] overall performance of my model. Well,
+[06:57] as you can imagine, the main problem is
+[07:00] that such a system would be very cost
+[07:04] intensive.
+[07:06] But let's look at this into more detail.
+[07:09] So
+[07:11] if you remember
+[07:14] the LLM outputs are really free form and
+[07:18] there may be cases that even human
+[07:21] judgment may be something that is fuzzy
+[07:24] because maybe the rating task in itself
+[07:27] is subjective.
+[07:29] So let's take the following example.
+[07:33] Let's suppose I ask my LLM what birthday
+[07:36] gift should I get? And let's suppose the
+[07:38] LLM responds with a teddy bear is almost
+[07:42] always a sweet gift. Just pick one that
+[07:44] feels right for you. So let's suppose I
+[07:47] want to evaluate this response with
+[07:49] respect to the usefulness dimension.
+[07:52] I may have one human raider that says,
+[07:56] "Yeah, it's pretty useful because you
+[07:58] know like teddy bear is pretty
+[07:59] indicative of um I guess the what the
+[08:03] user should get as a gift." But then
+[08:06] another raider may say, "No, actually
+[08:08] it's not useful because maybe the
+[08:11] response didn't specify exactly which
+[08:13] teddy bear. Should I have a bear? Should
+[08:17] I have an elephant, a giraffe? Like
+[08:19] which stuffed animal should I get?"
+[08:22] And so there is this um notion of
+[08:28] interrator agreements
+[08:31] where we're bas basically
+[08:34] um concerned with making sure that
+[08:36] everyone is aligned on how to rate those
+[08:40] responses
+[08:42] because sometimes like in this
+[08:44] illustrative example
+[08:47] it may be a little bit subjective.
+[08:50] So responses may vary. So what people
+[08:54] want to do is to make sure that the
+[08:57] guidelines are clear enough for everyone
+[09:00] to rate these responses in a consistent
+[09:03] manner.
+[09:04] So people come up with um agreement
+[09:09] types of metrics.
+[09:12] So a very natural metric that you may
+[09:15] think of is the quote unquote agreement
+[09:19] rates.
+[09:21] So for instance you have this uh two
+[09:23] raiders. So what you do is you just um
+[09:28] measure the proportion of the time that
+[09:30] the two raiders give the same response.
+[09:34] And let's suppose the response here is
+[09:36] binary. So let's say yes good or not
+[09:39] good.
+[09:42] Well do you see a problem with such a
+[09:45] metric?
+[09:47] like is this a good metric?
+[09:54] I guess another way to ask this question
+[09:58] is if I give you a given number of
+[10:01] agreement rates, can you tell me if it's
+[10:05] a good number or if it's a bad number?
+[10:09] Well, let's take the example of let's
+[10:12] say two raiders.
+[10:15] um let's say Alice
+[10:20] and let's say Bob
+[10:24] and let's suppose we have two different
+[10:28] types of ratings that these raiders can
+[10:30] give. So either let's say uh yes it's
+[10:33] good so one the output is good or the
+[10:36] output is not good.
+[10:40] So if we assume that the first raider
+[10:44] gives let's say random responses
+[10:49] with some probability P of A for being
+[10:53] good and one minus P of A for being not
+[10:57] good and then let's say Bob who should
+[11:00] have eyes and a smile
+[11:04] has uh P of B for being good and one
+[11:08] minus P of B for being not
+[11:13] Then
+[11:14] let's compute the agreement rate for
+[11:17] this case. So the agreement rate
+[11:23] is basically the probability
+[11:26] that
+[11:28] raider A and raider B
+[11:33] agree.
+[11:35] And so here A and B agree.
+[11:39] if A and B both vote one
+[11:44] or way when A and B both vote zero,
+[11:49] right?
+[11:50] But if they give the their response in
+[11:53] an independent and random way,
+[11:56] well, if you use like these probability
+[12:01] concepts that you know, then we will
+[12:03] have
+[12:06] probability of A and B responding to
+[12:08] one, which is probability of A
+[12:10] responding to one time probability of B
+[12:13] responding to one and same for zero. So
+[12:16] we will have something like this.
+[12:18] So P of A P of B
+[12:22] plus 1 - P of A
+[12:26] 1 - P of B.
+[12:29] So this one is A and B
+[12:34] say 1
+[12:37] and here A and B
+[12:42] say zero.
+[12:46] So,
+[12:50] so let's see what the agreement rate
+[12:51] would be in that case.
+[12:54] So if we assume that
+[13:00] suppose that let's suppose uh P of A is
+[13:02] equal to P of B which is equal to let's
+[13:04] say.5
+[13:08] then the agreement rate would be so
+[13:11] agreement rate
+[13:17] would be so I'm just replacing the
+[13:20] numbers here so.5
+[13:22] squared +.5^
+[13:26] squar. So it's 0.25 + 25 which is equal
+[13:29] to.5. So what that means is
+[13:33] if we're just letting our raers
+[13:36] rate these things in a random way with
+[13:39] some probability, you know, P of A, P of
+[13:41] B, we would already have an agreement
+[13:43] rate of 50%. Just by pure random chance.
+[13:48] And so
+[13:50] one thing that I want to say is that
+[13:52] this agreement rate by pure chance
+[13:56] is a function of the probability that
+[14:00] each of these raiders give these
+[14:02] ratings.
+[14:03] And so if
+[14:05] this probability is actually higher the
+[14:07] agreement rate by pure chance is also
+[14:10] higher.
+[14:12] So what that means? So what do I want to
+[14:13] say?
+[14:15] I want to say that if we just take the
+[14:17] agreement rates then it's very hard to
+[14:20] put it into context in terms of what you
+[14:24] would have gotten if things would have
+[14:26] happened just by pure chance.
+[14:31] So for this reason,
+[14:36] people have come up with a series of
+[14:38] metrics that try to make it more
+[14:42] relative to this baseline, which is what
+[14:46] would happen if our raiders would choose
+[14:50] things kind of randomly.
+[14:53] And so you have these metrics like for
+[14:56] instance this one is the coins scapa
+[14:58] metric which
+[15:01] computes a quantity that is a function
+[15:04] of this agreement rate by chance
+[15:10] and take the observed one
+[15:13] such that if our observed agreement rate
+[15:19] is greater than the by chance agreement
+[15:24] rates
+[15:25] then our coefficient is positive. So
+[15:27] when it's positive you know at least you
+[15:29] know it's going in the right direction.
+[15:32] So here if the observed agreement rate
+[15:36] is equal to one
+[15:40] then alpha is so kappa is equal to one.
+[15:44] But if our observed agreement rate is
+[15:48] below the you know by pure random chance
+[15:51] erment rate that we saw on the
+[15:53] blackboard then our coefficient would be
+[15:56] negative.
+[15:59] So long story short, there is a bunch of
+[16:02] metrics that try to quantify interrator
+[16:06] agreement rates using these kinds of
+[16:09] formulas to be able to make these
+[16:13] quantities relative to what would happen
+[16:17] if things were done in a random way.
+[16:20] And so that's why you may see a bunch of
+[16:23] metrics out there. So here it's cohen
+[16:26] scappa that people use for cases where
+[16:28] there are tool raiders but then you have
+[16:31] extensions such as fly scapa and
+[16:33] crypendors alpha that you may see out
+[16:35] there. So they all rely on this idea
+[16:40] that we should have some baseline
+[16:43] which is
+[16:45] you know our raiders just randomly
+[16:47] picking answers and try to see how much
+[16:50] better our actual agreement is compared
+[16:54] to this.
+[16:57] So does that make sense?
+[17:00] Yeah. So I guess what I want to say is
+[17:03] that the first limitation of asking
+[17:07] humans
+[17:08] to rate our LM outputs which was
+[17:12] sometimes the task being subjective
+[17:15] can be something that we can quantify
+[17:18] with this interrator agreement metrics.
+[17:22] So what people typically do is they keep
+[17:26] track of how good that agreement is. And
+[17:30] if let's say we have a quantity that's
+[17:32] not satisfactory,
+[17:35] people would just hold some quote
+[17:38] unquote agreement sessions between the
+[17:40] raiders to just align on how they should
+[17:43] rate the answers.
+[17:46] So that it can be seen as just a health
+[17:50] metric to track how consistent your
+[17:53] rating are and this is typically
+[17:56] something that people use in practice.
+[18:00] So
+[18:02] up until now we've seen one limitation
+[18:05] of human ratings.
+[18:08] Well second limitation I think I also
+[18:10] said this previously. So it's really
+[18:12] slow. You know, if you ask someone to
+[18:14] rate a thousand LM outputs, well, it
+[18:16] will take them a while and it's of
+[18:19] course expensive.
+[18:22] So, all of that to say that our ideal
+[18:26] scenario of asking a human to rate every
+[18:31] LLM output is not something that is
+[18:33] practical.
+[18:35] But we can leverage human
+[18:41] ratings in some way because we've seen
+[18:43] that even if the task is subjective, we
+[18:47] can have a way to align our raiders.
+[18:51] So now let's move on to another way to
+[18:55] go about doing this, which is by using
+[18:58] some rule-based metrics.
+[19:01] So here I'm just going to revise the
+[19:04] setting that I mentioned before
+[19:06] and instead of asking our humans to
+[19:10] write every LLM output,
+[19:13] this time I'm just going to ask them to
+[19:17] write
+[19:19] the references or the ideal outputs for
+[19:23] a given set of prompts. just fix that
+[19:26] for good
+[19:28] and then use some kind of metric that
+[19:32] would compare the LLM outputs
+[19:36] with those references.
+[19:40] So here the main difference is let's
+[19:42] suppose I have a given set of prompts
+[19:45] fixed.
+[19:47] Well, I can make iterations in my model
+[19:50] and always compare the output of my LLM
+[19:54] with this fixed reference instead of
+[19:58] always asking humans to rate that again
+[20:00] and again. So, it's already an
+[20:02] improvement
+[20:05] and we will see a little bit what are
+[20:08] the kinds of rulebased metrics that you
+[20:10] will see out there.
+[20:14] So ideally these metrics should reflect
+[20:19] the performance of the LM output in a in
+[20:23] an optimal way. And what I mean by an
+[20:25] optimal way, it is to make it be a
+[20:29] little bit flexible given the fact that
+[20:32] natural language is not always something
+[20:35] that you can say in one given way.
+[20:39] So for instance when I provide a
+[20:41] response to a given prompt there can be
+[20:43] very well a case where I can formulate
+[20:45] the response slightly differently but it
+[20:48] will still be just as good.
+[20:52] So the idea behind this metrics is to
+[20:55] make this comparison
+[20:57] a little bit flexible.
+[21:02] So let's start with one common one that
+[21:04] people use in the translation case. So
+[21:07] this metric is called meteor and it
+[21:10] stands for metric for evaluation of
+[21:12] translation with explicit ordering.
+[21:15] So the idea here is to compare
+[21:20] reference and predicted and we'll see
+[21:24] how it's being done and also
+[21:29] penalize cases when words are not in the
+[21:33] same order which is explaining why the
+[21:37] metric is called with explicit ordering.
+[21:41] So the formula is as follows. So it is
+[21:43] some fcore times 1 minus some penalty.
+[21:50] So the fcore here is so you may be
+[21:54] familiar with f1 score. So it's like the
+[21:56] harmonic mean with equal weights. So
+[21:59] this one is with the variable weights.
+[22:02] So it is a function of precision and
+[22:05] recall
+[22:07] where precision is the proportion of the
+[22:12] unigs that are in your predicted
+[22:15] sequence
+[22:17] that are matching with the reference and
+[22:20] the recall is the proportion of the
+[22:22] unigs in the reference
+[22:26] that are matching with what is in the
+[22:28] predicted. So it's basically matching
+[22:31] the
+[22:33] usual precision recall metrics that you
+[22:35] know and then we have another quantity
+[22:39] here which is the penalty and I
+[22:41] mentioned the penalty here tries to
+[22:44] incentivize
+[22:45] goods ordering. So if it's ordered the
+[22:48] same in the reference and in the
+[22:52] prediction then it's good otherwise it's
+[22:55] bad.
+[22:57] And so here there's a bunch of
+[22:58] quantities. So gamma and beta are
+[23:01] hyperparameters that people arbitrarily
+[23:05] choose.
+[23:06] And it's a function of C,
+[23:10] the number of contiguous chunks that are
+[23:13] matched
+[23:16] over the matched unigs. The number of
+[23:19] matched unigs.
+[23:23] So ideally you would want
+[23:26] C that would be as low as possible
+[23:29] because if you have a low number of
+[23:32] contiguous matches
+[23:34] it means that your contiguous sequences
+[23:36] are are long
+[23:39] which means that the ordering is the
+[23:41] same.
+[23:43] So you want C to be low
+[23:45] and then matched unigs to be high.
+[23:50] So you want that penalty term to be low
+[23:54] for a good I guess for a prediction that
+[23:56] has the same ordering as the reference.
+[24:01] So I guess
+[24:05] higher meter score means better
+[24:09] translation AC according to this way of
+[24:11] doing things.
+[24:14] So I guess when you look at this formula
+[24:17] so first of all it seems it looks very
+[24:19] arbitrary
+[24:21] right I have uh alpha as a
+[24:23] hyperparameter gamma beta so it's kind
+[24:26] of a
+[24:27] a recipe I feel so that's one
+[24:31] and the second thing is that it does not
+[24:34] allow for stylistic variations because
+[24:38] here we're measuring the number of
+[24:40] matched unigs
+[24:43] Although the metric expands the like
+[24:47] range of what is called matched unigs by
+[24:51] taking into account things like words
+[24:54] that are synonyms of one another and
+[24:57] things that are of the same roots
+[25:00] but still it is not like extremely uh
+[25:03] satisfactory in that sense.
+[25:06] So mter is meteor is one such metric.
+[25:11] You have another one that's being used
+[25:12] or that has been used in translation
+[25:16] tasks which is called blur which you may
+[25:19] know. So, BL stands for bilingual
+[25:22] evaluation under study. And you can
+[25:24] think of this as kind of a precision
+[25:27] focused kind of metric
+[25:30] that uh looks at the number of matched
+[25:35] the matching engrams
+[25:38] over the engrams that are in the
+[25:40] prediction, which is why it's a
+[25:42] precision kind of metric.
+[25:45] And it also has uh a penalty term here.
+[25:49] It's called brevity penalty
+[25:51] because given that it's more of a
+[25:53] precision kind of metric. If you
+[25:56] translate something that's very short,
+[25:59] you may be able to gain the the metric.
+[26:02] So you want to penalize
+[26:04] the translation being too short.
+[26:07] So we'll not go into a lot of details,
+[26:10] but I just want to just show you the
+[26:12] kinds of metrics that are out there. So
+[26:13] meter is one, blue is another one and
+[26:17] rouge which you may have heard is also
+[26:20] another one typically used for
+[26:21] summarization tasks.
+[26:24] Again same idea and um it has a bunch of
+[26:28] varants that you may see out there
+[26:31] but long story short all these metrics
+[26:35] they all compare
+[26:38] the output with a reference.
+[26:42] So as we saw one key limitation is that
+[26:46] they do not allow stylistic variation.
+[26:51] So let's take an example. So let's
+[26:54] suppose I say a plush teddy bear can
+[26:56] comfort a child during bedtime. Well,
+[26:58] the exact same thing I can say it I can
+[27:01] say it in a really different way. So
+[27:04] soft, stuffed uh bears often help kids
+[27:06] feel safe as they fall asleep or many
+[27:09] youngsters rest more easily at night
+[27:11] when they cuddle a gentle toy companion.
+[27:13] So in all these cases, the metrics that
+[27:16] we saw would you would really perform
+[27:19] very poorly.
+[27:23] So that's one key limitation. So the
+[27:25] second key limitation is correlation is
+[27:28] not that great.
+[27:30] I mean, you can imagine that people have
+[27:32] come up with all these hyperparameters
+[27:35] to kind of make it be correlated to
+[27:38] human ratings, but they're not that
+[27:41] correlated.
+[27:44] And the bottom line is it still requires
+[27:46] human ratings
+[27:48] to just get started. And sometimes
+[27:52] you just can't afford to have human
+[27:55] ratings maybe in your project.
+[27:58] So I guess there are still some key
+[28:00] limitations
+[28:02] which is the reason why. So all of that
+[28:04] to say I want to motivate the key method
+[28:08] of this class or of this lecture which
+[28:11] is called LLM as a judge.
+[28:15] So, you know, we spent the first seven
+[28:18] lectures motivating these large language
+[28:21] models that are pre-trained on huge
+[28:24] amounts of data that are uh tuned in a
+[28:27] way to match human preference. So, they
+[28:30] do contain human knowledge. They do
+[28:32] contain some indication of what humans
+[28:36] may prefer.
+[28:38] So the idea here is to have our model
+[28:42] response
+[28:44] be actually an input of yet another LLM
+[28:49] and that LLM is something that people
+[28:52] typically call LLM as a judge.
+[28:55] So it was a term that was introduced in
+[28:58] a paper uh from two years ago.
+[29:02] So here the idea is to use an LLM for
+[29:06] rating purposes
+[29:09] and things that you would see as input
+[29:11] would be the prompt that was used to
+[29:15] produce the response,
+[29:17] the response
+[29:19] and the criteria along which you want to
+[29:23] grade your response.
+[29:26] And so here LLM as a judge would give
+[29:30] you the following outputs. So the first
+[29:33] thing is it would give you a score.
+[29:36] So here you can think of it as like a
+[29:38] binary scale kind of score. So pass or
+[29:40] fail
+[29:42] but and this is very new
+[29:45] also a rationale
+[29:48] because LLMs they understand text
+[29:53] so they can also explain you why they
+[29:56] graded something with a given score
+[29:59] and that part is
+[30:02] the key difference with previous
+[30:03] methods. we are able to explain why the
+[30:08] metric or the model is giving us a given
+[30:11] score. And this is quite quite good
+[30:14] because in the other let's say rulebased
+[30:16] worlds where you would have all these
+[30:19] like formulas and multiplication all
+[30:21] these things and sometimes you would
+[30:24] come up with a number that would not be
+[30:27] very self-explanatory
+[30:30] and this is luckily something that LM as
+[30:32] a judge addresses.
+[30:37] So to recap,
+[30:39] what we want is to use an LLM as a way
+[30:43] to grade the response.
+[30:46] So here you would have typically
+[30:49] the following kind of prompts. So you
+[30:51] would state okay I want to evaluate my
+[30:54] response with respect to a given
+[30:56] criteria
+[30:58] and then you give the prompt that you
+[31:00] used to generate that response along
+[31:03] with the model response
+[31:06] and then you would ask
+[31:09] the judge to return two things the
+[31:13] rationale and then the score.
+[31:18] So one little trick I want to point out
+[31:21] is people typically ask the model to
+[31:24] first output the rationale and then the
+[31:28] score
+[31:30] and the reason why we typically do that
+[31:32] is it's something that empirically
+[31:35] improves the quality of the results
+[31:40] but then given what we saw I think in
+[31:42] lecture six if you remember the
+[31:44] reasoning class we saw that these
+[31:47] reasoning models that are being trendy
+[31:50] especially in 2025
+[31:53] what they do is they first output a
+[31:56] chain of thought before giving the
+[31:58] answer.
+[31:59] So you can actually think of this trick
+[32:02] as being on the same kind of idea of
+[32:06] reasoning models as in it allows the
+[32:09] model to
+[32:12] externalize verbalize its quote unquote
+[32:15] thought process before giving the score.
+[32:17] So it gives it a chance to really figure
+[32:20] out what is good or what is wrong in the
+[32:24] model response.
+[32:28] So far so good.
+[32:31] Any questions on I guess the setup?
+[32:36] Yeah, all good. Okay. So now I have a
+[32:38] question for you.
+[32:40] If I give the following prompt to my LM
+[32:44] as a judge,
+[32:46] am I guaranteed to have a rational and a
+[32:50] score that I can parse?
+[32:54] Am I guaranteed?
+[33:01] No. Yeah, exactly. No. The answer is no.
+[33:05] You're not guaranteed to have um a
+[33:09] rational and a score that you can parse
+[33:11] because this model has some
+[33:13] probabilistic nature to it with the
+[33:15] sampling process and it's not something
+[33:17] that you can really control. So I guess
+[33:19] my follow-up question is do you know a
+[33:22] technique that would
+[33:25] I guess guarantee you to have um a
+[33:30] structured response. So hint is a it's a
+[33:33] technique that we seen that we saw like
+[33:36] towards the beginning of the class.
+[33:42] Okay, I'll give you a little hint. So if
+[33:46] you remember on slide 65 of lecture 3,
+[33:50] we saw a technique called constrained
+[33:54] guided decoding.
+[33:56] So if you remember the idea here is to
+[34:00] constrain the decoding part pro process
+[34:03] by allowing our model to only sample
+[34:06] from quote unquote valid tokens.
+[34:11] And we typically do that in cases where
+[34:14] we want our output to have a given
+[34:16] format. So let's suppose a JSON format
+[34:19] and we want absolutely that format.
+[34:23] So what people do is they use this
+[34:25] technique to guarantee the form of the
+[34:28] response.
+[34:30] And in case you're using these provider
+[34:34] like the providers that are you know out
+[34:35] there like for instance open AAI or
+[34:37] Gemini or anthropic
+[34:39] this technique is known under the name
+[34:43] structured output.
+[34:46] So in your project if you want to
+[34:49] constrain the decoding process
+[34:53] in order to output a response of a given
+[34:55] format. So let's suppose my format is a
+[34:59] response and I kind of represent it by a
+[35:02] class and there are like two attributes
+[35:03] so rational and score.
+[35:07] Well typically you can reference that
+[35:11] with the argument text format equal to
+[35:15] that representation.
+[35:18] So, this I believe is something that uh
+[35:21] OpenAI does, and I'm not exactly sure if
+[35:23] it's exactly the argument name that you
+[35:25] would see for the other providers, but
+[35:27] they're all I guess along the same
+[35:31] lines.
+[35:34] Does that sound good? So, the key word
+[35:36] here is structured output. Whenever you
+[35:40] want a response of a given format, you
+[35:42] would just go for that.
+[35:46] Okay, cool. So just to recap, our LLM as
+[35:51] a judge has two main benefits. So the
+[35:54] first one is that we do not need a
+[35:58] reference text. We do not need human
+[36:00] ratings to just get started because our
+[36:03] LLM already has a lot of I guess
+[36:07] knowledge that has acquired during
+[36:09] pre-training and human preferences and
+[36:10] so on. So you do not need that.
+[36:14] And then the second thing is you can
+[36:16] interpret the score with the rationale
+[36:20] that is being output
+[36:23] and that is also quite remarkable.
+[36:26] So just as an example so here you would
+[36:28] say okay evaluate the quality of like
+[36:30] this this response. So you would have
+[36:32] some rational that would explain what
+[36:35] this response has or doesn't have that
+[36:39] makes it good or bad
+[36:42] along with the score.
+[36:46] Okay, cool. And I believe uh Okay, so
+[36:49] now we're going to see the kinds of LM
+[36:52] messages that you can see out there. So
+[36:54] of course there are many variations but
+[36:57] there are generally two types of L me
+[36:59] that you will see.
+[37:01] So the first one is you have a single
+[37:05] output a single response that you want
+[37:09] to evaluate
+[37:10] and here you would ask LS judge to say
+[37:14] okay is it good or is it not good
+[37:17] and the second big kind of LS judge that
+[37:22] you will see out there is pairwise kind
+[37:24] of setup. So you have two responses and
+[37:28] you say is response A better or is
+[37:31] response B better
+[37:34] and here you would obtain a response
+[37:37] either okay that one or this one.
+[37:41] So if you remember we've seen uh in
+[37:43] previous lectures that there are a lot
+[37:45] of situations where we would want to
+[37:48] have preference data. So for instance in
+[37:50] the preference tuning class that we had
+[37:53] I believe it was lecture five.
+[37:56] So this kind of method can also be a
+[38:00] good way to synthetically generate
+[38:02] preference ratings
+[38:04] where you have two responses
+[38:07] and then you ask your LLM to say okay I
+[38:10] prefer that one and you can use that one
+[38:12] as a as the label to train your rework
+[38:16] model.
+[38:19] Does it sound good?
+[38:22] Any questions on the setup or
+[38:25] everything that we've talked about so
+[38:27] far?
+[38:31] Okay, cool. Everyone is uh on the same
+[38:34] page. So now let's see what can go wrong
+[38:39] with our LMS as a judge. So uh let's
+[38:42] think of the possible kinds of failures
+[38:45] that we can encounter.
+[38:48] So the first one is called position bias
+[38:52] and as the name suggests it has to do
+[38:55] with the ordering at which we present
+[38:57] the responses to our model.
+[39:00] So let's say if we ask our model is
+[39:03] response A better or response B.
+[39:06] Well, there is a chance that the model
+[39:08] responds with response A just because it
+[39:13] it was the first one to be mentioned.
+[39:16] So that kind of bias is called position
+[39:19] bias. So it's where the position at
+[39:21] which you place the response matters in
+[39:26] the
+[39:27] judgment of the LMS as a judge model.
+[39:31] And I guess as a way to remedy that,
+[39:35] people have different techniques. But
+[39:38] one typical technique would be to ask
+[39:40] the model is A or B better and then ask
+[39:44] the model is B or A better and then take
+[39:48] the majority voting. So if both of them
+[39:52] lead to the same response, then it's
+[39:55] good. But if the response changes,
+[39:58] then it may not be good. So you may want
+[40:00] to do something else.
+[40:04] Um there are a bunch of other
+[40:07] techniques. So I know there's a bunch of
+[40:08] papers that try to tweak the position
+[40:10] embeddings but those ones are a bit more
+[40:13] advanced. So it's not typically the
+[40:15] thing that you would do just out of the
+[40:17] box. So taking the average or like you
+[40:20] know taking the majority voting of this
+[40:22] you know position swapping is CPT what
+[40:25] you would do.
+[40:28] Okay, cool. So this was the first kind
+[40:30] of bias. The second bias is called
+[40:33] verbosity bias.
+[40:35] So let's suppose you have two responses
+[40:39] and the first response is short and
+[40:42] concise.
+[40:44] The second response is something that
+[40:46] goes much more into details is typically
+[40:49] something that is more verbose.
+[40:51] Well, there are cases where the model
+[40:54] will tend to um
+[40:58] to I guess prefer responses that are
+[41:01] just more verbose just because they're
+[41:02] more verbose, not necessarily because
+[41:04] they're more correct.
+[41:07] And for that, it's maybe a little bit
+[41:09] trickier. So
+[41:12] people typically try to explicit
+[41:16] this dimension in the guidelines
+[41:19] when they input I guess the this this
+[41:24] question to the LMS as a judge they say
+[41:26] uh well make sure to not pay too much
+[41:28] attention to the length of these
+[41:30] responses to not I guess prefer
+[41:33] something just because it's more
+[41:34] verbose.
+[41:35] So that's one kind of meth method that
+[41:38] you will see out there.
+[41:40] Uh the second one is to just um also add
+[41:43] some examples in context learning
+[41:45] examples
+[41:46] uh to the model to just um I guess tell
+[41:50] it to
+[41:52] um I guess show by example that
+[41:55] verbosity is not something you should uh
+[41:57] prefer. And then uh the last one is to
+[42:01] have some kind of penalty
+[42:04] on the output length.
+[42:07] So you can ask your model in a pointwise
+[42:09] way is one how how good is one how good
+[42:11] is two and then try to penalize that
+[42:15] with the length. So that's something
+[42:17] that also people may use.
+[42:21] Okay. So we've seen position bias, we've
+[42:24] seen verbosity bias, now we will see the
+[42:27] third kind of bias that you may see out
+[42:28] there which is called selfenhancement
+[42:32] bias.
+[42:34] And so that one has to do with the fact
+[42:37] that if you ask a model to judge an
+[42:43] output
+[42:44] that was produced by itself,
+[42:48] well, the model will tend to prefer
+[42:51] responses that are generated by itself
+[42:55] regardless of whether or not the other
+[42:56] one was more
+[42:58] uh aligned with what we wanted.
+[43:03] And I guess here the intuition is that
+[43:06] if our model
+[43:09] generated such an answer then it's maybe
+[43:12] the case that
+[43:14] uh our model thought that from a
+[43:17] probabilistic standpoint this was a
+[43:19] sequence that was very much likely to
+[43:21] appear. So it may be I guess one way to
+[43:25] think about it which is if it has
+[43:27] generated such a sequence then it means
+[43:29] that it it is something that
+[43:34] it thinks I mean think uh quote unquote
+[43:38] that it's a good answer.
+[43:41] So the general guideline here is to
+[43:43] typically not use the same model that
+[43:45] you use for generation and for
+[43:49] judges.
+[43:52] But um I guess nowadays it's kind of
+[43:55] hard to have that strict
+[43:59] uh constraints um I guess
+[44:03] uh respected because I guess all models
+[44:06] they are trained on basically the same
+[44:08] data sets.
+[44:10] So you can argue they're all being
+[44:13] subject to the same I guess training
+[44:16] mixes and so on. But still I guess
+[44:19] people what what people do is they tend
+[44:22] to use another model just to have
+[44:25] such a risk be minimized. So long story
+[44:29] short try to not use the exact same
+[44:31] model that you use for generation
+[44:34] and for evaluation.
+[44:39] So this is self- enhancement bias.
+[44:43] Okay. So before we go to the next uh
+[44:46] subp part I guess what do you think of
+[44:48] these three biases? Do they make sense?
+[44:50] Any questions so far?
+[44:53] Yep.
+[45:03] So, can you elaborate a bit more?
+[45:08] Yeah.
+[45:14] Yeah. Yeah. Yeah. So, the question is,
+[45:15] can you have a model that just maybe
+[45:18] isn't aligned with uh I guess the ground
+[45:20] truth and maybe prioritizes maybe one
+[45:24] label over another. So, yeah, this can
+[45:25] definitely be another kind of bias. Uh
+[45:28] so this bias being that our LLM is not
+[45:31] exactly aligned with what humans would
+[45:34] prefer. So these three biases are by no
+[45:36] means exhaustive. So this can very well
+[45:39] be another bias that you can list as
+[45:41] well. Um so yeah, this is definitely
+[45:44] another kind of bias.
+[45:47] Yep.
+[45:49] Yep.
+[46:00] So the question is, is it possible that
+[46:02] our judge still prefers an LM response
+[46:05] even if it's a different one? Well, it
+[46:07] depends how good your judge is. But
+[46:10] typically the best practice is to have a
+[46:13] judge that has a much bigger capacity
+[46:17] that may capture these kind of
+[46:19] differences and not be fooled by a
+[46:23] response that just sounds like something
+[46:25] it may generate but something that is
+[46:27] maybe more aligned with human
+[46:29] preferences. So I guess the short answer
+[46:31] is yes, you can still have such a
+[46:33] situation. But in order to mitigate that
+[46:36] risk, you would typically take a model
+[46:39] that is not the same but also typically
+[46:41] much bigger.
+[46:43] So uh you have a bunch of uh such models
+[46:47] out there and uh you know with all the I
+[46:50] guess um improvements that have been
+[46:52] made with like reasoning models. This is
+[46:54] also something that people try.
+[47:01] Yeah, question is should the judge be
+[47:03] bigger? Um, it's not a hard constraint,
+[47:05] but it's typically something that people
+[47:06] would take like a bigger model that
+[47:09] would have strong reasoning capabilities
+[47:12] that could really tease out what's good
+[47:14] and what's not good. Yeah.
+[47:19] Okay, cool. So, with that, I'm going to
+[47:23] just go over the best practices that
+[47:25] we've seen. So we saw that um in order
+[47:30] for our LMS as a judge to output a
+[47:32] score, we need to give the criteria that
+[47:36] we want this to be evaluated against.
+[47:39] But sometimes this criteria may be a
+[47:41] little bit subjective. So one thing that
+[47:44] really works very well is to have crisp
+[47:48] guidelines. So really explicit what we
+[47:52] want, what we don't want.
+[47:57] The other point is you may see different
+[48:00] kinds of scaling out there. So sometimes
+[48:02] people having uh a scale that is maybe
+[48:06] more granular and maybe other cases
+[48:08] where we're just operating on a binary
+[48:10] scale. So typically what people would
+[48:15] tend to prefer is actually the binary
+[48:17] one because it makes the job of the LM
+[48:21] as a judge easier. So it's just either
+[48:24] good or bad.
+[48:27] And also when it comes to aligning the
+[48:30] judge with human ratings, humans, they
+[48:34] typically also find it easier to just
+[48:38] judge out of two options as opposed to
+[48:40] several. So it just removes the noise of
+[48:45] having several uh possible choices. And
+[48:48] it's not necessarily an extra signal
+[48:50] that may be really useful. So here the
+[48:54] tip is to use a binary scale like a pass
+[48:58] or fail kind of score as opposed to like
+[49:00] a gradual one.
+[49:03] The third tip is to make sure to output
+[49:06] the rational before outputting the
+[49:09] score.
+[49:11] And we've seen this is along the same
+[49:12] ideas of outputting a chain of thought
+[49:16] before providing the response which is
+[49:18] something that is done by our reasoning
+[49:20] models. So it's typically something that
+[49:22] will improve uh the judge performance.
+[49:27] Uh so we've talked about the different
+[49:28] kinds of biases. So position, verbosity,
+[49:32] self-enhancement, but it's not the only
+[49:34] ones of course and uh I guess people
+[49:37] typically also look at how to mitigate
+[49:41] those with the remedies that we
+[49:43] mentioned.
+[49:45] So, so far we've stated that we do not
+[49:50] need human ratings to get started,
+[49:54] but a good practice is to still look at
+[49:57] how the LLM ratings compare with the
+[50:01] human ratings.
+[50:03] So here one tip is to just calibrate the
+[50:07] responses that the judge is giving with
+[50:09] respect to the human ratings because at
+[50:11] the end of the day it is the quantity
+[50:14] that we want to approximate
+[50:17] and so here I guess if there is the
+[50:19] budget and it's something that is
+[50:21] possible for the project one good uh
+[50:25] practice is to collect the human ratings
+[50:28] output the LM as a judge scores and then
+[50:32] run some correlation analysis. this to
+[50:33] see if there is something that can be uh
+[50:37] improved in terms of the prompt mainly
+[50:39] the prompt
+[50:41] and then the last thing is the
+[50:44] temperature.
+[50:45] So if you remember the temperature
+[50:49] um is a parameter that you can tweak to
+[50:53] make your generation more deterministic
+[50:58] as opposed to more creative. And so you
+[51:00] will see that for evaluation tasks,
+[51:03] people use a low temperature because
+[51:06] they want to make their evaluation
+[51:09] experiments reproducible.
+[51:11] Like let's imagine you do one evaluation
+[51:14] and then you do another one let's say uh
+[51:17] two days later. You don't want the
+[51:19] scores to be super different. So you
+[51:22] will see a temperature value of
+[51:24] something [snorts] like 0.1 or 0 2.
+[51:26] These are like very uh common values
+[51:29] that people take.
+[51:32] And so long story short, if we were to
+[51:34] recap, we went from the ideal scenario
+[51:38] being that
+[51:40] each LM output is rated by humans
+[51:45] to actually having some kind of
+[51:49] approximation with these LM as a judge
+[51:52] models that can do this evaluation I
+[51:55] guess um without any constraints or
+[51:59] without any need for human judge. ments.
+[52:03] But as we mentioned in the best
+[52:06] practices,
+[52:07] making sure that the LMS adjust scores
+[52:11] and the human ratings do not diverge is
+[52:15] something that we should keep in mind as
+[52:18] we improve our model
+[52:21] because it may be that we're improving
+[52:22] on our model
+[52:24] so that our LMS score is very high but
+[52:28] the LMS score is itself an approximation
+[52:32] of human ratings. So I guess you don't
+[52:35] want to overoptimize against the I guess
+[52:38] a proxy. And so that's why you want to
+[52:41] have that proxy be as aligned as
+[52:44] possible with your ground truth labels
+[52:47] which are human ratings.
+[52:51] Okay, cool. Um so uh we have a few
+[52:56] minutes left before giving it to
+[52:57] Shervin. So I'm going to quickly go over
+[53:01] the kinds of dimensions that people uh
+[53:05] measure uh LM output against. So we have
+[53:09] broadly so there are many dimensions but
+[53:12] just to simplify things there are two
+[53:14] main dimensions that we can look at
+[53:16] here. So one is how well your task is uh
+[53:20] being done. So task performance with
+[53:23] things like was the response useful, was
+[53:27] the response factual, was the response
+[53:30] relevant among other things. And also
+[53:34] how aligned
+[53:36] was the response format in terms of tone
+[53:41] is in terms of whether the style was
+[53:44] something that is aligned what we want
+[53:46] in terms of whether there was any unsafe
+[53:49] elements of response that was given to
+[53:52] the user.
+[53:54] And I just want us to spend maybe five
+[53:57] minutes on the facility dimension
+[54:01] which is actually something that
+[54:03] requires a little bit more work
+[54:06] and I'll give you just a setting.
+[54:10] So let's suppose we have some text
+[54:14] output
+[54:16] and our goal is to quantify how factual
+[54:19] that output is. So I'm going to read the
+[54:22] text out loud. So teddy bears first
+[54:25] created in the 1920s were named after
+[54:28] President Theodore Roosevelt after he
+[54:30] proudly wanted to shoot a captured bear
+[54:32] on a hunting trip. So what we want is
+[54:36] quantify how factual that piece of text
+[54:38] is.
+[54:41] So I told you pre previously that um we
+[54:45] typically prefer binary scales when it
+[54:48] comes to rating
+[54:50] uh something with respect to a
+[54:52] dimension.
+[54:54] But the thing with factuality is that
+[54:57] there's a lot of nuance.
+[55:00] Some text may be very wrong. Some text
+[55:03] may be a little bit wrong. Some text may
+[55:05] be not wrong at all. So we want to
+[55:08] capture how wrong the text is. given the
+[55:13] the fact that the text can contain a lot
+[55:16] of sentences and if there's like one
+[55:18] small issue, we don't want to just say
+[55:21] the whole thing was not correct.
+[55:26] So, I'm not sure if you saw in this
+[55:27] text, but there are actually two errors.
+[55:30] So, it's not 1920s, but 1900s that the
+[55:33] teddy bears were first created. And uh
+[55:36] the president didn't want to proudly
+[55:38] shoot. He actually I think refused. So
+[55:42] if we are in such a case the question
+[55:45] that we want to tackle here is how do we
+[55:48] want to quantify
+[55:51] this nuance.
+[55:54] So this is an open question that people
+[55:56] have been writing papers on. So what I'm
+[56:00] going to tell you now
+[56:02] is something that people typically use
+[56:05] nowadays based on re research that has
+[56:08] been done.
+[56:10] So we typically operate in a few steps.
+[56:16] So the first step is for us to go from
+[56:20] the original text output
+[56:23] to a list of facts
+[56:27] because when you look at a text, it
+[56:29] actually contains a lot of facts that
+[56:31] need to be checked. And so the idea here
+[56:35] is to aggregate
+[56:38] the factuality of this text along the
+[56:42] dimension of the facts that are present
+[56:45] in this text.
+[56:47] So in this example, we would have one
+[56:50] LLM call that transforms our original
+[56:54] multi-sentence multiaragraph potentially
+[56:57] text
+[56:59] into a list of list of facts. So here in
+[57:03] this example we would have four facts.
+[57:07] So that's the first step. The second
+[57:09] step is we would go over each of these
+[57:11] facts
+[57:13] and check whether it is correct or not.
+[57:18] And so here we would typically proceed
+[57:20] in a binary fashion
+[57:23] because when if you think about it a
+[57:25] fact is either correct or not. I mean
+[57:28] you may have some in between but we
+[57:30] don't want to over complicate the ta the
+[57:32] task
+[57:35] and so here the factchecking process
+[57:38] would typically involve the other
+[57:41] technique we've seen last lecture like
+[57:44] rag for instance given a piece of text
+[57:48] we want to I guess query a knowledge
+[57:51] base with the actual fact and then check
+[57:54] whether the fact that is here is
+[57:56] actually correct
+[57:57] So this facteing process is typically
+[58:00] something that involves things like rag
+[58:04] web search is also something else
+[58:07] and so on.
+[58:09] So you can think of this facteing step
+[58:12] as also involving
+[58:14] LLM calls.
+[58:18] And so you can also think of some facts
+[58:24] being more important than others.
+[58:27] So as an example, maybe the fact that
+[58:30] the president proudly wanted to shoot
+[58:32] the the bear is not as important as
+[58:35] let's say the name of the person after
+[58:38] which the teddy bears were named. So you
+[58:41] can think of also having weights that
+[58:44] quantifies
+[58:46] the importance of each fact.
+[58:49] So people would use something
+[58:53] like this formula which is an
+[58:55] aggregation over all the facts with some
+[58:59] weight that quantifies the importance of
+[59:01] each fact.
+[59:03] So these weights alpha I can be all
+[59:07] equal to one another if you want to make
+[59:10] it simpler. It's not something that is
+[59:12] necessarily
+[59:14] uh the case everywhere that these must
+[59:16] be different but it may be something
+[59:18] that you can tweak.
+[59:20] So if we go back to our uh initial
+[59:23] question which is how do you quantify
+[59:25] the factuality of this text here you
+[59:28] would say okay the second and the third
+[59:33] facts are both correct. we know how
+[59:36] important they are. So we run this
+[59:40] aggregation formula and we obtain a
+[59:42] score of 6.
+[59:45] So that means that there are some errors
+[59:47] but we still have some things that were
+[59:50] still factually correct.
+[59:52] So this is typically how you would run
+[59:56] this criteria with I guess the
+[59:59] techniques that we have nowadays.
+[60:02] Okay, cool. I know I'm 2 minutes late
+[60:04] and with that I'm going to give it to
+[60:06] Shervin.
+[60:09] Thank you Ashin.
+[60:11] So before we move on to looking at
+[60:14] specific benchmarks, I wanted to take a
+[60:16] detour and look at what is happening on
+[60:19] the agent side of things.
+[60:22] So if you recall what we discussed uh
+[60:26] last lecture, we talked about this react
+[60:28] framework where you could decompose what
+[60:32] was going on within an within an agent
+[60:35] into specific steps. So it's usually
+[60:39] three steps can be observe, plan, act or
+[60:42] it can have other names. But the fact is
+[60:45] that you have several atomic steps that
+[60:49] can loop.
+[60:51] So if you take a look at the typical
+[60:54] agents inner working uh you can see a
+[60:58] pattern like this. Now you might wonder
+[61:01] how do you even evaluate such a thing.
+[61:04] So let's take a look at just one loop um
+[61:11] and then let's see together what can the
+[61:14] errors be in order for us to have an
+[61:16] idea of what would an evaluation results
+[61:19] mean on an agentic workflow.
+[61:23] So I'm going to show a slide that we had
+[61:27] presented
+[61:29] um at the previous lecture and uh we had
+[61:33] seen that we can decompose a tool call
+[61:38] into these three steps. So let's take
+[61:40] our favorite example um let's say you
+[61:44] want to find a bear near you. So you
+[61:46] would ask that to the model. So the
+[61:48] first stage is to find the right tool
+[61:52] call with the right argument
+[61:55] and then once you have found this right
+[61:58] tool call you need to execute it and
+[62:01] then based on your tool call prediction
+[62:04] and on the results that you obtained
+[62:06] from your tool you would infer the
+[62:09] results at the last step. So these are
+[62:12] three steps and you might have a series
+[62:16] of them in the case of an agentic
+[62:18] workflow where you call multiple tools
+[62:21] and then build up your reasoning until
+[62:24] reaching an answer that you then give to
+[62:26] the user.
+[62:28] Okay. So now let's look at
+[62:33] what can the failure modes can what can
+[62:36] they be at each of these steps. So first
+[62:39] let's take a look at possible tool
+[62:42] prediction errors. So the first one I
+[62:45] want to mention is the case where the
+[62:49] error is that from a user query that
+[62:52] obviously needs a tool that you don't
+[62:55] actually use the tool. So here let's
+[62:59] suppose that you want to find a bear.
+[63:02] You have the tool to find bears at hand
+[63:05] but you don't use it. Uh so typically if
+[63:07] you don't use it a possible behavior
+[63:10] from the model can be to uh say an
+[63:13] error. Um so an error by an error I mean
+[63:17] you know sorry I cannot do that and this
+[63:20] in assistant terms you can call this a
+[63:23] punt. So when you don't answer the
+[63:25] question you just fail. Uh it's called a
+[63:28] punt. So you might punt here. Uh you
+[63:30] know sorry I don't know where I can find
+[63:32] one. and let's see together what could
+[63:35] possibly cause this issue and how we
+[63:38] could remedy it.
+[63:42] So I don't know if you recall the
+[63:43] concept of tool router or tool selector
+[63:46] that we had introduced. So usually when
+[63:49] you are dealing with tools you don't
+[63:52] have just one you have multiple ones and
+[63:55] the number of tools that might be useful
+[63:58] for a large scale in the sense of number
+[64:01] of users LLM might be large. So you
+[64:05] don't want to input all the function
+[64:08] APIs at every call. So it might be the
+[64:11] case that you have this intermediary
+[64:13] step where you filter down the sets of
+[64:17] possible functions that you can put in
+[64:19] the preamble
+[64:21] and here um like these tool selectors or
+[64:25] tool routers
+[64:26] um they have the property of trying to
+[64:29] be recall oriented. So you want to trim
+[64:33] the list of functions that you want to
+[64:35] input in the preamble
+[64:38] u but you want to at least find those
+[64:41] that you need. So the main property here
+[64:43] is that you want to save on uh context
+[64:47] space but you still want to ensure you
+[64:50] know most of your use cases are still
+[64:53] working. So this is why here when we say
+[64:57] tool wer error we actually mean a recall
+[65:01] error. So it means it's possible that we
+[65:03] just didn't select the right tool among
+[65:06] the set of tools
+[65:08] and uh let's say this is the cause then
+[65:10] it's pretty clear we just have to adjust
+[65:14] the tool router in order for it to be um
+[65:17] like predicting the right tool. So this
+[65:20] can be one kind of issue. Another kind
+[65:23] is, hey, actually the tool was included
+[65:26] in this list of function APIs, but it's
+[65:29] just that the LLM didn't think about
+[65:32] using it.
+[65:34] So, um, so maybe this like fine teddy
+[65:37] bear was in there, but we just don't use
+[65:40] it. The LLM directly outputs a response.
+[65:43] So in that case um if you recall we had
+[65:47] mentioned techniques to teach an LLM to
+[65:50] use a tool. So you would need to revisit
+[65:53] that part and either so if if you had
+[65:57] trained it with SFT so you know include
+[66:00] this pattern maybe to train the model to
+[66:03] recognize it or if you had done prompt
+[66:06] tuning then you should revisit your
+[66:08] prompt in order for this call to make
+[66:11] sense to the model that you should use
+[66:13] that tool.
+[66:16] Okay, great. So this is one kind of uh
+[66:20] possible error. Another one that you
+[66:23] might see in the wild when you want to
+[66:25] debug uh agents is at the time of tool
+[66:29] calls. It might be the case that the
+[66:31] model comes up with a function name that
+[66:34] just simply doesn't exist.
+[66:37] So here I mentioned the tool
+[66:39] hallucination. This is what I mean by
+[66:41] that. So it calls a function that is
+[66:44] just not defined. So here our API was
+[66:48] called if you remember find teddy bear.
+[66:50] So this was the function that existed
+[66:53] and in this example of failure the model
+[66:56] tries to call the function find bear
+[66:59] which I haven't defined.
+[67:02] So uh when you see such errors you have
+[67:06] several potential causes. One of them
+[67:08] being that the model simply doesn't
+[67:12] ground well overall and typically it
+[67:15] occurs if the model is too simple.
+[67:21] Uh so it's an empirical observation if
+[67:23] it's too weak. Maybe it can make up
+[67:25] things that it thinks uh can be
+[67:28] reasonable but it doesn't actually
+[67:30] ground on your instructions.
+[67:32] And here I have no better remedy
+[67:35] proposal than to maybe upgrade the model
+[67:38] if you see that this is truly the case
+[67:40] and then see if this uh this is
+[67:43] reproducible.
+[67:45] Some other potential causes could be
+[67:48] coming from actually you. So the model
+[67:51] is trained on very high quality data
+[67:53] during its SFT stage. So it has seen
+[67:57] what great APIs look like. So these
+[68:01] tools that you define that help the user
+[68:05] achieve what they're looking for might
+[68:07] not be written in the best way. You
+[68:10] know, if you didn't use uh AI assistant
+[68:12] coding, let's say um or yeah, you don't
+[68:16] necessarily have to use AI assistant
+[68:18] coding to write this, but these are
+[68:20] typically a great way to check whether
+[68:22] your implementation makes sense from a
+[68:24] model standpoint. And if it doesn't then
+[68:28] a typical remedy is to either like
+[68:32] renaming the API just the function name
+[68:35] and the arguments
+[68:37] just go a long way because this is what
+[68:40] the model will see when it comes to your
+[68:42] to your tool call. It sees the API
+[68:46] um you know function name. It sees the
+[68:48] arguments and the highle descriptions.
+[68:51] So these are your three knobs to tune in
+[68:54] order to make it sound more logical and
+[68:58] then linked to the actual task at hand.
+[69:03] And then uh so you know at the very
+[69:05] beginning I was saying maybe the model
+[69:08] is too weak but actually maybe the first
+[69:10] thing you should check is whether the
+[69:13] horizontal instructions so horizontal
+[69:15] across tools whether these are clear
+[69:18] enough. Maybe [snorts]
+[69:20] uh the model hasn't really um understood
+[69:24] that it needs to use functions that are
+[69:26] given to it. So maybe it's just making
+[69:28] up function names that it believes could
+[69:31] have access to. So the first thing to
+[69:34] check would probably be to see if this
+[69:37] phenomenon is generalized and see if
+[69:41] these horizontal instructions they are
+[69:43] concisely saying that you should uh make
+[69:47] sure to use available functions
+[69:50] and then uh yeah on that you can iterate
+[69:52] on these top level instructions and uh
+[69:56] you know maybe iterate with uh with an
+[69:58] LLM itself because typically top level
+[70:00] instructions they're veryant important.
+[70:03] So you need perfect formatting and
+[70:06] perfect logic. So yeah, typically being
+[70:09] able to detail them um with with great
+[70:13] detail is is helpful.
+[70:17] Um okay, now let's see a third possible
+[70:21] failure cause. So let's say you have
+[70:24] your model and your uh user prompts, but
+[70:28] you just don't use the right tool. So
+[70:31] here if the user says find a bear near
+[70:34] me, one other reasonable approach would
+[70:38] be you know what if you just send a
+[70:41] message asking for a bear. You know that
+[70:44] would be reasonable, right? But maybe
+[70:47] that's not what you want to implement as
+[70:50] a behavior for your user. So in that
+[70:53] case it's not clear to the model what
+[70:56] approach you prefer and it is uh on your
+[71:01] um you know it is your responsibility to
+[71:03] ensure it is indeed clear. So um and
+[71:07] then you have to do that at two
+[71:10] different levels. So the first one is
+[71:13] you know potentially also at the tool
+[71:15] router level. Maybe the tool router
+[71:18] doesn't know that for this kind of
+[71:20] query, you should have the tool that you
+[71:22] had in mind as part of the results. So
+[71:25] it's possible that you have a recall
+[71:27] issue that you need to fix. And then the
+[71:30] second one is simply going back to the
+[71:33] APIs of both functions. Maybe they
+[71:36] conflict in scope. So you want to go
+[71:39] back to each of them and be precise into
+[71:44] which situations should be dealt with
+[71:46] with which tool. So being very um very
+[71:52] precise in in these APIs um just plays a
+[71:57] lot here.
+[72:00] Okay, great. So now we're going to go
+[72:02] through a fourth
+[72:04] u and last failure mode for this tool
+[72:06] prediction task which is what if you
+[72:09] have the right tool but you just don't
+[72:12] have the right arguments.
+[72:15] So you have already gone one step you
+[72:18] know you have found the right tool but
+[72:20] then this last mile of making sure that
+[72:22] the tool is run with what you would like
+[72:25] is not fulfilled. So here if I say find
+[72:28] a beer near me and it outputs and and it
+[72:31] uses the coordinates 0 0 which is u
+[72:36] somewhere in the southern Atlantic so
+[72:39] it's not likely that I'm actually there
+[72:41] uh you know that can reflect an issue
+[72:44] and
+[72:46] you know one possible explanation for
+[72:49] this is that maybe simply doesn't know
+[72:52] where I am because I haven't specified
+[72:54] in my query that I'm here at Stanford
+[72:57] and it just tries to make up my
+[72:59] coordinates. So, one uh thing that you
+[73:03] should uh double check is making sure
+[73:06] that the context uh carries the location
+[73:09] information. So, if I haven't provided
+[73:11] that as a setting on my LLM map, it's
+[73:14] possible it's not there. Um, and uh, and
+[73:18] then let's say it's not there, maybe you
+[73:20] would want to introduce a location
+[73:23] finder tool that is executed beforehand
+[73:26] and if it fails because I haven't given
+[73:29] the app the permission to see my
+[73:30] location, then maybe you could have a
+[73:33] actionable error shown to the user uh,
+[73:37] instead of having some dummy parameters
+[73:40] passed in. So this is one potential
+[73:43] remedy. And then the second one is uh
+[73:47] you know maybe it sees arguments but uh
+[73:49] the model just doesn't know what it
+[73:51] should put as input.
+[73:53] So that that could also be um you know
+[73:55] another reason and then on that you know
+[73:59] this is a common remedy to go back and
+[74:02] then retrain either the model on how it
+[74:06] uses these tools or rewrite the API.
+[74:12] So we have seen four ways to I mean four
+[74:16] failure modes for the tool prediction
+[74:18] step. Now we're going to see two more on
+[74:21] this tool call step.
+[74:26] So the first one is you know very simple
+[74:30] one um you know from a mindset
+[74:33] perspective. So know maybe your your
+[74:35] tool just doesn't output the right
+[74:38] response. So, it's a very um kind of
+[74:42] vague category. And as an example, maybe
+[74:46] uh your code logic has a bug somewhere
+[74:50] and it it it just returns an error. You
+[74:53] know, those that you see in Python,
+[74:55] maybe it hits some value error or like
+[74:57] anything else. And I just want to say um
+[75:01] that it might not be necessarily the
+[75:04] case that hitting an error is bad
+[75:07] because sometimes you know in the case
+[75:10] of finding your location
+[75:13] if you haven't uh provided your
+[75:15] permission to find the location maybe it
+[75:17] will hit an error and the model will
+[75:19] anchor on that error to convey the
+[75:22] status to the user. But in general, it's
+[75:25] not really common practice to return
+[75:29] errors just because the model could
+[75:32] interpret it as an internal tool error.
+[75:35] So sometimes when you you hit an error
+[75:37] and then you ask the model to synthetize
+[75:40] the tool cause it has seen. Sometimes it
+[75:42] just says, "Oh, sorry. I couldn't do it,
+[75:45] but it's my fault. It's because I
+[75:46] encountered an error." Doesn't really
+[75:48] say, you know, actionably what happened.
+[75:52] And instead the fix here is to uh convey
+[75:56] these outputs in a meaningful manner. So
+[75:59] uh typically you have a structured
+[76:01] output and you return a true output
+[76:03] instead of an error.
+[76:06] So uh yeah here um so it's a general
+[76:10] case just to say that just check your
+[76:12] tool implementation. So you have the
+[76:15] right arguments you you have the right
+[76:16] tool but you just don't have the right
+[76:19] value. So just a software engineering
+[76:20] problem, just go and fix the tool.
+[76:25] And the second category of issues that
+[76:28] we see at the backend level is when you
+[76:31] return no response.
+[76:34] And returning no response is often bad
+[76:38] when the tool is one that performs an
+[76:42] action.
+[76:43] So let's say last lecture we talked
+[76:46] about uh increasing the thermostat for
+[76:49] your teddy bear who was called. So if
+[76:51] you increase the thermostat and the tool
+[76:54] doesn't say anything. So the model
+[76:56] doesn't know if it has done the task
+[76:59] successfully or not. So it could well
+[77:02] come up with a false confirmation of hey
+[77:05] uh you know all is good. I have
+[77:06] increased the thermostat. No worries.
+[77:09] But it actually hasn't. So this is why a
+[77:13] common guidance is to always make sure
+[77:16] that tool calls are followed by a
+[77:20] meaningful output. So uh as usual you
+[77:23] have this like structured message and
+[77:26] you should take advantage of it to
+[77:29] convey what has happened as part of your
+[77:31] tool um in order to make sure that the
+[77:33] the model in turn knows what to convey
+[77:37] to the user or knows how to continue
+[77:40] that agent tick loop.
+[77:44] So yep. So always output something and
+[77:48] let's say you're finding you want to
+[77:49] find a teddy bear and you haven't found
+[77:52] any then here you will be surprised by
+[77:56] what I say but it's actually better to
+[77:58] output an empty JSON than just
+[78:01] outputting none because an empty JSON
+[78:04] could mean I found no bears but an
+[78:08] output of none doesn't say anything. So
+[78:11] even in that case an empty output in the
+[78:14] sense of you know empty JSON is
+[78:16] meaningful and make sure to use that
+[78:18] meaning in the way you encode your tool.
+[78:23] Okay great. So we have seen uh two more
+[78:26] u possible errors at the function call
+[78:28] level. Now let's suppose that everything
+[78:31] went great at the first step everything
+[78:34] went great at the second step. So you
+[78:37] have found the right tool output but now
+[78:40] the model has trouble to synthesize the
+[78:44] output into a meaningful response.
+[78:48] So yeah let's suppose your tool found a
+[78:51] bear named teddy and then the other
+[78:53] attributes which I haven't shown here
+[78:55] maybe say that they are like one mile
+[78:57] away from me. So yeah the teddy bear has
+[78:59] been found and we just have to present
+[79:01] it to the user. But uh if you put it to
+[79:05] the model, let's suppose the model says,
+[79:08] you know, I didn't find any bear. So
+[79:11] what could be the cause here? So it
+[79:14] could be the case that you have an
+[79:16] output that has information that the
+[79:20] model doesn't ground on. So it could be
+[79:22] the case that just the model lacks the
+[79:25] ability to refer to content that it that
+[79:28] was uh you know put previously. So here
+[79:31] I have this the same um vanilla
+[79:34] suggestion of um you know upgrading the
+[79:38] model.
+[79:39] So usually that doesn't happen really
+[79:42] anymore but it used to in early
+[79:44] iterations of LLMs.
+[79:47] There is uh you know one that is
+[79:50] actually one that happens fairly often.
+[79:52] So sometimes the tool back end returns
+[79:55] not only an output but a lot of output
+[79:58] and it's too much for the model to
+[80:00] properly parse what is important. So you
+[80:04] have maybe the information of Teddy in
+[80:06] there but you know it's it's it's
+[80:09] drowning under um an ocean of other
+[80:13] kinds of information that are not
+[80:15] useful. So the model cannot distinguish
+[80:17] what is helpful. And then the solution
+[80:20] for that is to go back to your tool
+[80:22] implementation and ensure that whatever
+[80:25] you output is meaningful to be used to
+[80:28] the model in the next stage.
+[80:32] And uh I think this goes um so this
+[80:35] overlaps with the third reason I put
+[80:37] here. So let's say your output is
+[80:39] trimmed already. Then another possible
+[80:43] explanation is maybe it's not being
+[80:45] presented in a meaningful way. So this
+[80:48] is why in Python you have these classes
+[80:50] where you can uh instantiate attributes
+[80:54] so that the output is very meaningful.
+[80:57] So let's say for like saying that you
+[80:59] have found a bear, you could return an
+[81:03] object called teddy bear with attributes
+[81:06] name, distance and so on. This is very
+[81:09] meaningful as opposed to maybe raw
+[81:11] information that it doesn't know how to
+[81:13] interpret.
+[81:16] Okay, awesome. So we have seen here
+[81:18] seven different failure modes over all
+[81:22] these categories. So these are not the
+[81:25] only ones you know I I have just
+[81:28] mentioned those that I see very often
+[81:30] that I thought could be helpful but you
+[81:31] could definitely see other failure
+[81:33] modes. Um does this make sense?
+[81:40] Do you have any questions?
+[81:45] Okay, great. So we can move on
+[81:49] um to
+[81:51] uh summarizing what were the common
+[81:53] trends in uh these failure modes. So
+[81:56] often times we have talked about the
+[81:58] modeling side where uh you know
+[82:01] sometimes
+[82:02] in improving the model's ability to
+[82:06] reason and ground could be the solution.
+[82:08] Another um you know another kind of
+[82:11] complaint that we have seen is uh the
+[82:14] relevance of what we put in the context
+[82:16] window. If we improve that relevance
+[82:18] maybe it gets better. And on the
+[82:20] modeling side one more um aspect is
+[82:24] maybe the tool wrers modeling or the
+[82:26] tool API modeling itself either by SFT
+[82:30] tuning or just prompting or even just
+[82:34] the API description itself. So you know
+[82:37] does the function make sense? Do the
+[82:40] arguments make sense? Does the duck
+[82:42] string make sense? So this is one kind.
+[82:47] And the other kind is the tool itself.
+[82:50] So maybe it just has a problem. So you
+[82:51] need to fix it.
+[82:54] Um and I just want to say that when you
+[82:57] deal with tools and evaluations, you
+[83:00] have a lot of possible errors. So one
+[83:03] thing that will help you to navigate
+[83:05] through this is to be very methodical
+[83:08] into categorizing kinds of errors and
+[83:11] then dealing with them in group. So you
+[83:15] see there's lots of errors and every
+[83:17] time that you deal with a given loss, it
+[83:20] may be just an adventure to solve. So
+[83:23] really being very organized here is
+[83:26] going to help you a lot.
+[83:28] Okay.
+[83:30] So with that in mind um we can delve
+[83:34] into the world of benchmarks. So we
+[83:37] talked about evaluations. Now you might
+[83:39] wonder how can you evaluate a large
+[83:42] language model uh you know let's say you
+[83:45] have trained everything you know how can
+[83:47] you compare it with respect to others.
+[83:49] So we're going to see together a series
+[83:54] of [snorts] benchmark categories that
+[83:57] today's benchmarks usually um you know
+[84:00] where where today's benchmark usually
+[84:02] resides. So in one of these um and we're
+[84:05] going to see examples for each of them.
+[84:08] Does that sound good?
+[84:10] Awesome. So we can start with a kind of
+[84:14] benchmark that I called a knowledge
+[84:16] based benchmark where we want to test if
+[84:21] the model is able to restitute
+[84:24] um given facts. So um so yeah these
+[84:31] facts are typically spanning uh lots of
+[84:34] domains. So it doesn't have to be super
+[84:37] precise on a given domain, but it's like
+[84:39] spanning like all the kind of domains
+[84:42] that your users may care about. And then
+[84:45] one prime example for this is MMLU that
+[84:49] we're going to see very soon. But just
+[84:51] before we do so, I want to say that this
+[84:54] knowledge benchmark
+[84:56] mostly but not only measures how well
+[85:00] pre-training was done. How well the
+[85:02] information in your large corpora of
+[85:05] data was retained by the model in order
+[85:08] to be helpful at inference time.
+[85:12] So, MMLU stands for massive multitask
+[85:17] language [snorts] uh language
+[85:19] understanding and this benchmark has um
+[85:23] like almost 60 different tasks that are
+[85:27] super diverse. So it's not just uh you
+[85:30] know one specific topic is just a bunch
+[85:32] of topics like everyday life topics or
+[85:36] very you know for example is there are
+[85:39] like law um you know medicine and
+[85:42] everything that you can think about and
+[85:45] the benchmark is redacted in a way that
+[85:49] can be easily
+[85:51] um you know measuring an LLM's
+[85:53] performance and weighing that
+[85:55] performance with respect to others. So
+[85:57] it's not something that is free form is
+[86:00] something that is um very constrained.
+[86:05] There is a question and then you have
+[86:07] four possible answers and you ask the
+[86:10] LLM to choose one of them. So it's a bit
+[86:13] like CME 295 exams. you know part of the
+[86:18] exam is also multiple choice questions
+[86:21] and you know it's a good way to
+[86:22] standardize the you know evaluation and
+[86:26] it's the same that is used here. Uh so
+[86:30] here um and this is also a trend that
+[86:34] you see across benchmarks. You don't ask
+[86:36] the model to just come up with some
+[86:38] answer and you have maybe an LLM as a
+[86:41] judge just giving some its opinion about
+[86:44] it because doing so introduces
+[86:48] um you know another layer of potential
+[86:52] errors. You know the LLM as a judge as a
+[86:55] mentioned isn't necessarily perfect. So
+[86:58] this framing enables us to to have a
+[87:02] hard-coded way to extract the the answer
+[87:05] output by the LLM. So typically you
+[87:07] would ask it to output the the right
+[87:10] letter at the end of each question which
+[87:13] you can then extract and then compare
+[87:15] with respect to the answer.
+[87:19] So giving some examples that what is
+[87:21] about what is in this benchmark. uh as I
+[87:24] mentioned you have all sorts of fields
+[87:27] uh in there and you will notice that
+[87:30] each problem
+[87:32] uh mostly requires some prior knowledge
+[87:35] about that topic so it's not like purely
+[87:38] logic that will help you solve it and I
+[87:41] think the last example in this slide is
+[87:44] a good representation of it where you
+[87:47] have something in the domain of medicine
+[87:50] and you have a bunch of numbers uh you
+[87:52] know patient has this and
+[87:56] What would you say like where would you
+[87:58] say is the damage? So it's typically
+[87:59] something that you could see in medicine
+[88:01] books maybe and the same goes with other
+[88:04] fields such as law where everything has
+[88:07] been codified somewhere and you need the
+[88:09] knowledge of that somewhere in order to
+[88:11] answer the question.
+[88:14] Okay, great. So this is the first kind.
+[88:17] Um and it's not the only kind of
+[88:19] benchmark you have. Um so it's not the
+[88:22] only benchmark in this category. You
+[88:23] have other benchmarks that are uh that
+[88:26] can be in this category but it's just
+[88:27] one of them.
+[88:29] A second category that you might see are
+[88:33] are those that are in the reasoning
+[88:35] space. So typically
+[88:39] uh these are kinds of benchmarks that
+[88:41] require some amount of
+[88:44] thoughts before outputting an answer. So
+[88:47] it assesses the quality of the chain of
+[88:49] thoughts or if you are in the reasoning
+[88:52] world maybe the quality of your think
+[88:55] tokens
+[88:56] but just more broadly your ability to
+[88:59] infer um a response based on some
+[89:02] reasoning and then for that I'm going to
+[89:06] mention two examples. So, one in the
+[89:10] field of math and then one other in the
+[89:13] field of so-called common sense
+[89:16] reasoning that is anchored in everyday
+[89:19] life. Uh, which is typically
+[89:23] the field that might be of interest for
+[89:25] your LM users and we're going to see
+[89:28] that very soon. So, first let's take a
+[89:31] look at the benchmark focus on math. So
+[89:36] how many of you know about AIM?
+[89:41] So, AIM is uh an exam that high school
+[89:46] students um sit for when they want to um
+[89:51] participates to like the Olympiads and
+[89:54] it's typically um it's it's a very hard
+[89:57] test and it's covering math topics and
+[90:02] um and then it's in a format that is LLM
+[90:05] friendly because you have uh a given
+[90:08] problem statement and at the end you ask
+[90:12] the student to write the response into a
+[90:15] three-digit
+[90:17] uh a three-digit number. So, it's very
+[90:19] well constrained which makes it a right
+[90:22] fit to benchmark LLMs
+[90:25] and uh you know just like the one before
+[90:28] it's hardcoded
+[90:30] and you know I give here some samples of
+[90:34] the AIM exam as seen this year. So as
+[90:38] you see, so I don't know if you can read
+[90:39] from afar, but it's not super simple.
+[90:42] You you have some, you know, one
+[90:44] sentence. So you think maybe it's easy,
+[90:47] but you actually need to write down the
+[90:48] reasoning before finding the answer. And
+[90:50] this is what we want to test the LLM
+[90:53] for.
+[90:55] And then the second kind of um reasoning
+[90:59] that we mentioned here was so-called
+[91:01] common sense reasoning. And the one that
+[91:04] is often used these days is um PAS. So
+[91:09] physical interaction question answering.
+[91:12] So these are tasks that are deeply
+[91:15] grounded into the physical real world.
+[91:19] So we have some samples at the next
+[91:21] slide that we'll show. But it is uh you
+[91:24] know still reasoning based questions but
+[91:28] that will rely on your understanding on
+[91:30] how things work around you not nec
+[91:32] necessarily math based but just you know
+[91:35] everyday life
+[91:37] and uh this time it's not multiple
+[91:42] choice questions over four answers like
+[91:45] MMLU it's over two only
+[91:49] and you have 20k examples And then here
+[91:53] a good example that I really liked from
+[91:56] the samples mentioned in the paper uh
+[91:58] was how do I find something lo I lost on
+[92:01] the carpet. So there is one solution
+[92:03] that says you know vacuum with a solid
+[92:06] seal and the other one is vacuum with
+[92:10] the hairnet
+[92:12] and of course when you vacuum with a
+[92:14] solid seal then the seal is of course
+[92:16] solid so no air can go through it. But
+[92:20] if you have a hairet, you will vacuum
+[92:24] the whole thing and the thing that you
+[92:25] lost will be caught inside of it. So
+[92:28] what I mentioned is common sense, but it
+[92:30] might not be obvious and this is what we
+[92:32] task the model to resolve.
+[92:37] Okay. So then one other major area for
+[92:40] benchmarks is coding where uh we want to
+[92:45] probe the model for solving
+[92:48] uh complex questions in coding and um
+[92:53] this has two main uses in real life. So
+[92:56] one is aligned with the kind of use case
+[92:59] that I mentioned at the end of last
+[93:01] lecture the one I liked regarding AI
+[93:04] assistant coding. So these models they
+[93:07] aim at being used in that setting as
+[93:09] well. So you should make sure that these
+[93:12] benchmarks
+[93:13] perform like these benchmarks show that
+[93:15] these LLMs perform well in order to be
+[93:18] useful to your users.
+[93:20] And then a second reason why uh
+[93:23] benchmarking on coding makes sense is
+[93:26] that you have all these tools that you
+[93:28] might want to use in an agentic setting
+[93:31] and then these tools are written maybe
+[93:33] in a Python format. So you want to
+[93:36] ensure that your model has uh the right
+[93:40] ability to read and write code so that
+[93:43] it can execute these tool calls and then
+[93:46] interpret what's coming out of them.
+[93:49] So these are two I would say motivations
+[93:52] that um that motivate us to like you
+[93:55] know find coding useful here you know
+[93:58] even to the to the folks that don't do
+[94:01] coding at all.
+[94:03] So
+[94:05] um yeah and then one example of such
+[94:09] benchmark is SWEBench.
+[94:12] So SWEBench is so I put a question mark
+[94:16] here because they didn't define exactly
+[94:19] you know what the acronym meant but it's
+[94:21] likely that it meant software
+[94:22] engineering benchmark. to Swiss, often
+[94:24] times the acronym for software
+[94:26] engineering.
+[94:27] And what they did is that they looked at
+[94:31] popular Python repositories,
+[94:33] and they filtered down those that
+[94:36] contained pull requests that were
+[94:40] solving an issue and that introduced
+[94:43] tests. So you have some before after
+[94:47] behavior that you can quantitatively
+[94:50] assess with the tests that are
+[94:52] introduced. And supposedly if you have a
+[94:56] pull request that introduces some test
+[94:58] and some fix, you can fairly assume that
+[95:02] these tests were not passing without the
+[95:05] fix and that they are passing after the
+[95:08] fix. So the fact that we have these
+[95:11] tests at hand is a good measure for us
+[95:15] to assess the quality of a fix.
+[95:18] So if you have heard of a testdriven
+[95:20] development, it's all about you know
+[95:22] having tests and ensuring they pass and
+[95:25] this is what it relies on.
+[95:29] So uh yeah and then here uh you ask
+[95:32] these LLMs to solve these GitHub issues
+[95:36] and then you assess whether they indeed
+[95:40] uh pass by uh by looking at the test
+[95:44] status before and after patching the
+[95:48] answer suggested by the
+[95:52] Okay, great. Uh so here is a very nice
+[95:56] um figure that the paper introducing
+[95:59] that benchmark gives. So you know you're
+[96:02] given a code base uh and then what you
+[96:04] ask the model for is a patch that is
+[96:07] just it and then uh you patch whatever
+[96:10] the model has provided to find the
+[96:12] tests. So to find the test status
+[96:16] and then one last area that I want to
+[96:19] mention in the case of uh like base
+[96:22] benchmarks is safety.
+[96:24] Uh so when you see uh fancy LLMs coming
+[96:28] out you usually don't see in the you
+[96:31] know advertisement of modeling
+[96:33] benchmarks
+[96:35] the safety part because usually safety
+[96:38] is
+[96:40] is a bit subjective with respect to the
+[96:42] LLM provider. So every company has its
+[96:45] own policy. So you cannot necessarily
+[96:48] compare a performance on a given
+[96:51] benchmark across models just because all
+[96:54] these providers might not claim they
+[96:56] want to perfectly solve that benchmark
+[96:58] 100%.
+[97:00] As a result, it's not necessarily a good
+[97:02] measure of that field. So if you look at
+[97:06] model cards often times you see a safety
+[97:10] section being mentioned in reports to
+[97:12] say the work that they have done but
+[97:14] they don't necessarily compare models
+[97:17] with respect to a given benchmark.
+[97:21] Um and uh yeah, usually the safety
+[97:24] benchmarks they are fairly aligned with
+[97:26] what we think um you know should or
+[97:29] should not happen. But on top of it you
+[97:31] might have additional policies that
+[97:34] maybe uh you know just policies. So you
+[97:37] have some human that had to make some
+[97:39] decision. It might not be a universal
+[97:42] decision. It's just a given decision. So
+[97:46] the benchmark the benchmark's goal is to
+[97:49] be aligned with what kind of policy the
+[97:53] LLM provider has in mind in order to be
+[97:55] truly meaningful and yeah this is why
+[97:58] when you execute a safety benchmark
+[98:01] you should check the content of the
+[98:04] benchmark in order to put a meaning
+[98:05] behind it. So here let's talk about harm
+[98:09] bench which I am supposing it means
+[98:12] harmful behavior benchmark.
+[98:15] So this benchmark has four categories.
+[98:19] The so-called standard category that is
+[98:23] um categorizing
+[98:26] uh like quote unquote vanilla harmful
+[98:29] behavior. Then you have copyright
+[98:32] category that is uh assessing the
+[98:34] model's ability to generate copyrighted
+[98:37] content which we do not want. And then
+[98:40] the two last ones contextual and
+[98:42] multimodel it's like both of them are
+[98:46] contextual based on a given modality. So
+[98:50] contextual is on the the text modality
+[98:53] and then multimodel is with like other
+[98:57] model modalities than text. So we're
+[98:59] going to see an example at the next
+[99:01] slide.
+[99:02] And here
+[99:05] you don't have the same ability to
+[99:07] assess performance on this benchmark
+[99:09] based on some hard-coded match because
+[99:12] these harmful statements might be
+[99:14] open-ended.
+[99:16] And you cannot possibly just solve all
+[99:19] of these by regex matching. You know,
+[99:21] for example, one example in the standard
+[99:25] category of this benchmark
+[99:28] tries to uh entice
+[99:32] harmful behavior um into like executing
+[99:35] something that is harmful and um the
+[99:38] paper mentions like makes a distinguish
+[99:40] uh distinguishes something that is very
+[99:43] interesting. So it distinguishes
+[99:45] model quality with safety by saying that
+[99:49] if the model tries to do the harmful
+[99:52] behavior even if it wasn't successful
+[99:55] because it was not of a good quality
+[99:57] enough then it's enough to count the
+[100:01] attack as successful and then for that
+[100:04] they trained some classifier to
+[100:06] recognize these cases and yeah this is
+[100:10] the only benchmark
+[100:12] uh among those that I presented here
+[100:14] that is done based on a classifier that
+[100:16] can itself be prone to error uh compared
+[100:20] to others that are very grounded in uh
+[100:23] constraints setup values
+[100:28] and as promised here is like a few
+[100:30] examples as mentioned in the paper. So
+[100:33] uh here uh you know we test whether you
+[100:35] can unlock a door that you shouldn't
+[100:37] unlock and then here um the yeah the
+[100:42] test is on influencing someone with
+[100:44] respect to some election. So it's not
+[100:46] these are not safe behaviors and yeah
+[100:52] okay great so I mentioned everything uh
+[100:54] so far that you could solve without
+[100:57] tools.
+[100:58] Uh so of course I say you could you know
+[101:00] some of them you could use tools of
+[101:02] course to solve them but what about uh
+[101:05] measuring the behavior of agents.
+[101:08] So for here you have an interesting
+[101:10] benchmark called toao bench where toao
+[101:14] is a Greek letter that actually um you
+[101:18] know you can write it as tool agent
+[101:20] users and this is why we say toao and um
+[101:24] it's a benchmark that provides uh across
+[101:28] two different fields so the airline and
+[101:31] the retail field a set of tools and it
+[101:35] gives a set of policies is you know
+[101:38] things that the agent can and cannot do
+[101:41] and then what you do is that you have a
+[101:44] set of tasks. So tasks are problem
+[101:48] statements that you give um given user
+[101:53] and the goal is for the user to achieve
+[101:56] that task through the agent.
+[101:59] And the interesting thing about TaoBench
+[102:01] is that Towbench is language model
+[102:04] simulated. So the user interaction with
+[102:07] the agent as you can imagine cannot be
+[102:09] hardcoded because further turns will
+[102:13] depend on previous ones. So let's say
+[102:17] you say something as a user and your
+[102:19] agent decides to do something. Then you
+[102:22] need the context of what it has done in
+[102:26] order to continue the conversation. And
+[102:28] this is why you have the simulation
+[102:30] aspect that the paper introduces that is
+[102:33] typically done by a separate
+[102:36] uh big model that plays the role of the
+[102:39] user.
+[102:41] And uh yeah, here we have an example of
+[102:45] the task of changing a flight. So you
+[102:47] have a given tools, the agent tries to
+[102:49] help the um the user to achieve that
+[102:54] goal and uh at the end of it we assess
+[102:58] whether it's successful in doing so by
+[103:01] calculating a reward that's a function
+[103:03] of the database change. So let's say the
+[103:06] user has changed their tickets. So we
+[103:09] want to see if the database has indeed
+[103:12] the state that we're looking for and or
+[103:16] a given action. So maybe the action of
+[103:19] cancelling is one that is the goal of
+[103:21] this task. Uh so this is like part of
+[103:24] the reward.
+[103:26] And the paper that introduces this
+[103:29] benchmark uh talks about a concept that
+[103:32] is um funny word play. Um with respect
+[103:37] to the metric that we had that we had
+[103:39] talked about at the last lecture, we had
+[103:42] introduced pass at K. And then this
+[103:46] paper talks about pass hat K
+[103:51] which is the probability that all K
+[103:56] attempts succeed and then why is that uh
+[104:00] relevance metric here. So as you have
+[104:03] seen the airline and retail um domains
+[104:07] were ones that were chosen chosen here
+[104:09] and then an an agent in the loop here
+[104:12] could be a way to see if automating the
+[104:18] agent side of things could help. And in
+[104:22] order to truly know whether it can help
+[104:24] you want to have reliability and
+[104:27] consistency in mind. So if you execute
+[104:29] the the task k times, you don't want
+[104:33] like pass at k the probability that at
+[104:37] least one of them succeeds. You want the
+[104:39] probability that all of them succeeds
+[104:41] which is why this metric matters. So if
+[104:45] we had more time I would have derived
+[104:47] the formula to find
+[104:51] um pass hat K with respect to the um
+[104:56] parameters of the problem but I will
+[104:58] refer you to the derivation that Afin
+[105:00] has done last time and uh yeah I just
+[105:04] want you to be convinced that this is
+[105:06] indeed the formula. So if you're not
+[105:08] convinced, please feel free to do it um
+[105:10] at home.
+[105:12] And
+[105:14] moving on, we talked about all these
+[105:16] benchmarks. Now let's see how they are
+[105:19] grounded in reality. So by now I think
+[105:23] everyone of you has seen the new Gemini
+[105:26] launch a few days ago. So this was the
+[105:29] report that was sent to everyone to to
+[105:33] just justify that the performance here
+[105:35] was better. And you can see that what we
+[105:38] introduced here is mentioned in some
+[105:42] format. So the reasoning part on
+[105:46] aim and pa is there. And then you will
+[105:49] see that some of these benchmarks are
+[105:53] derived in a flavor that introduces um
+[105:56] multilinguality linguity um multi-
+[105:59] languages and uh so this is the case for
+[106:02] pika instead of p global pa and then for
+[106:06] coding it uses a flavor of swbench and
+[106:09] tool use it uses also a flavor of bench
+[106:14] which is towel squared bench
+[106:19] And
+[106:20] a few last words here. I just want to
+[106:23] say that benchmarks are here to
+[106:25] characterize the profile of of your LLM.
+[106:29] So it's not all good or all bad. Maybe
+[106:34] some of your LLMs will have some
+[106:36] strength and some weaknesses.
+[106:39] and your personal experience might guide
+[106:43] you to use one specific one with respect
+[106:45] to others in given situations. So if I
+[106:48] had to just give my personal experience,
+[106:51] I know that the Sony models are very
+[106:54] helpful for coding and whenever I want
+[106:57] outputs that are fast and cheap, you
+[107:00] know, Gemini flash is usually good. But
+[107:02] these are not by any means global
+[107:05] recommendations. you know, your own use
+[107:07] case and your own experience can guide
+[107:08] you into having a profile of models that
+[107:12] suits your tasks best.
+[107:15] And
+[107:17] you can interestingly plot the
+[107:20] performance of your models with respect
+[107:23] to the other dimension that you care
+[107:25] about which is price for example and see
+[107:28] for a given price what is the best model
+[107:31] you can use. And then the border that
+[107:35] you see on the best models for that
+[107:37] specific metric is called the parareto
+[107:39] frontier.
+[107:41] And you might have a parto frontier with
+[107:43] respect to several aspects. So cost,
+[107:47] safety, context length.
+[107:50] And then few words regarding data
+[107:52] contamination.
+[107:53] One thing about these benchmarks is that
+[107:55] they are as good as the assumption of
+[107:59] whether you have seen the actual
+[108:01] benchmark results or not. So make sure
+[108:03] you haven't seen them. And for that
+[108:05] people introduce hash values.
+[108:08] uh you know in the case of tool use they
+[108:10] introduce a block list in order to not
+[108:12] access websites that might contain the
+[108:14] responses
+[108:16] or uh in the case of math we have the
+[108:19] luxury of evaluating on new tests that
+[108:23] the model has for sure not seen
+[108:26] and a good heart's law is a very good
+[108:30] um adage that says a measure when a
+[108:34] measure becomes a target it ceases to be
+[108:37] a good measure
+[108:38] So all these benchmark results are to be
+[108:42] weighed against what you're truly
+[108:44] looking for and then these benchmark
+[108:46] results don't necessarily tell you
+[108:48] whether a model is good for you or not.
+[108:52] So um you know we had talked about
+[108:54] chatbot arena um in what one of the
+[108:58] previous lectures it can be one way to
+[108:59] balance the real life um performance of
+[109:03] these. But I would say ultimately you
+[109:06] should be the one trying out these best
+[109:08] models and see for yourself which one
+[109:11] corresponds to you best.
+[109:14] And with that I hope you all have a
+[109:15] great Thanksgiving and thank you

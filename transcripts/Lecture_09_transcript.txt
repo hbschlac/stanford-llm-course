@@ -1,0 +1,2258 @@
+[00:05] Hello everyone and uh welcome to lecture
+[00:08] 9 of CM295.
+[00:12] So as you know uh today is a kind of a
+[00:15] special day because uh we're having the
+[00:17] last lecture of the entire course. Um so
+[00:21] the menu for today will be a little
+[00:23] different compared to usual.
+[00:26] uh we're going to try to divide the
+[00:28] lecture in three parts. So in the first
+[00:32] part we're going to recap actually what
+[00:34] we did in the entire class
+[00:38] just to see how different pieces kind of
+[00:42] fit together. Uh in the second part we
+[00:45] will look at some topics that are
+[00:47] particularly trending uh in 2025 and
+[00:50] what we think are going to be trending
+[00:52] in the near future. And then uh the
+[00:56] third part will be more uh way for us to
+[00:59] just conclude and uh next steps uh for
+[01:03] all of you.
+[01:05] Does that sound good?
+[01:07] Cool. So with that uh we're going to
+[01:11] start with the first part which uh what
+[01:13] I mentioned is about recapping what we
+[01:16] did this entire quarter.
+[01:19] So nothing new here. It's just a way for
+[01:21] us to piece everything together.
+[01:24] So if you remember u lot of weeks ago I
+[01:28] believe it's like maybe 10 weeks ago we
+[01:30] had lecture one which was focused on
+[01:35] understanding what transformers were. So
+[01:38] at the very beginning of the class we
+[01:41] didn't even know how we could process
+[01:43] text. So I guess the first step that we
+[01:46] saw was this tokenization step which
+[01:50] consists of dividing the input into
+[01:53] atomic units. And so here the way you we
+[01:58] divide the text is something that is
+[02:01] arbitrary in some sense. So we have
+[02:04] different algorithms that allow us to do
+[02:06] that. Uh and we saw that the most common
+[02:10] tokenization algorithm is the subword
+[02:13] level tokenizer.
+[02:16] And we saw that some of the advantages
+[02:18] were that um roots of words could be
+[02:23] reused um and leveraged especially when
+[02:27] it came to representing those tokens.
+[02:30] And
+[02:32] speaking of representation,
+[02:34] once we were able to divide the input
+[02:37] text into atomic units, aka tokens, the
+[02:42] next step for us was to learn how to
+[02:46] represent these embeddings. So if you
+[02:49] remember, we saw some methods that were
+[02:51] very popular back then. So one of them
+[02:54] was called wordtovec
+[02:56] and the representation was learned from
+[02:59] a proxy task which was something like
+[03:03] predicting the center word or predicting
+[03:06] the context words.
+[03:09] But then we saw that this way of
+[03:11] learning representations had some
+[03:13] limitations.
+[03:15] One of which was that these
+[03:17] representations were not contextaware.
+[03:21] Meaning that uh if a word is in a given
+[03:24] sentence or in another sentence they
+[03:27] will both have the same like that word
+[03:30] will have the same representation in
+[03:32] both sentences.
+[03:34] And so for that reason we saw some uh
+[03:37] other methods that were popular in the
+[03:39] 2010s. one of which was
+[03:43] RNN's if you remember. So RNN's um had
+[03:47] this recurrent structure which process
+[03:50] tokens one at a time and kept an
+[03:53] internal representation of the sequence
+[03:56] so far.
+[03:58] But then we saw that a big limitation of
+[04:00] this was this problem of long range
+[04:03] dependency and in particular the fact
+[04:05] that uh tokens that were encoded far in
+[04:09] the past were not um quantities that
+[04:13] were able to be kept I guess as the
+[04:15] sequence got longer
+[04:18] and this is the reason why we saw the
+[04:21] central idea of this whole class which
+[04:23] is the idea of self attention where
+[04:27] tokens s can actually
+[04:29] attend to one another regardless of
+[04:32] where they are placed in the sequence.
+[04:35] So you can think of this as a direct
+[04:37] link.
+[04:39] And so uh this for instance is what we
+[04:42] saw. We we saw that there are like three
+[04:45] main uh terminologies that people use.
+[04:48] So query, key and value. So typically
+[04:52] you want to know how similar a query is
+[04:56] compared to the keys in the in the
+[04:59] sequence and you quantify that by um
+[05:03] taking some dot products that's kind of
+[05:05] scaled and softmaxed
+[05:08] and then you have the corresponding
+[05:10] value that is taken. So at the end of
+[05:13] the day we obtain some kind of weighted
+[05:16] average of all the tokens that are in
+[05:19] the sequence.
+[05:22] And then uh you may also be familiar now
+[05:25] with this formula. So soft max of q
+[05:28] krpose over square root of dk um time v.
+[05:33] So this is the matrix formulation of
+[05:37] what I mentioned here which uh is able
+[05:40] to process these computations in a very
+[05:43] efficient way and it's something that uh
+[05:46] today's hardware is well equipped to do
+[05:50] and then we finish the first lecture by
+[05:53] going through the architecture that is
+[05:56] the foundation of modern day LLMs which
+[05:59] is the transformer and we saw that there
+[06:02] are two u not notable parts in the
+[06:06] transformer. So one was the encoder in
+[06:09] the left part of the uh um the figure
+[06:12] and then the right part is the decoder
+[06:15] and we saw how this was applied in the
+[06:17] case of translation.
+[06:20] So at the end of the first lecture we
+[06:23] saw what motivated us to end up with the
+[06:28] transformer
+[06:31] and we saw that transformer was working
+[06:33] quite well in the case of uh translation
+[06:36] and so in the next lecture what we saw
+[06:38] was what were the little improvements
+[06:43] that people have made to this
+[06:44] architecture since it was released and
+[06:47] if you remember it was in 2017 that it
+[06:49] was publicublished.
+[06:53] So one particular improvement that
+[06:56] people have made is in the way we
+[07:00] consider positions
+[07:03] because in the original transformer
+[07:05] paper positions were encoded
+[07:09] in an absolute way as in each position
+[07:13] had its own embedding
+[07:16] and this embedding was added to the
+[07:18] token embedding.
+[07:22] But then if we think about it
+[07:25] positions actually we don't really care
+[07:27] about the absolute position. We care
+[07:30] about the relative position between
+[07:33] tokens
+[07:34] and in particular we care about how far
+[07:37] tokens are in the self attention
+[07:40] computation.
+[07:41] Which is why we saw this methods that is
+[07:44] now quite popular called rotary position
+[07:47] embeddings aka rope
+[07:50] that is now quite used. And it is a
+[07:52] method that rotates
+[07:56] query and keys
+[07:58] both of which happen in the self
+[08:01] attention computation.
+[08:03] And so here um what is uh quantified
+[08:08] here is purely a function of the
+[08:10] relative distance between um two tokens
+[08:15] and not only that it is something that
+[08:17] is uh taken care of in the self
+[08:20] attention layer which is what we care
+[08:22] about.
+[08:24] So this was one big improvement and then
+[08:26] we saw some other improvements
+[08:29] especially when it came to how the multi
+[08:32] head attention um layer multi head
+[08:35] attention layer was composed of and in
+[08:38] particular we saw that it was possible
+[08:40] for us to have some groupings
+[08:44] of the matrices that we learn. So we
+[08:48] don't need to have one matrix one
+[08:50] projection matrix per head for let's say
+[08:54] keys and values. We can actually uh
+[08:58] group them. So this is uh for instance
+[09:01] what is mentioned here. So group query
+[09:03] attention. Um and then we also saw some
+[09:07] other techniques that I have not
+[09:08] represented here like for instance the
+[09:11] normalization layer in the transformer
+[09:14] which here happens after each
+[09:18] sub layer but I guess nowadays people
+[09:20] have tried moving the normalization
+[09:23] piece before the sub layer. So here it's
+[09:26] the postnorm
+[09:29] version and then the before the sub
+[09:31] layer part is called the prenorm
+[09:35] version.
+[09:37] And then the last thing that we saw was
+[09:39] that from this transformer architecture
+[09:43] there were a lot of derived models that
+[09:46] were based from that. So we saw that if
+[09:49] we only keep the encoder part we could
+[09:54] compute very meaningful embeddings.
+[09:57] If you remember there was this um uh
+[09:59] kind of landmark paper on encoder only
+[10:03] model which is birds which was heavily
+[10:06] used in the context of classification
+[10:09] because it relied on the encoded
+[10:11] embedding of the CLS token. And so that
+[10:14] was one.
+[10:16] But then we also saw that there was a
+[10:18] number of other kinds of models all more
+[10:21] or less derived from the transformer. So
+[10:24] you could only keep the encoder which
+[10:26] was for birds. You could only keep the
+[10:28] decoder which is for instance for GPT
+[10:32] and you could also have both
+[10:35] which is for instance the case of T5.
+[10:39] And one particular aspect of each of
+[10:43] these models is that encoder only is not
+[10:47] able in the way that we saw is not able
+[10:50] to generate text
+[10:52] but is able to generate embeddings which
+[10:54] can be used for downstream tasks. But
+[10:57] then encoder decoder models like T5 or
+[11:01] decoder only models like GPT they can be
+[11:05] auto reggressive and
+[11:08] generate text. The paradigm can be text
+[11:11] in text out.
+[11:16] And with that we then focused on what
+[11:20] now everyone calls large language models
+[11:24] which are transformerbased models
+[11:26] specifically texttoext models. So
+[11:30] decoder only transformer-based models
+[11:35] and we saw that people have come up with
+[11:37] a lot of new tricks now because um you
+[11:40] know these models as the name uh
+[11:43] indicates um people have scaled them up.
+[11:46] But then one question was uh kind of
+[11:51] kind of thrown which is do you actually
+[11:54] need all these parameters to just do a
+[11:58] forward pass.
+[12:00] So we saw uh one kind of uh variant
+[12:04] which was based on mixture of experts.
+[12:09] So what mixture of experts are is
+[12:12] instead of running everything through
+[12:15] the whole entire model, you're going to
+[12:18] instead have a number of experts
+[12:22] that you're going to activate in a
+[12:24] sparse way.
+[12:27] So for instance, for one input, you're
+[12:29] going to just activate just a subset and
+[12:31] then for another input you're going to
+[12:33] activate another subset so that you
+[12:36] don't need to do all the computations
+[12:38] all the time.
+[12:41] And we saw that these mixture of experts
+[12:44] they were used in LLMs in particular in
+[12:48] the feed for neural network layer. So
+[12:51] here you would have experts as being
+[12:54] different feed for neural networks and
+[12:57] you would have a gating mechanism that
+[13:00] would reroute
+[13:02] to the correct feed for neural network.
+[13:07] And then we also saw that some papers
+[13:10] were also able to kind of produce some
+[13:13] nice visualization in terms of uh I
+[13:15] guess which token gets routed to which
+[13:17] experts because this rerouting we saw
+[13:20] that it was done at the token level.
+[13:24] And so one reason why it's done at the
+[13:26] token level is to be able to I guess
+[13:29] smartly put the experts on different
+[13:32] pieces of hardware, different GPUs and
+[13:35] then kind of parallelize the computation
+[13:37] a little bit more.
+[13:40] And then we also saw that these LLMs
+[13:46] they always are tasked with predicting
+[13:48] the next token. And in order to predict
+[13:51] the next token, we were interested in uh
+[13:54] I guess how we were uh you know doing
+[13:56] this. And so one particular uh method
+[14:00] that people use is just sample
+[14:03] sample from the output distribution. So
+[14:05] you have let's say given an input you
+[14:07] have a distribution of probabilities of
+[14:11] what the next token would be that is
+[14:14] output by the model. And what you do is
+[14:18] instead of let's say taking the highest
+[14:21] probability which is called the greedy
+[14:22] decoding
+[14:24] uh greedy kind of decoding you actually
+[14:27] sample.
+[14:30] So it introduces some randomness and
+[14:33] allows the model to produce kind of a
+[14:36] bigger variety of uh kinds of outputs.
+[14:39] And we saw uh that you could adjust how
+[14:44] how much I guess variety you want in
+[14:47] your output by tweaking a hyperparameter
+[14:50] called temperature.
+[14:52] So very low temperature leads to very
+[14:54] spiky distribution. So more
+[14:56] deterministic outputs and higher
+[14:59] temperatures are I guess a bit more uh
+[15:02] random a bit more creative.
+[15:07] Okay. So until then we saw what LLMs
+[15:11] were, how they were based on the
+[15:13] transformer, how they connected to the
+[15:15] architecture that we saw in the first
+[15:16] lecture and then in lecture lecture four
+[15:20] we saw how people actually trained those
+[15:24] LLMs
+[15:26] because as I mentioned these LLMs are
+[15:28] large and so you cannot kind of naively
+[15:32] fit them in your hardware. you need to
+[15:36] be a little bit smart about it.
+[15:38] So in particular, what people have uh
+[15:42] kind of noticed in the early 2020s is
+[15:45] that the bigger your model is,
+[15:48] the better your performance.
+[15:51] So people just started building bigger
+[15:54] and bigger models. So here in the uh
+[15:57] illustration we saw that so on the y-
+[16:00] axis is the test loss. So the lower the
+[16:02] better. So we saw that the more compute
+[16:07] you use the better your tests uh
+[16:11] performance and same with uh increasing
+[16:14] the data set size and same with
+[16:17] increasing the number of parameters
+[16:21] but then as you know compute is not
+[16:23] infinite. So there was a natural
+[16:26] question that came out of the community
+[16:29] which was okay if we give you a given
+[16:32] budget a given compute budget
+[16:36] can you choose
+[16:38] I guess some quote unquote optimal
+[16:43] number of parameters and data set size
+[16:47] on which you want to train your model.
+[16:50] And so we saw that there was this paper
+[16:52] that was um published in the early 2020s
+[16:57] uh which actually studied the
+[17:00] relationship between
+[17:02] um I guess if you vary the data set size
+[17:04] and uh the size of your model and the
+[17:08] performance on the test set.
+[17:12] And then we saw that actually most
+[17:14] models at the time were what we say
+[17:17] undertrained because they were too big
+[17:20] compared to the data set that they were
+[17:22] trained on. Like the data set that they
+[17:23] were trained on it was not as big as
+[17:25] they should have been.
+[17:27] And so in particular there was a kind of
+[17:29] a rule of thumb that came out of this
+[17:31] which was if you have a given number of
+[17:36] parameters in your model
+[17:38] you should at least train it on 20 times
+[17:42] the number of parameters in terms of
+[17:43] tokens.
+[17:46] So for instance, if you have uh a 100
+[17:48] billion parameter model, you should
+[17:50] train it on at least two trillion
+[17:54] tokens because two trillion is 100
+[17:57] billion * 20. So that's kind of the rule
+[18:00] of thumb that people have uh used and
+[18:04] then you know as I mentioned previously
+[18:06] you know these models are huge. So
+[18:09] people have tried to also make the
+[18:12] computation more efficient
+[18:15] and so there was this uh method that we
+[18:17] saw which is actually quite important
+[18:19] called flash attention
+[18:22] and flash attention is a method that
+[18:26] leverages the strength the strength of
+[18:29] the underlying hardware
+[18:31] and in particular it looks at so GPUs
+[18:35] more particularly it looks at the kinds
+[18:37] of memory memories that a GPU has.
+[18:42] So it has a big but slow memory and a
+[18:47] small but fast memory. So the HPM and
+[18:50] the SRAMM respectively.
+[18:53] And we saw that this method tries to
+[18:57] minimize the number of reads and writes
+[19:01] to the big and slow memory to the HPM.
+[19:05] And so the the way it was doing this was
+[19:08] to divide the computation in uh little
+[19:12] bits that it would send to uh the SRAMM
+[19:17] which is the small but fast memory so
+[19:20] that it can do the end to end
+[19:22] computation
+[19:24] and then send it back to where it was in
+[19:27] order to do the full end toend
+[19:28] computation.
+[19:31] So that method is an exact method
+[19:34] meaning that we're not doing any
+[19:36] approximations to the results
+[19:39] but it led to significant speedups and
+[19:42] in particular there was this second idea
+[19:44] from uh the paper which is a kind of an
+[19:47] important one as well which was that
+[19:49] sometimes
+[19:51] it's okay for you to not store results.
+[19:56] it's okay for you to just throw them out
+[19:58] and then recomputee when you need them
+[20:01] again. So there is this idea of
+[20:03] recomputation
+[20:05] using what I described which led to
+[20:09] faster run times even though we were
+[20:12] doing more computations.
+[20:16] So that was flash flash attention and uh
+[20:19] we also saw a number of other methods
+[20:23] that were meant to I guess parallelize
+[20:27] the computation. So we saw uh data
+[20:30] parallelism
+[20:31] which was this idea of not having all
+[20:35] your data be processed on a single GPU
+[20:37] but instead divided into uh kind of
+[20:41] multiple places.
+[20:43] And then we had the second method which
+[20:45] was model parallelism
+[20:49] where even for a given forward pass you
+[20:52] would actually involve multiple GPUs.
+[20:56] So anyway, there were a lot of very
+[20:58] interesting techniques, a lot of
+[21:00] different uh ideas about how to train
+[21:04] this model in an efficient way.
+[21:08] And uh in particular um so what I
+[21:11] described here is mostly important for
+[21:13] the first step of uh the training
+[21:16] process of an LLM which is called the
+[21:18] pre-training
+[21:20] which is meant to teach the model about
+[21:25] the structure of language about the
+[21:27] structure of codes. Uh and in particular
+[21:30] this model was trained with huge amounts
+[21:33] of data. So think about trillions of
+[21:36] tokens or even tens of trillions of
+[21:39] tokens.
+[21:41] Um and so that first step goes from an
+[21:44] initialized model to a model that is
+[21:48] able to autocomplete because it is
+[21:50] trained with an objective of predicting
+[21:53] the next token.
+[21:56] So at the end of this first stage, you
+[22:00] have a model that knows how to
+[22:02] autocomplete, but you have a model that
+[22:04] is not very helpful because it only
+[22:07] knows how to complete things.
+[22:11] So in order to have the model be useful
+[22:15] for our use cases, we had this second
+[22:18] step which is called the fine-tuning
+[22:20] step. uh where we teach the model on the
+[22:25] kinds of input output pairs that we want
+[22:28] it to perform well. So this is also
+[22:31] called uh the SFT stage supervised
+[22:35] fine-tuning stage. And at the end of
+[22:38] this second step, we have a model that
+[22:41] not only knows the structure of text and
+[22:45] codes, but also is able to behave in the
+[22:48] way you want.
+[22:51] But so far up until step number two, we
+[22:55] have only taught our model what to do.
+[22:59] We have not taught it what to not do.
+[23:03] And this is why we had our third step
+[23:05] which was the preference tuning step
+[23:09] where we took our model that went
+[23:11] through the pre-training stage that went
+[23:13] to the SFT stage and now we want to
+[23:16] inject some negative signal as well as
+[23:19] in I want you to prefer this compared to
+[23:24] this output.
+[23:26] And this third step uses preference
+[23:31] data. So like the name uh suggests so
+[23:34] preference tuning uses preference data
+[23:36] which is typically pair-wise data where
+[23:40] humans say okay I prefer this output
+[23:42] compared to that output.
+[23:46] And typically the model here is able to
+[23:49] align the kind of output it produces
+[23:51] with human preferences that could be
+[23:54] along the dimension of uh usefulness of
+[23:58] safety, friendliness, tone. Um there's a
+[24:01] bunch of different dimensions but uh
+[24:04] yeah so that's what is happening in this
+[24:06] third step.
+[24:08] And in this third step, it's actually in
+[24:11] lecture five that we dug into what that
+[24:15] third step was about. So if you remember
+[24:20] uh we had drawn a parallel
+[24:22] between the way our LLM produces tokens
+[24:27] and I guess what people in the
+[24:30] reinforcement learning field um I guess
+[24:34] consider how uh given policy is uh
+[24:38] interacting with some environment and
+[24:41] performing some action and being in some
+[24:42] states. uh and the reason why we drew
+[24:46] drew that parallel was to be able to
+[24:48] leverage some RLbased techniques
+[24:52] in order to train our model. So in this
+[24:55] case we said our LLM is a little bit
+[24:58] like a policy.
+[25:00] So given some state which is the input
+[25:03] it has received so far it can perform
+[25:07] the next action and in this case it is
+[25:10] to predict the next token
+[25:13] and this prediction is made in the
+[25:17] environment of tokens
+[25:20] and when we u like predict a completion
+[25:25] what we do is at the end of the day we
+[25:27] have some signal some reward part which
+[25:30] can be the human preference.
+[25:34] So this is the parallel we drew with the
+[25:36] RL worlds and with that in mind we
+[25:39] talked about rewards
+[25:41] but the problem is that rewards are only
+[25:44] available for a limited set of data
+[25:48] which is why we saw how to model
+[25:51] rewards.
+[25:52] So we saw this formula if you remember
+[25:54] it's called the Bradley Terry
+[25:56] formulation
+[25:58] which um models
+[26:02] how the probability of an output being
+[26:05] better than another one is as a function
+[26:09] of I guess two scores like the score of
+[26:12] output I and the score of output J. And
+[26:16] we saw that reward models they are
+[26:18] typically trained by having this
+[26:21] formulation in mind in a pair-wise
+[26:24] fashion.
+[26:26] So what this means is a reward model you
+[26:29] give it two outputs. You say this one is
+[26:31] good, this one is bad and then I want
+[26:34] you to say this one is good. You train
+[26:37] it in a pair wise fashion. But then your
+[26:40] model is actually predicting always two
+[26:42] scores. It's always predicting the score
+[26:45] RA I for output I RJ for output J. Um
+[26:49] and so at inference time you're only
+[26:53] giving it one output.
+[26:57] So I think that's like one subtlety like
+[26:59] we train it in a pair wise way but at
+[27:01] inference time we're kind of using it
+[27:05] in a in an individual way if that makes
+[27:07] sense.
+[27:09] And so once we trained our reward model
+[27:12] using this formulation
+[27:14] then we were able to use it to steer our
+[27:19] LLM towards the direction that we care
+[27:21] about.
+[27:23] So if you remember the way we steer our
+[27:26] LLM in the direction of human
+[27:29] preferences is to give it a prompt
+[27:34] so that it can produce a completion
+[27:38] aka a rollout or in simpler terms an an
+[27:43] answer.
+[27:44] And then we take this prompt, we take
+[27:47] this answer, we put them both in the
+[27:49] reward model that tells us how good the
+[27:53] model response is.
+[27:55] And depending on what the reward model
+[27:57] says, we can tune the weights of the LLM
+[28:02] in a way that maximizes human or the
+[28:05] reward that we saw which is trained on
+[28:07] human preferences.
+[28:10] And the loss function of this RL uh
+[28:16] setup
+[28:18] is typically something that tries to
+[28:20] maximize rewards
+[28:23] but also keep the model close to the
+[28:27] base model. And here by base model we
+[28:30] mean the SFT model. And the reason why
+[28:33] we want that is because this reward is
+[28:36] imperfect.
+[28:37] So we saw this uh phenomenon of reward
+[28:40] hacking
+[28:41] where your reward can be imperfect and
+[28:45] the LLM can exploit its imperfect nature
+[28:50] to tune it in a way that actually does
+[28:52] not align with what you want it to be.
+[28:54] So you want the LLM to not be too far
+[28:57] from the base model which is actually
+[29:00] already a good model. So it's a way to
+[29:03] regularize that if you want and you also
+[29:07] want the
+[29:10] iteration updates to not be too big
+[29:13] either.
+[29:15] So you typically have these two
+[29:17] constraints. You don't want it to
+[29:18] deviate too much from the base model,
+[29:20] but you don't want it to deviate too
+[29:21] much from the previous RL iteration.
+[29:25] And then just as a reminder, I think
+[29:27] this was lecture five. I think was the
+[29:29] most technically challenging of the
+[29:31] whole class. So completely fine if the
+[29:35] first time you were like you know what's
+[29:36] happening. Uh but hopefully now it
+[29:38] should be a little bit more more clear.
+[29:42] Uh cool. And then after lecture five
+[29:44] we're like okay we've done a lot of uh
+[29:46] hard work. So uh the good thing is you
+[29:49] know we're in 2025 and in the past 12
+[29:53] months or now 14 months we've seen a lot
+[29:58] of models that were being released with
+[30:00] these reasoning capabilities
+[30:03] and the way they were trained to exhibit
+[30:07] these advanced reasoning capabilities
+[30:10] was actually leveraging a lot of the
+[30:13] techniques that we saw in lecture 5
+[30:16] just like oral based techniques.
+[30:19] And in particular, what we want our LLM
+[30:21] to do is to output a reasoning chain
+[30:28] before producing the final answer.
+[30:32] And the reason why we wanted to do that
+[30:33] is because people have seen that it
+[30:36] improves the performance of the model.
+[30:39] And so it's actually relying on this
+[30:41] idea of chain of thoughts, which I
+[30:44] believe we saw at lecture three.
+[30:47] which is a prompting technique to have
+[30:49] your model output the reasoning before
+[30:53] outputting the the response.
+[30:56] So long story short, up until lecture
+[30:59] six, our LLM was having a prompt as
+[31:02] input directly outputting the output.
+[31:05] But in lecture seven, we said, sorry, in
+[31:08] lecture six, we said, uh, well, let's
+[31:11] have our LLM actually first output a
+[31:14] reasoning chain that the user may or may
+[31:17] not have access to before outputting the
+[31:20] final answer.
+[31:23] So you want to teach the LM to do that.
+[31:26] So how do you do that? Well, first
+[31:28] before doing this, I just want to show
+[31:30] you this chart which we saw which is the
+[31:33] performance of uh the model as we're
+[31:38] teaching it to produce these reasoning
+[31:41] chains. So people have typically
+[31:44] measured uh the improvement in
+[31:46] performance by comparing it to uh I
+[31:50] guess certain benchmarks and this one is
+[31:52] a popular one the AIM benchmark which is
+[31:55] the math math benchmark and we saw that
+[31:59] as the training progresses the accuracy
+[32:03] number of uh I guess what the LLM
+[32:06] outputs is increasing.
+[32:08] But back to what I was I was saying uh
+[32:11] the key technique that we use to teach
+[32:15] the model how to output these reasoning
+[32:20] chains is
+[32:22] leveraging the RL techniques that we saw
+[32:25] in lecture five. And in particular
+[32:28] um up until now we saw PO which was the
+[32:34] main RL algorithm that people were using
+[32:38] up to maybe last year and now people are
+[32:43] kind of prioritizing GRPO as an R
+[32:46] algorithm in order to teach the model to
+[32:49] be better at reasoning tasks.
+[32:52] And there are several reasons to do to
+[32:54] to that that I will explicit right now.
+[32:57] So we saw this illustration that
+[33:01] compared how GRPO was differing with PO
+[33:06] and if you can see in the graph uh there
+[33:09] are a few things that are different.
+[33:12] The first thing is that GRPO does not
+[33:15] rely on a value model.
+[33:20] So, who remembers what a value model is?
+[33:29] Yep.
+[33:35] Yes. Exactly. So, the value function is
+[33:38] trying to predict what the reward would
+[33:41] be if you um were to follow the policy
+[33:45] of the LLM. Um, and I guess it's a way
+[33:49] to have some baseline as to how good
+[33:56] some predictions are. You want to make
+[33:59] it more relative. So the value function
+[34:02] is a way for us to make these uh rewards
+[34:05] a little bit more relative to one
+[34:07] another. Um, and so that's what that's
+[34:10] how PPU was doing this. So it was having
+[34:13] a value model that was um making these
+[34:16] predictions and then we had uh this
+[34:19] generalized advantage estimation method
+[34:22] that was combining the reward
+[34:25] predictions
+[34:27] with the value function predictions in
+[34:30] order to have what we call advantages.
+[34:33] So advantages is how good your output is
+[34:37] compared to some baseline.
+[34:40] But then in contrast to that, GRPL said,
+[34:45] "Okay, tree, we don't need a value
+[34:48] function because it's, you know, too
+[34:50] expensive to to train, to maintain. What
+[34:53] we're going to do instead
+[34:56] is generate several completions
+[34:59] and then have some formula that compares
+[35:04] the rewards of these completion these
+[35:07] completions
+[35:09] to one another.
+[35:12] So it's going to have some relative
+[35:16] effect in a sense that it will make
+[35:18] things more relative
+[35:22] and in doing so you are actually not
+[35:27] uh needed to maintain and train a value
+[35:30] function and that's like one big
+[35:33] difference compared to PO.
+[35:35] Um and uh the second big difference
+[35:39] which is not represented in this
+[35:41] illustration uh is that uh GRPO is
+[35:45] typically an algorithm that people have
+[35:47] used in the context of
+[35:50] teaching your model to be better at
+[35:52] reasoning tasks.
+[35:55] And so we saw that these kinds of
+[35:57] problems
+[35:59] have a verifiable reward
+[36:03] because when you complete a math
+[36:05] problem,
+[36:07] you actually know the answer you need to
+[36:08] get to. So you don't need to train a
+[36:12] reward model to tell you how good your
+[36:14] final answer is because you you already
+[36:16] know the answer.
+[36:19] And so we saw that GRPO was in
+[36:21] particular used in the context of when
+[36:25] you actually don't even need a reward
+[36:27] model when you actually have a
+[36:29] verifiable reward. So at the end of the
+[36:31] day, the only two models you need to
+[36:35] keep are the policy model
+[36:38] and the reference model to be able to
+[36:42] just compare how far you are from the
+[36:44] reference model.
+[36:49] Cool. Um, I know this one was also a
+[36:52] challenging class, I guess. So far so
+[36:55] good. And this is also on on the final.
+[36:57] So, which is why I'm I'm taking things
+[37:01] more slowly for this second part of the
+[37:04] recap. So, is everything good so far?
+[37:08] Yeah.
+[37:10] Okay. Perfect. We also saw some
+[37:12] extensions of GRPO. So if you remember
+[37:14] there was um some kind of bias that was
+[37:19] um a result of the loss function of GRPO
+[37:26] having some normalization term that
+[37:30] penalized
+[37:32] tokens that were in shorter outputs.
+[37:39] So we saw that if you use GRPO in its
+[37:43] original case in its original form
+[37:47] we saw that after a certain point
+[37:50] the algorithm will incentivize your
+[37:52] model to produce longer and longer
+[37:56] answers longer and longer incorrect
+[37:58] answers.
+[38:00] And the reason why it does that is
+[38:02] because relative to short incorrect
+[38:05] answers,
+[38:06] it penalizes less
+[38:09] long incorrect answers. And so this is
+[38:12] the reason why there are some extensions
+[38:14] that people have worked on this year.
+[38:18] One of which was uh GRPO done rights. So
+[38:22] we saw like um that they basically
+[38:24] removed the normalization term and there
+[38:27] was another method that we saw it was
+[38:29] called depo dapo
+[38:32] which also had some variance
+[38:37] and that's for reasoning models and then
+[38:39] lecture seven we had a model that you
+[38:44] know we knew how to train it we knew how
+[38:47] to uh use it for uh reasoning tasks how
+[38:51] to train it to be better but now we
+[38:53] wanted the model to be useful and
+[38:56] interacting with outside systems.
+[39:01] So we saw one technique that is kind of
+[39:05] an an essential technique called rag
+[39:07] short for retrieval augmented generation
+[39:11] that is meant for you to be able to
+[39:15] fetch relevant documents from some
+[39:19] knowledge base in order to answer
+[39:23] a question or answer a prompt.
+[39:26] And the reason why you want to do that
+[39:29] is that the knowledge of your LLM is
+[39:34] including up to
+[39:37] the data that is up to the knowledge cut
+[39:41] updates which is the max dates of what
+[39:45] your LM has been trained on.
+[39:48] And from a practical standpoint,
+[39:51] I guess from what we see nowadays,
+[39:53] you're typically not training your LLM
+[39:56] daily or continuously. And so in cases
+[40:00] where you need your LLM to know about
+[40:02] things that happened recently or about
+[40:06] things that happened that were not
+[40:09] in your LM training data,
+[40:12] you want your LLM to have access to such
+[40:14] information. And so that's how rag is
+[40:19] very useful. So we saw that rag
+[40:22] dependent very heavily on the way it
+[40:25] retrieves data. So we saw that the
+[40:29] retrieval part was mainly composed of
+[40:31] two steps. So the first one was
+[40:35] candidate retrieval
+[40:37] which use which uses a by encoder kind
+[40:41] of setup where you're basically doing
+[40:46] some semantic search. So you're
+[40:48] computing the embedding of the query.
+[40:50] you have some precomputed embeddings of
+[40:53] the documents in your knowledge base and
+[40:55] you're taking the ones that maximize
+[40:58] some similarity score like let's say
+[41:01] some cosign similarity.
+[41:05] So the this first step is allowing you
+[41:08] to retrieve
+[41:09] um I guess a filtered version of the
+[41:13] potential documents and then typically
+[41:15] you have a second step which is called
+[41:19] ranking or reranking because the first
+[41:22] step already gives you a ranking which
+[41:25] has typically a more sophisticated
+[41:28] setup.
+[41:30] So it's a cross encoder kind of setup
+[41:33] where you have your query and your
+[41:37] document that are both fed to some model
+[41:41] and produces a more precise score
+[41:45] and then you use this final score to
+[41:48] rank the final results and you typically
+[41:52] choose the top let's say K
+[41:55] and then you add them to your prompt. So
+[41:57] it's the augmented part. So retrieval is
+[41:59] everything I mentioned so far and then
+[42:02] once you have the relevant documents you
+[42:04] add them in your prompt which is the
+[42:07] augmented part and you generate the
+[42:09] answer.
+[42:11] So the reason why I'm taking so much
+[42:13] time on rag is rag is such an important
+[42:17] concept also
+[42:20] if you were to you know have interviews
+[42:22] or you know also maybe in the exam who
+[42:25] knows um so I think it's a it's an
+[42:28] important concept to uh to have in mind
+[42:30] the second one that we saw was tool
+[42:33] calling
+[42:35] and tool calling is allowing your LLM to
+[42:43] leverage tools. The way it does that is
+[42:47] in two steps. The first step is for your
+[42:50] model to know which API there is out
+[42:54] there.
+[42:56] At the end of which your LLM says, okay,
+[42:58] I want to use this API and I want to use
+[43:01] it with these arguments.
+[43:04] And then you have an intermediary step
+[43:06] which is you just run your API with
+[43:08] these arguments.
+[43:10] And then the second step is you feed the
+[43:14] results of this operation back to the
+[43:17] LLM which then produces a final answer.
+[43:22] So that's how tool calling works. So if
+[43:24] you say to your LM okay you can use this
+[43:28] use this API this is how your LM would
+[43:31] leverage that.
+[43:33] And then we saw that modern-day agentic
+[43:37] workflows were leveraging both rag and
+[43:42] tool calling as key methods to um
+[43:46] perform actions.
+[43:49] And we saw an example detail example uh
+[43:52] which was such that you had some inputs
+[43:54] and then your LLM had a series of
+[43:58] different calls
+[44:00] um in order to perform some action and
+[44:02] then at the end of it it retrieves sorry
+[44:05] it returns an answer.
+[44:10] Cool. And then last lecture
+[44:13] we saw how we could evaluate LLMs which
+[44:17] is a much tougher thing to do now that
+[44:20] LLMs can do a bunch of different things.
+[44:25] So we first saw that there were some
+[44:29] rulebased metrics that people were using
+[44:33] before LMS came into play. metrics that
+[44:36] you may have heard like blur, rouge,
+[44:40] meor and so on, but the main limitation
+[44:44] was that they were not considering how
+[44:48] language could differ but still be
+[44:51] correct.
+[44:53] And so uh this key idea that we saw was
+[44:57] why not leverage LLMs to evaluate
+[45:00] outputs. And so there is this uh key
+[45:03] idea of LLM as a judge where you receive
+[45:08] as input the prompts
+[45:11] the model response along with the
+[45:14] criteria that you want the response to
+[45:16] be evaluated on.
+[45:19] And then you want your LM messages to
+[45:22] output two things. The first one is a
+[45:25] rationale for why a given score is
+[45:29] output.
+[45:31] along with that score.
+[45:34] So nowadays, LM as a judges, they're
+[45:37] typically outputting a binary response
+[45:40] either
+[45:42] uh pass or fail, true or false, just
+[45:44] because it's easier. And we're also
+[45:47] having the rational be output before the
+[45:51] score
+[45:53] because in practice it's something that
+[45:55] also improves the performance of uh the
+[45:59] element as a judge a little bit if you
+[46:01] want like reasoning models do by
+[46:03] outputting the reasoning chain before
+[46:05] they output the answer.
+[46:09] But then we also saw that there were uh
+[46:11] some biases that came with this
+[46:13] approach. We saw position bias which is
+[46:17] the way you present the elements to
+[46:20] compare matters. So if you present
+[46:22] something first then maybe the LLM will
+[46:25] just prioritize that first. Uh so there
+[46:28] was position bias, there was verbosity
+[46:30] bias which is your LLM just preferring
+[46:33] longer outputs.
+[46:35] Uh and self-enhancement bias was another
+[46:37] one where it prefers its own outputs.
+[46:41] Um and then we also saw a number of
+[46:44] benchmarks
+[46:46] uh that people use nowadays in order to
+[46:49] say how great their LLM is. So if you
+[46:52] see the releases that come out, there
+[46:56] are typically a bunch of metrics across
+[46:58] a number of different benchmarks that
+[47:00] people know about. So that spans uh
+[47:04] knowledge, the ability to reason, coding
+[47:07] which is very important because a lot of
+[47:09] applications are coding related
+[47:12] and then safety and then this is not an
+[47:15] an
+[47:16] extensive list so there's actually many
+[47:19] more dimensions.
+[47:21] Um
+[47:24] so yeah I think that's where we stopped
+[47:26] and it was last lecture
+[47:30] and this is all you are expected to know
+[47:34] for the final.
+[47:37] Everything after that is not going to be
+[47:40] part of the final.
+[47:44] Any questions
+[47:47] on this so far?
+[47:54] Cool. Okay. I'm expecting a hundreds for
+[47:57] everyone for the final. But yeah, um
+[48:02] I would say what I went through
+[48:06] is going to be foundational for the
+[48:08] final. So I guess if you understood
+[48:11] everything I said,
+[48:13] I think you're going to be ready for the
+[48:16] final. So um yeah, but if you have any
+[48:19] questions, you know, Shervin and I are
+[48:20] always here um to uh Oh, yeah. You have
+[48:23] a question?
+[48:29] Yes. So the question is, is the scope
+[48:31] for the final of lecture 5 to lecture 8?
+[48:33] Yes. So for midterm it was lectures 1 2
+[48:37] 3 4 and this one is 5 6 7 8. So I guess
+[48:40] it's u equal equal size.
+[48:45] Cool.
+[48:47] Okay, great. So, with that said, we just
+[48:52] finished recapping this entire quarter
+[48:55] worth of lectures and now we're going to
+[48:58] go to the second item of today's menu,
+[49:01] which is looking at some trending
+[49:04] topics.
+[49:06] And so, I'm going to start with the
+[49:08] first one.
+[49:10] And I'm going to introduce it as
+[49:12] follows.
+[49:14] So if you remember we saw that the
+[49:16] transformer
+[49:18] was a concept and an architecture that
+[49:21] was first introduced in the context of
+[49:24] machine translation.
+[49:26] So it performed great. People said okay
+[49:29] it performs great on machine translation
+[49:31] why not try it on other text tasks. So
+[49:35] they tried it performs great
+[49:38] but now the question is can you not use
+[49:41] it for things other than text
+[49:45] it's a natural question right so in
+[49:50] order to answer that question I just
+[49:52] want us to remind ourselves that this
+[49:55] architecture is relying on this concept
+[49:58] of self attention
+[50:01] and this is what is making the
+[50:04] transformer work so Well,
+[50:07] so if we just recap what self attention
+[50:12] is, this uh illustration kind of does
+[50:15] the job quite well.
+[50:18] You have a query and then you have a
+[50:21] bunch of other elements which are
+[50:23] represented by your keys and your values
+[50:26] and you want to know which other
+[50:28] elements are actually relevant
+[50:32] in order to compute the embedding for
+[50:34] that query.
+[50:37] So right now we have only used tokens
+[50:41] you know text tokens
+[50:43] but text tokens
+[50:46] they're actually vectors.
+[50:50] So if you take those vectors
+[50:54] and you actually represent something
+[50:56] else than text
+[50:58] like for instance parts of an image.
+[51:02] The question is would the transformer
+[51:07] based on that kind of input also perform
+[51:10] well.
+[51:14] And so here the key question that I want
+[51:18] to ask is how can we adapt our
+[51:22] transformer
+[51:23] to work on non-ext input and for
+[51:27] instance here we can think of image
+[51:29] understanding input. So you have some
+[51:31] image and so it's a traditional um
+[51:35] computer vision task where you want to
+[51:37] know in which class this image belongs
+[51:39] to.
+[51:41] So you want to know if
+[51:43] having some transformer-based
+[51:45] architecture would work well in that
+[51:47] situation.
+[51:49] Well, the answer to that is well, first
+[51:53] in order to adapt it to this task,
+[51:56] you would take
+[51:59] the encoder part of the transformer
+[52:03] because in order to understand what is
+[52:05] in an image, you need to classify that
+[52:09] image in some sense.
+[52:11] So if you remember if there's one model
+[52:14] in what we saw that was working very
+[52:16] well for classification
+[52:18] was BERT because BERT is encoder only.
+[52:22] It computes meaningful embeddings that
+[52:26] can then be used for projection purposes
+[52:30] or for classification purposes.
+[52:33] So it's a very natural choice that here
+[52:36] we would have. So here we would just
+[52:39] keep the encoder part of the transformer
+[52:41] and then
+[52:43] have the self attention mechanism come
+[52:46] into play and um compute meaningful
+[52:50] embeddings that we could then project
+[52:53] for our relevant task. And this is
+[52:56] exactly what a group of researchers did
+[53:00] back in 2020.
+[53:02] So have you heard of VIT vision
+[53:04] transformer?
+[53:07] Yeah. No. Yeah. So what I described here
+[53:10] is exactly what they did.
+[53:13] So they took an image,
+[53:16] they divided that image into patches.
+[53:21] Those patches
+[53:23] were represented by some vectors.
+[53:27] And of course you have some some kind of
+[53:29] position information that allows you to
+[53:31] know where your your patch is in the
+[53:34] image.
+[53:36] And then you just put it through the
+[53:37] transformer encoder. So the encoder part
+[53:39] of the transformer
+[53:41] and you compute the representation
+[53:44] corresponding to the CLS class very
+[53:47] similar to birds and you would just
+[53:50] project that representation
+[53:52] over some classes of interest
+[53:57] and then you would perform your um your
+[54:01] uh I guess computation uh like this. So
+[54:04] what that paper found was that if you
+[54:09] train such a model on a lot of image
+[54:13] data on a lot of image data you then
+[54:16] outperform these traditional
+[54:18] convolutional neural network kind of
+[54:21] methods.
+[54:23] And so those kind of
+[54:26] uh remarkable
+[54:28] because so why is it remarkable? Because
+[54:30] in the vision case,
+[54:33] so there is this concept of inductive
+[54:36] bias where you want to gear your model
+[54:41] towards
+[54:42] looking at certain things in order to to
+[54:46] deduce the results.
+[54:48] So convolutional neural networks
+[54:52] are a kind of model that are designed in
+[54:56] a way for you to look at the image
+[54:59] in some you know sliding way. You know
+[55:02] you look at your image a little bit like
+[55:04] you would look at it in practice as a
+[55:06] human.
+[55:08] And people had hypothesized that such
+[55:12] such a bias such an indictive bias would
+[55:14] actually make sense for something like a
+[55:17] vision task.
+[55:19] So you contrast that with the vision
+[55:21] transformer
+[55:22] which is actually letting all parts of
+[55:25] the image attend to one another which
+[55:29] has on the other side very low inductive
+[55:32] bias. So what this paper showed was if
+[55:36] you give your model enough data
+[55:40] then it will actually learn how to
+[55:43] classify
+[55:45] um I guess your images in this in this
+[55:47] classes. So this was like kind of a
+[55:48] remarkable results.
+[55:51] Um so I think this is like pretty
+[55:52] remarkable and a nice extension of
+[55:54] everything we saw.
+[55:57] So with that in mind,
+[55:59] um I want us to just go through an end
+[56:02] toend example of how you would process
+[56:06] an image and go through that um vit so
+[56:11] vision transformer in order to make your
+[56:13] um prediction. So here you would take uh
+[56:17] like your favorite image that you would
+[56:19] just split into patches. So here you can
+[56:22] think of you predefining some uh fixed
+[56:27] size patches.
+[56:29] So here I would say like 3x3 let's say
+[56:31] and then each patch has some um fixed
+[56:34] number of pixels
+[56:37] and then what you do is for each patch
+[56:40] you try to have some vector
+[56:43] representation.
+[56:45] So you can think of each patch as so
+[56:49] what is a patch? So it's composed of
+[56:51] pixels.
+[56:53] So if each pixel has three values which
+[56:56] correspond to red, green and blue, then
+[57:00] you can find
+[57:02] a way to project those on some lower
+[57:05] dimensional flattened space
+[57:08] and you can learn how you would project
+[57:11] that through some kind of linear layer.
+[57:14] So
+[57:17] long story short, you just find a way to
+[57:21] associate a vector to each of these
+[57:23] patches
+[57:25] which you you then represent
+[57:29] every single one of your inputs. And
+[57:32] then you have of course a special
+[57:34] embedding for the CLS token which you
+[57:36] can also learn.
+[57:38] And you add the position embedding.
+[57:42] So you do the same for all of your
+[57:44] inputs and then very similar to birds
+[57:48] just put that through your encoder. Let
+[57:50] everyone interact with everyone
+[57:54] and then at the end of the day what you
+[57:56] care about is a representation of the
+[58:00] input that is meaningful. So typically
+[58:02] people take the encoded embedding of the
+[58:05] CLS token. So the reason why they take
+[58:08] that is one because it's a convention
+[58:11] but second one is this CLS token. So the
+[58:15] encoded embedding
+[58:17] is actually
+[58:19] an embedding that has interacted with
+[58:22] all other tokens through this self
+[58:25] attention mechanism.
+[58:27] So it has seen everything
+[58:30] and then you would project that CLS
+[58:34] token encoded embedding onto some class
+[58:37] through a feed for neural network in
+[58:40] order to predict your final class.
+[58:45] So in this case we know it's a picture
+[58:47] of a teddy bear. So here we would want
+[58:49] the model to classify this as a teddy
+[58:51] bear.
+[58:54] So far so good. Does that make sense?
+[59:00] Cool. Uh, so now, okay, we know how to
+[59:04] process
+[59:06] image input, right? Now, so another
+[59:10] question is how would you have your LLM
+[59:17] answer questions about your image, which
+[59:19] is something that you can do actually
+[59:21] nowadays. Like if you open chat GPT you
+[59:23] can input an image and ask it questions.
+[59:28] So
+[59:30] you would have two kinds of inputs. So
+[59:32] you would have an image which we saw we
+[59:35] can find a way to represent
+[59:38] and then the text which you now know
+[59:41] very well how to represent like with
+[59:42] tokens.
+[59:44] So the way you would
+[59:48] allow the model or let the model
+[59:51] process. All of this
+[59:54] is typically as follows. So there are
+[59:55] like a couple of methods. The first one
+[59:57] is the more most common one which is you
+[60:00] just feed everything as input.
+[60:03] So the image token as input, the um text
+[60:06] tokens as input and you have some
+[60:09] representation to have the model just
+[60:12] know that these are image tokens and
+[60:14] this is like text token and then you let
+[60:17] it generate an answer in a decoder only
+[60:22] fashion, auto reggressive fashion
+[60:24] exactly like you would do it
+[60:27] the first method and a lot of such
+[60:30] models are designed that way. So there
+[60:34] is for instance a very popular uh open
+[60:37] weight I believe um vision language
+[60:41] model VLM that's what they are called uh
+[60:43] model called lava
+[60:46] and this is how they do it. So they have
+[60:48] some encoder on the image parts uh that
+[60:51] produces some tokens that are then uh
+[60:55] concatenated with text tokens that are
+[60:57] input into the LLM.
+[61:00] So that's one method.
+[61:03] The second method which is less common
+[61:06] is to have the images be input at the
+[61:11] cross attention layer.
+[61:15] So here what you would do is you have
+[61:17] your text input
+[61:19] and then your image input. You don't put
+[61:22] it in the input. You actually let it
+[61:25] interact with the text tokens within the
+[61:28] cross attention layer.
+[61:31] And this is something that for instance
+[61:33] llama 3 had represented in their paper.
+[61:38] This technique is typically less common.
+[61:40] The first one is more common.
+[61:45] So I guess what I want to say is CME 295
+[61:51] focused on the transformer specifically
+[61:53] in the case of
+[61:56] texttoext problems. So text generation
+[61:59] is all you know this class
+[62:02] but we also have the transformer that
+[62:05] was used for non-ext applications. So
+[62:09] here we saw image understanding so
+[62:11] vision understanding with the vit and
+[62:14] then uh we will not have the time to say
+[62:18] this now but also for image generation
+[62:21] tasks we can also have parts of the
+[62:25] transformer be used in that architecture
+[62:29] and so you may uh you know hear about
+[62:32] diffusion transformer or multimodel
+[62:36] diffusion transformer that's actually
+[62:37] rely on the self attention mechanism
+[62:41] and um this is actually not an
+[62:43] exhaustive list. This is also something
+[62:46] that has been used in other uh domains
+[62:49] like recommendations, speech and so on.
+[62:54] So I guess I what I want you to remember
+[62:56] from this is that transformers
+[63:01] were like was an architecture that
+[63:04] performed very well for machine
+[63:06] translation tasks
+[63:09] but then it proved to perform very well
+[63:13] for other text related tasks
+[63:16] and it was then reused in a bunch of
+[63:18] other domains which also proved to be
+[63:21] quite successful. So I would just
+[63:23] encourage you after this class to also
+[63:25] keep an open mind for non-ext related
+[63:30] transformer applications and the ones
+[63:32] that I mentioned here are maybe just a
+[63:35] few first few pointers into the kind of
+[63:38] papers that you can look at.
+[63:41] Cool. So here we said that transformer
+[63:45] was something that came from the text
+[63:48] world that's also uh useful and used in
+[63:51] other worlds.
+[63:53] Now I want to tell you about something
+[63:55] else that was uh I guess used and useful
+[64:01] in the non-ext world that may be useful
+[64:04] in the text world
+[64:06] and I want to tell you about
+[64:08] diffusionbased LLMs.
+[64:11] So who has heard the term diffusion?
+[64:15] Who knows about diffusion?
+[64:18] Yeah,
+[64:20] cool. So we will see how we can apply
+[64:22] that to LLM. So this is a very trendy
+[64:24] topic. I believe the first paper started
+[64:27] in the early 2020s, but I guess it's
+[64:30] only now that people are starting to
+[64:34] have this really work.
+[64:37] I just want to start with a motivation
+[64:40] which is that up until now we have taken
+[64:44] for granted the fact that our LLM is an
+[64:48] auto reggressive LLM and by auto
+[64:51] reggressive what do I mean by that?
+[64:54] So it takes some input
+[64:58] and what the LLM tries to do is to
+[65:01] predict the next token. So given
+[65:04] everything so far, we predict the next
+[65:07] token.
+[65:08] We do that and then we take that token
+[65:12] that we just predicted along with
+[65:14] everything that we have predicted so far
+[65:17] and then we again
+[65:20] predict the next token.
+[65:22] We predict it and we go again and again
+[65:26] up until you know finishing the sequence
+[65:28] with that end of sequence token which
+[65:31] makes the generation stop.
+[65:33] So this is a true auto reggressive
+[65:36] generation as in we take the input so
+[65:39] far in order to predict the next token
+[65:43] and then we repeat this process until
+[65:46] the end.
+[65:50] So it's something that people now try to
+[65:55] kind of give it a name which is like
+[65:57] auto reggressive model kind of model.
+[65:59] So, ARM, if you kind of see this
+[66:02] notation, that's what it means. Um, the
+[66:06] problem with that kind of paradigm is
+[66:09] that inference time generation
+[66:13] is actually not something you can
+[66:14] parallelize
+[66:16] because you always need what's before in
+[66:20] order to predict the next one.
+[66:24] But I just want to say that inference
+[66:26] time generation is not paralyzable. But
+[66:30] training is paralyzable.
+[66:34] So if you remember the way we do
+[66:36] training is we input all the tokens
+[66:41] that we want our model to predict and
+[66:44] then we let the model generate tokens
+[66:51] out of this. So basically in a decoder
+[66:53] only setting you have this causal mask
+[66:56] which lets your model not cheat if you
+[66:59] want and not use the future ones.
+[67:04] So I just want to say that when I say
+[67:05] that uh this paradigm is not paralyzable
+[67:09] I just want to emphasize on the fact
+[67:10] that it's a inference time that I'm
+[67:12] saying training time you can actually
+[67:14] paralyze that quite well.
+[67:18] So as I mentioned that's one of the
+[67:21] reasons why people have tried to look at
+[67:24] other paradigms
+[67:26] and in particular um so if you know
+[67:29] about diffusion you know that it works
+[67:30] very well for the vision domain
+[67:33] and so people have tried adapting
+[67:37] this paradigm for the text generation
+[67:39] case
+[67:41] and uh so this is like a bunch of
+[67:43] screenshots we took from announcement
+[67:45] that happened this year. So for instance
+[67:48] uh earlier this year there was an
+[67:50] experimental text diffusion model from
+[67:52] Google that they presented during the IO
+[67:55] event
+[67:57] um which was very impressive because it
+[67:59] led to a lot of speedups. And then we
+[68:01] have some um like different startups. So
+[68:04] Inception is one of them uh that made
+[68:07] headlines I believe a couple of weeks
+[68:09] ago or last week no sorry a month ago um
+[68:13] that also are pursuing this route. Um,
+[68:16] so all of that to say that this
+[68:18] direction is a very trendy and hot
+[68:21] direction that potentially has a lot of
+[68:24] promise.
+[68:27] But the key issue with this is that text
+[68:32] is discrete
+[68:34] whereas images are continuous.
+[68:38] And we're going to see why that
+[68:40] distinction that I just made matters.
+[68:44] So I'm going to try to explain to you
+[68:46] what diffusion is in two minutes.
+[68:49] So
+[68:51] in the image world
+[68:53] in order to generate an image
+[68:56] what people typically do is they start
+[68:59] from noise
+[69:02] and then they try to generate some
+[69:04] image.
+[69:06] Now now you may wonder okay why noise?
+[69:09] Well, you cannot do something that's um
+[69:12] you know uh auto reggressive because I
+[69:15] guess like if you were to say okay let's
+[69:16] predict the pixels one at a time uh it's
+[69:20] just not tractable because there are
+[69:21] many pixel in in an image and this is
+[69:23] typically not how you produce uh an
+[69:26] image but some other reasons are that uh
+[69:30] noise is just something that you can
+[69:32] model very well with uh some very
+[69:35] popular distributions so gausian
+[69:37] distribution if you know about
+[69:40] it has very nice properties. Um, also
+[69:43] noise is very easy to sample. So, it's
+[69:45] very easy to start with that. Um, noise
+[69:49] is also a way for you to introduce
+[69:51] randomness because you don't necessarily
+[69:54] want to always produce the same image.
+[69:56] You want to have uh the uh I guess
+[70:00] choice of generating images that are
+[70:03] slightly different from one another.
+[70:06] And uh just mathematically it works
+[70:08] quite well. And um speaking of that, the
+[70:13] goal is to learn
+[70:16] some transformation that would allow you
+[70:19] to go from noise
+[70:22] to the target image distribution.
+[70:26] So all of what I said here is just kind
+[70:29] of reasons for me to tell you, okay,
+[70:31] noise is actually a choice that is quite
+[70:35] natural to start with in order to
+[70:37] generate an image.
+[70:40] And to give you an analogy,
+[70:43] um let's suppose you're a sculpture
+[70:46] sculptor. So the person who does
+[70:48] sculptures.
+[70:50] So if you want to do a sculpture, you
+[70:52] typically start with some rock.
+[70:58] But then rocks are, you know, different
+[71:00] from one another. They always have uh
+[71:03] things that are unique to them. And
+[71:07] still you would focus on what to remove
+[71:12] in order to obtain the end sculpture. So
+[71:16] you can think of the rock as being your
+[71:18] noise
+[71:20] and your end result as being your target
+[71:24] data distribution.
+[71:26] So I just want to have this quote by
+[71:28] Michelangelo. So the sculpture is
+[71:30] already complete within the marble block
+[71:32] before I start my work. It is already
+[71:34] there. I just have to chisel away the
+[71:36] superus material. The reason why I'm
+[71:39] reading that is you can have a a nice
+[71:42] analogy between what Michelangelo said
+[71:45] and the process of denoising
+[71:50] the noise to get an image.
+[71:54] So this is all just motivating how image
+[71:57] generation is done. So you start from
+[71:59] noise
+[72:00] and you want to generate an image. So
+[72:03] the way you do that for diffusion is to
+[72:06] learn some transformation
+[72:08] that would allow you to go from noise
+[72:12] to image.
+[72:16] So you have two steps. I mean you have
+[72:18] more than two steps but we have these
+[72:20] two main steps for diffusion models
+[72:21] where you first want to start from clean
+[72:26] images
+[72:28] and you add noise gradually
+[72:32] until until you obtain some very noisy
+[72:35] image
+[72:37] and then from that
+[72:40] what diffusion models try to do is to
+[72:44] predict the noise to remove in order to
+[72:48] obtain the image.
+[72:51] So, it's a little bit like, you know,
+[72:52] you're the sculpture sculpture person
+[72:55] and you have your rock. You just want to
+[72:57] learn what pieces of rock you need to
+[73:00] remove in order to obtain your final
+[73:02] piece of art.
+[73:05] So, this is what diffusion is. So it
+[73:08] works pretty well because noise as I
+[73:12] mentioned is typically something that
+[73:13] people draw
+[73:15] from a gausian distribution.
+[73:18] Gausian distributions are mathematically
+[73:21] very well defined have a lot of nice
+[73:23] properties. So that's why they work so
+[73:26] well.
+[73:28] But now the question is how would you
+[73:30] adapt this to the text world? Because in
+[73:34] the text world as you know we're talking
+[73:36] about tokens.
+[73:38] Tokens are discrete.
+[73:41] So there's not this concept of you know
+[73:42] adding noise. Cannot have that.
+[73:47] So pe what people have tried to um to do
+[73:52] was to find a text equivalent that would
+[73:54] make sense. And this is what the current
+[73:58] research
+[74:00] points to which is that noise is to
+[74:04] images what the mask token is to text.
+[74:11] So mask is just a way for us to just not
+[74:16] have the information coming from one
+[74:18] part of the sequence.
+[74:21] And I just want to go through the
+[74:23] revised two-step process that we saw
+[74:25] here for text.
+[74:28] So here for the forward process
+[74:32] instead of noising your input
+[74:35] you would just have more and more
+[74:39] inputs that would be masked.
+[74:44] So that's the for process and at the end
+[74:46] you would just obtain a sequence full of
+[74:49] mass tokens.
+[74:52] So what you want to do is to learn
+[74:56] some
+[74:58] model that allows you to unmask
+[75:03] these mass tokens in a way that
+[75:06] reconstructs the original sentence.
+[75:10] So there's some math that goes into it.
+[75:13] Obviously in a few minutes we will not
+[75:14] have time to go into that. But I just
+[75:17] want to emphasize on the key idea which
+[75:19] is
+[75:21] you want to do diffusion but in a way
+[75:24] that makes sense for text inputs.
+[75:27] And the way the way it would make sense
+[75:29] is to consider
+[75:31] the noise for images as being mask
+[75:34] tokens
+[75:36] for text input.
+[75:41] Cool. And so with that in mind, you have
+[75:44] a bunch of models that are being
+[75:46] released these days which are called
+[75:49] masked diffusion models, MDM.
+[75:54] So whenever you see MDM now, you know
+[75:57] what kind of model we're talking about.
+[76:00] So notations are still very um not very
+[76:06] well defined. So it may change in the
+[76:09] future. But one other term you will see
+[76:11] out there is also DLLM diffusion based
+[76:16] LLM
+[76:18] and this is what it's doing. So instead
+[76:21] of predicting a token in an auto
+[76:24] reggressive fashion like one at a time,
+[76:27] what it does is that at inference time
+[76:31] it goes from a completely masked
+[76:34] input sequence
+[76:37] and it tries to predict what tokens were
+[76:40] behind these mass tokens.
+[76:44] So of course um you know in a real life
+[76:47] setting you would have some prompts
+[76:48] here. you would have some prompts. So of
+[76:52] course in order to predict this answer
+[76:54] you would have some conditioning. So you
+[76:57] would tell your model okay given this
+[76:59] prompts you're going to start with all
+[77:01] these mass tokens just try to predict
+[77:05] what the answer is.
+[77:08] So in case you're having trouble with
+[77:11] the intuition. So I also had trouble in
+[77:13] the beginning you know why would it make
+[77:15] sense for text to be solved in a
+[77:19] diffusion manner because typically when
+[77:21] you write you write one word at a time.
+[77:24] So one helpful way to think about this
+[77:27] is
+[77:29] let's suppose you want to write a
+[77:31] speech.
+[77:33] So you would not directly write your
+[77:36] speech in a linear way.
+[77:38] You would first have like a rough plan.
+[77:42] you say okay I'm going to talk about
+[77:43] this in the first place second third you
+[77:45] have some kind of draft
+[77:47] and then you try to refine what is in
+[77:50] each of these sections
+[77:53] so you can think of diffusion as kind of
+[77:56] working like this so it tries to have a
+[78:00] course to fine refinement of the output
+[78:06] so it can predict things that are you
+[78:08] know after a certain token that has not
+[78:09] been predicted But you can think of this
+[78:12] as being
+[78:14] something that goes from a very drafty
+[78:16] version to a very refined version.
+[78:21] So that's what I think about this
+[78:23] process. Hopefully that's helpful. And
+[78:26] the key advantage here is that the
+[78:30] decoding is now done in much fewer
+[78:33] forward passes
+[78:35] because previously you had to do as many
+[78:39] forward passes as there were tokens to
+[78:42] predict.
+[78:44] But here for diffusion you only need to
+[78:47] do as many passes as there are steps in
+[78:52] your diffusion process. And the number
+[78:54] of steps is something you can fix.
+[78:57] So the higher the step, the more high
+[79:00] quality your output is, but it's
+[79:03] typically much lower than the length of
+[79:06] your output.
+[79:09] So that is the core reason why
+[79:13] this model is so much faster than the
+[79:16] auto reggressive one.
+[79:19] And um of course you know uh we don't
+[79:22] have uh that much time but in case
+[79:24] you're curious in case you're interested
+[79:26] after the final once you're completely
+[79:28] freed in terms of uh things to think of
+[79:32] uh just put some references that could
+[79:35] be help helpful. There's a paper that
+[79:37] came out earlier this year called LADA
+[79:40] large language
+[79:43] uh diffusion
+[79:45] model with masking. Actually, I don't
+[79:47] remember the full acronym, but it is
+[79:50] actually going through the math and why
+[79:53] the thing that I just mentioned works.
+[79:56] Uh, and then there's like a bunch of
+[79:57] other papers that would also be helpful.
+[80:00] So, the links are in the at the bottom
+[80:02] of the slide in case you're interested.
+[80:06] And I just want to go through two last
+[80:09] things before giving it to Shervin.
+[80:12] So first on the advantages of this new
+[80:15] paradigm.
+[80:17] So the first one is the speed.
+[80:21] So as we mentioned it's going to be much
+[80:23] faster than traditional auto reggressive
+[80:27] models especially for outputs that are
+[80:29] longer. And so some benchmarks they even
+[80:33] say that it's something along the lines
+[80:35] of 10x faster.
+[80:38] So for cases like coding it can be very
+[80:43] powerful because you may have to do
+[80:46] several model calls and uh you know you
+[80:50] as a user you're just waiting for that
+[80:52] code to happen and you know just having
+[80:54] a lower latency makes a lot of
+[80:56] difference.
+[80:58] The other thing is that the nature of
+[81:01] this approach is actually considering
+[81:06] the text as a whole in order to make the
+[81:08] predictions.
+[81:10] And so there's a category of coding
+[81:13] tasks that are called fill in the middle
+[81:18] which is about trying to figure out you
+[81:22] know you have a bunch of code and you
+[81:24] want to know what's missing.
+[81:27] in the middle and so fill in the middle
+[81:30] and diffusion models are typically
+[81:32] better formulated for the kind these
+[81:34] kinds of tasks because they can consider
+[81:37] I guess input from multiple directions
+[81:42] and um you know that's why this approach
+[81:45] can be probably something that can be
+[81:47] useful
+[81:49] for some applications.
+[81:53] So in terms of the current work, so
+[81:55] these models they look great you know
+[81:57] what I mentioned to you looks great but
+[81:59] the performance was not on par with the
+[82:03] current frontier models at least for
+[82:05] some time but it's something that may
+[82:08] change.
+[82:10] So the papers that I mentioned they are
+[82:12] actually posting performance that is
+[82:14] kind of catching up with the models that
+[82:16] are auto reggressive.
+[82:19] So there is some promise in there. And
+[82:22] then uh the other line of work is just
+[82:24] to adapt
+[82:26] all the techniques that people have come
+[82:28] up with uh like for instance you know
+[82:31] reasoning chains. How do you adapt that
+[82:32] for diffusion?
+[82:34] Um like you know and so on. You know
+[82:37] there are so many techniques that are
+[82:38] intrinsically more
+[82:41] better suited for auto reggressive
+[82:43] kinds of models that can be adapted for
+[82:47] that
+[82:49] and that's what people are working on.
+[82:52] So long story short,
+[82:55] what we saw was that things we saw in
+[82:59] this class could be used in other
+[83:03] domains. Like for instance, we saw the
+[83:05] vision transformer
+[83:08] uh that was borrowing the transformer
+[83:10] for vision related tasks. But we also
+[83:13] saw that things from other domains
+[83:16] could also be used in the text world.
+[83:20] And that's what we saw with diffusion
+[83:21] LMS. Um, and so this is probably, you
+[83:25] know, of course a subset of everything
+[83:27] that's happening.
+[83:30] And so with that, I think we're
+[83:32] concluding our second item of our menu.
+[83:35] And um, I'm going to just give it to
+[83:38] Shervin.
+[83:42] Thank you, Ashin.
+[83:44] And with that, welcome to the last part
+[83:47] of the season finale of CM295.
+[83:50] And as Ein mentioned, now is the time
+[83:53] for some closing thoughts and see um
+[83:56] what we can get away from this class and
+[84:00] uh concepts that are u neighboring to
+[84:04] it.
+[84:05] Uh so first Afin went through the
+[84:08] concept of diffusion and images and we
+[84:11] saw some similarities. we could draw
+[84:13] with text. And now we're going to see
+[84:16] what kinds of inspirations have both
+[84:19] modalities taken from each other. And
+[84:21] we're going to see um that actually like
+[84:24] a lot of things can be um reused.
+[84:29] So the first thing that I want to
+[84:31] mention in terms of what has been reused
+[84:34] is the architecture part. So Afinen uh
+[84:38] mentioned this uh like diffusion concept
+[84:41] that was born in the field of images but
+[84:44] that was taken for text and was able to
+[84:47] yield uh lower latency like a higher
+[84:51] speedups which is great when you're a
+[84:52] user. Uh so this was one example of a
+[84:55] win.
+[84:57] Uh and then on the other direction um
+[85:01] traditionally images have been dealing
+[85:03] with um convolutions mostly as as uh
+[85:08] model architecture type but uh these
+[85:12] papers saw that replacing convolutions
+[85:15] with transformers
+[85:17] uh was very good even um yielding better
+[85:20] results. So all these latest
+[85:23] diffusionbased papers in the field of
+[85:25] images typically use transformers
+[85:29] and then here I'm linking one of the
+[85:31] papers that Afin already uh briefly went
+[85:34] through.
+[85:37] But not only uh is it the architecture
+[85:39] sides that is uh that that is the
+[85:42] subject of pollination between these
+[85:45] modalities. You could even think of
+[85:48] other kinds of components like the
+[85:50] input. And for this one I want to
+[85:53] mention the example of deepsek OCR. So I
+[85:58] don't know if you've heard of this
+[85:59] paper. It just came out very recently
+[86:02] and contrary to what the names the name
+[86:06] suggests. So, OCR stands for optical rec
+[86:10] uh like recognition, character
+[86:12] recognition and it's usually a field
+[86:15] that tries to convert some scanned image
+[86:19] into text but actually that paper
+[86:23] doesn't boast some improvement on the
+[86:26] OCR task itself rather it showed that
+[86:30] you could learn some function that
+[86:34] reconstructs
+[86:36] text tokens based on vision tokens and
+[86:40] not only on vision tokens on very few
+[86:43] vision tokens. So it showed that the
+[86:47] representation power of patches of
+[86:50] images as tokens was very strong. And
+[86:54] you have some researchers that bring
+[86:55] some rationale to it like um you know
+[86:59] hey tokenizers are not the best tool
+[87:02] anyway. and then things in patches
+[87:05] convey the meaning of text already with
+[87:07] the example of emojis and so on that you
+[87:11] would otherwise need to represent with
+[87:13] way more tokens in text. Um and then
+[87:17] another example I want to mention is
+[87:19] even when you look inside the
+[87:21] architectures
+[87:23] some of the tricks uh can be reused and
+[87:26] adapted in each field. So here I'm
+[87:29] mentioning the example of rope which fin
+[87:32] mentioned in the recap that was used in
+[87:35] text to represent uh the relative
+[87:38] position of tokens and in the case of
+[87:41] images or even multimodel setting where
+[87:45] you have the presence of both text and
+[87:48] image within the architecture. you're
+[87:52] able to adapt that trick uh by
+[87:56] reformulating it in 2D. So here uh the
+[88:00] figure shows how you can attribute rope
+[88:04] positions in the 2D grids and how you
+[88:06] could place text tokens such that the
+[88:10] relative computation of position still
+[88:13] makes sense.
+[88:17] And you know even beyond that I would
+[88:21] say that the ongoing research for
+[88:23] transformers is very much alive and
+[88:27] people are still figuring out all the
+[88:29] details that we're working with today
+[88:32] and you see refinements all the time
+[88:34] coming uh in terms of new papers. So
+[88:38] it's um you know it's something that is
+[88:40] still developing
+[88:42] and
+[88:44] you can look at it from multiple angles.
+[88:47] One is each of these design decisions
+[88:49] that we've had they are still being
+[88:52] iterated on. So like I'm listing a few
+[88:55] items here as an example. So one is the
+[88:59] optimizer side. You might be familiar
+[89:01] with the atom optimizer and its update
+[89:04] role which has been popular for quite
+[89:06] some time and it seems that uh state is
+[89:11] being challenged with a newer paper. So
+[89:14] I referenced here the Kim K2 paper that
+[89:18] came out a few months ago that uh
+[89:21] introduces a new kind of optimizer
+[89:23] called muon and the latest version of
+[89:26] that muon clip seems to be a potential
+[89:30] candidate for this optimizer to to
+[89:33] become like the new standard. So this
+[89:36] field even
+[89:39] like as basic as it can be is still
+[89:41] developing
+[89:43] but it's not only the optimizer side you
+[89:46] also have the topic of normalization
+[89:48] where Afin mentioned that the difference
+[89:51] between the original transformer paper
+[89:54] and what you see today in LLM papers
+[89:58] um you don't have the same kind of
+[90:00] normalization anymore in the past you
+[90:02] had postnorm
+[90:04] but Now you have pre-norm which brings
+[90:07] the normalization earlier on in the
+[90:10] layer.
+[90:12] Uh but beyond that design choice of the
+[90:15] loca location of normalization you even
+[90:18] have the type of loca uh of
+[90:22] normalization that changes. So the
+[90:25] transformer paper used layer norm but
+[90:28] these days you might see other kinds of
+[90:30] uh normalization techniques like RMS
+[90:33] norm which uses less parameters and
+[90:35] others. So the theory behind it is not
+[90:39] set just yet.
+[90:42] Uh so you have other kinds of
+[90:43] parameters. Um Ashin mentioned the
+[90:47] grouped query attention paper and you
+[90:50] see these days in LLM papers not a fixed
+[90:55] design rather every paper adopts their
+[90:58] uh their own technique. Sometimes you
+[91:00] see one kind of u attention used at a
+[91:04] given layer but then it switches and
+[91:07] different papers take different design
+[91:09] decisions so it's not set in stone. Um
+[91:13] then you also have activation functions.
+[91:16] So traditionally in deep learning a lot
+[91:18] of emphasis was put on ReLU which is uh
+[91:22] very simple and used worked very well.
+[91:26] But in the world of LLM the shift was
+[91:29] towards uh ReLU like um activation
+[91:34] functions but not exactly relu. So you
+[91:36] had gausian error linear uh units you
+[91:40] you had like other kinds and the the
+[91:43] research there is still ongoing. So you
+[91:45] you still see um you still see new
+[91:48] activation functions coming in uh now
+[91:51] and then and then you have also whether
+[91:54] to take the design option of uh
+[91:56] considering the LLM as ane or not and uh
+[92:01] even the number of layers of your LLM
+[92:03] and other hyperparameters like number of
+[92:06] heads
+[92:07] um size of the number of units in the
+[92:11] FFN all of that is still up for debates
+[92:15] uh in terms of like design decisions. So
+[92:17] it's not fixed.
+[92:19] Uh and then another area of research I
+[92:22] want to mention is the data part which
+[92:25] is crucial.
+[92:27] So the first LLMs they enjoyed a
+[92:31] relatively clean state of things because
+[92:34] you could scrape the internet and hope
+[92:36] for a lot of data that was for sure
+[92:40] human generated. So you could learn
+[92:44] these patterns from quote unquote a high
+[92:47] quality source even though it's like not
+[92:50] in high quality format when you look at
+[92:52] typical internet data but it was still
+[92:55] uh generated by human. So these days the
+[92:59] state has changed. You type anything you
+[93:01] want in your favorite search browser.
+[93:04] Chances are the first results are 80%
+[93:07] LLM generated. So are we doomed?
+[93:10] Maybe not
+[93:12] uh because actually you see the
+[93:15] development of more and more work in
+[93:18] data curation. So in the past you would
+[93:20] just scrape the whole internet and train
+[93:22] next token prediction on it. But now you
+[93:25] have more and more this work of curating
+[93:28] data sets of interest and you have
+[93:30] companies that work on it and you have
+[93:32] the emergence of newer
+[93:36] fine-tuning modes. So in the past you
+[93:38] had pre-training and then fine-tuning.
+[93:41] Now you have pre-training, mid training
+[93:44] and fine-tuning. And the mid-training
+[93:46] part trains still on a large corpus of
+[93:50] data but higher quality. So people are
+[93:53] finding ways around it. Um and I would
+[93:56] say the picture is not all grim but it's
+[93:59] just that we need to do more work in
+[94:02] order to be um to have meaningful data
+[94:04] at hand. And the paper that is linked
+[94:08] and at the bottom of the of the slide is
+[94:10] dealing with the phenomenon of what if
+[94:14] you were training on LLM generated data
+[94:17] and it's talking about a concept called
+[94:19] model collapse
+[94:21] and it says that
+[94:23] LLM generated text is typically less
+[94:27] diverse.
+[94:29] So the data distribution that you would
+[94:31] see at training time changes and it
+[94:33] leads to less meaningful learning at
+[94:36] training time which is why it's
+[94:38] typically bad and it motivates the need
+[94:41] for more work on the data part.
+[94:45] Okay. Nice. Um and then you know even
+[94:48] taking a step back on the very
+[94:51] architecture we've been um using all
+[94:54] along is it the best one? it's not it's
+[94:57] not clear. So that itself is an area of
+[95:01] research and um future breakthroughs
+[95:04] might come from redesigning this uh this
+[95:08] architecture.
+[95:11] Okay. So in the past few years a lot of
+[95:15] the research that we have seen has been
+[95:18] on improving benchmarks
+[95:21] even more each time. So you have a set
+[95:24] of benchmarks. Everyone tries to get the
+[95:26] best results. So it's a natural trend
+[95:29] because you want to have more and more
+[95:31] powerful models that fulfill all your
+[95:34] use cases. But let's say we reach a
+[95:37] point where all the use cases we care
+[95:40] about are solved.
+[95:42] Then what?
+[95:45] So I think we're going to see the
+[95:47] emergence of this second border of the
+[95:50] Parto Frontier where we care most about
+[95:55] making predictions from LLM cost
+[95:58] effective um and still very high
+[96:01] quality.
+[96:03] So uh we see this emergence of uh
+[96:06] smaller and smaller LLMs like I think it
+[96:11] has been dubbed small language models
+[96:13] SLM uh like in the literature and um
+[96:18] yeah typically you hear sometimes LLM
+[96:21] providers say that they lose money even
+[96:23] on the highest tier plans. So I think it
+[96:26] reflects the fact that you need to be
+[96:29] smarter in the compute that you spend
+[96:32] for serving LLM queries at test time and
+[96:36] uh yeah I think this this will motivate
+[96:38] more and more uh this line of research
+[96:41] in the coming years
+[96:44] and then there is another area that
+[96:47] we've not touched on at all in this
+[96:49] class which is the hardware part. So
+[96:52] typically the kind of device that you
+[96:55] use to train these LLMs are GPUs which
+[96:58] are great at one thing matrix multiply.
+[97:02] Uh but the thing is uh we've kept these
+[97:05] kinds of architectures to train our
+[97:06] models even though the architecture
+[97:09] doesn't only need matrix multiplies as a
+[97:13] foundational
+[97:14] um
+[97:16] like atomic unit of compute. the uh self
+[97:21] attention world and the transformer
+[97:23] world has all these special needs. Um
+[97:28] you know the Q K transpose part we saw
+[97:32] was actually very expensive which has
+[97:35] motivated papers such as flash attention
+[97:38] to as Afin mentioned actually forgo of
+[97:43] some of the data for the sake of not
+[97:45] doing too much movement on the memory
+[97:48] side
+[97:50] even if it meant recomputing the same
+[97:52] things afterwards. And then a lot of
+[97:54] work has been on optimizing where the
+[97:57] flow of memory within the GPU resided.
+[98:00] And this shows that maybe you need a
+[98:03] more um optimized uh hardware
+[98:07] architecture in order to uh to to um to
+[98:13] solve these use cases. So there is a
+[98:15] recent paper that came out um that
+[98:18] actually encodes all of these operations
+[98:22] as part of the hardware. So in the past
+[98:25] the core um the core operation that the
+[98:29] GPU was great at is matrix multiply and
+[98:32] based on it you try to build all of the
+[98:35] input output that you want. But here
+[98:39] this paper that came out I think in
+[98:41] September
+[98:42] shows a proof of concept where you can
+[98:46] all do all of these computations as a
+[98:49] side effect of implementing input and
+[98:52] outputs with analog signals. So you have
+[98:56] all of these computations that are
+[98:57] embedded as part of the hardware and
+[99:00] based on pulses as input that simulates
+[99:03] your array values. These uh hardware
+[99:08] architectures
+[99:10] have some physical properties like you
+[99:12] could think of kirhoff uh law in the
+[99:16] like field of um I think intensity um
+[99:20] you can add them up and it uses
+[99:23] properties like this to have um what you
+[99:27] need as input and just read out the
+[99:30] result uh as output.
+[99:35] So uh when uh the paper simulated this
+[99:38] kind of architecture uh they observed
+[99:41] without uh too much surprise quite a bit
+[99:44] of improvement both on the latency and
+[99:47] energy saving parts. Uh both explained
+[99:50] because you don't need to do the
+[99:52] computations yourself. Uh you just get
+[99:55] them as a side effect of uh of your
+[99:58] hardware.
+[100:01] Now I want to take a step back and look
+[100:05] at our users at our use cases of LLMs
+[100:08] today and what could lie ahead. Uh what
+[100:12] could be the most exciting for you. So
+[100:15] today we've seen that in just a few
+[100:17] years I think it has become quite
+[100:20] important to know how to use them if you
+[100:22] want to speed up everything you you do
+[100:24] in your daily life. So a few lectures
+[100:28] ago we talked about the coding case
+[100:30] where um do you have all these AI
+[100:33] assistant coding tools that um enable
+[100:37] enable you to turn into code some
+[100:41] natural language prompts. So you just
+[100:44] you know ask for something and it will
+[100:47] uh help you do that task with a
+[100:48] so-called agent mode. And um this is
+[100:53] just something that you would do as an
+[100:55] engineer. But even beyond that uh other
+[100:59] use cases are deeply impacted by it
+[101:01] because you have um a lot of problems
+[101:04] that today can be turned into a text to
+[101:09] query or text to code problem. Uh so you
+[101:12] could think of even the visualization
+[101:14] world. you could um so for example there
+[101:17] was a launch from Google uh recently
+[101:21] that showed that you could uh generate
+[101:23] visualizations on the fly based on some
+[101:25] principles and this is already changing
+[101:29] um quite a bit the
+[101:32] picture of what you can do today. Uh
+[101:35] something else that I think is used by
+[101:37] most people actually today when using
+[101:39] these chat bots is general uh like being
+[101:43] a general assistant. So you ask about
+[101:45] common facts and all the facts that it
+[101:47] has learned at training time becomes
+[101:49] useful. It browses the web um more
+[101:53] efficiently than you and converts into
+[101:55] natural language the things that you
+[101:57] care about. Um but then there are also
+[102:01] other domains that were impacted by it.
+[102:04] So you could think creativity where a
+[102:07] lot of jobs such as marketing uh or
+[102:10] others rely on uh getting something out
+[102:14] of a blank page and usually if you start
+[102:17] from a draft it's much easier to get
+[102:19] something done rather than just thinking
+[102:21] of it from from scratch. So it's used as
+[102:24] an eight here. And also one use case
+[102:27] that I've seen in class that I think is
+[102:30] is great that some of you do you know
+[102:33] sometimes I talk about something or Afin
+[102:35] talks about something and I see people
+[102:36] typing typing on JGPT related concepts
+[102:40] and I think it's very smart to do that
+[102:42] because brainstorming
+[102:44] the concepts that you learn is great for
+[102:47] actually grasping the concepts of
+[102:49] interest and getting that early feedback
+[102:52] loop is uh very useful for learning. So
+[102:56] I have a lot of hopes regarding uh how
+[102:59] like how great of a time it is for you
+[103:02] to learn as opposed to maybe uh you know
+[103:04] a nice time maybe 10 years ago. So yeah
+[103:08] keep doing that and I think it will be a
+[103:09] growing use case.
+[103:12] So looking forward
+[103:15] um so I said tomorrow on the slide but
+[103:18] actually two days ago there was a launch
+[103:22] uh that went in the direction of what I
+[103:25] was thinking about which is uh like all
+[103:28] the agentic things that we talked about
+[103:31] they are still very much confined into
+[103:35] people that know about the field like
+[103:37] everyday people they wouldn't typically
+[103:40] use quote unquote
+[103:41] agentic workflows. So I think one field
+[103:44] of development that we will see more and
+[103:46] more is all these use cases being
+[103:49] democratized. So people can now create
+[103:52] things that can be useful to them with
+[103:55] easier
+[103:57] um you know mediums just natural
+[103:58] language no need to code.
+[104:02] uh moving forward uh to later um so all
+[104:06] this AI assistant coding that I was
+[104:08] mentioning you could think of it as
+[104:10] helping you browse the internet in a
+[104:12] very natural fashion so it seems right
+[104:15] now when you just execute tasks you're
+[104:18] way too microscopic in what you do and
+[104:20] this is typically what uh AI assistant
+[104:24] could help you do so there are like
+[104:26] recent product launches that reflect
+[104:28] these growing interest such as chat
+[104:31] GPT's atlas. So I think it launched in
+[104:35] October. I don't know if they released
+[104:37] some public number uh on usage. I
+[104:41] suspect it's still timid because you
+[104:44] still have challenges when it comes to
+[104:46] security. Uh anyone could inject some uh
+[104:50] bad prompt in there and maybe exfiltrate
+[104:53] things from you, but I'm sure the
+[104:55] community will come up with uh more ways
+[104:59] to get around it. So in the past you had
+[105:02] https for example to say that the
+[105:05] connection was secure. Maybe tomorrow
+[105:07] you'll have some certificate that will
+[105:09] guarantee that a site website is safe
+[105:11] for AI assistant browsing.
+[105:14] um and looking even at a higher level,
+[105:17] maybe just browsing on your uh desktop
+[105:21] or your mobile phone at the LLM level.
+[105:23] Uh at the OS level might be um something
+[105:27] that the LLM can u can help. So when we
+[105:31] talked about agents, we mentioned how um
+[105:36] nonreliable it could be because as you
+[105:39] have more and more steps, the
+[105:41] probability for a failure increases and
+[105:43] stabilizing predictions is something of
+[105:46] interest.
+[105:47] And um even in the longer run, I think
+[105:50] one test that we can have in mind as to
+[105:53] how far we've come is whether the common
+[105:56] use case of having a customer service
+[105:59] that is served by AI is truly useful. So
+[106:02] I don't know about you, but every time I
+[106:04] have a problem and I'm on the phone and
+[106:06] I hear some AI assistant maybe LLM
+[106:08] powered robot and like you know quick
+[106:11] quick I want a human. I don't want that.
+[106:14] And uh and I think it shows how hard
+[106:17] this space is, the space of problems is
+[106:19] because human has way more dimensions of
+[106:24] of value that an LLM could bring. So
+[106:27] empathy,
+[106:29] um like groundedness, there are some
+[106:31] things that you and I we perceive as you
+[106:33] know things that make sense even though
+[106:34] they're not in our system prompts. So I
+[106:37] think there there are hard problems to
+[106:38] to solve there.
+[106:42] And even moving forward
+[106:45] um there are some key challenges that we
+[106:48] have with the current architecture. So
+[106:51] um we saw during the class that you had
+[106:54] to go through a training process that u
+[106:57] went to like fix some weights but these
+[107:00] weights are not changing afterwards. And
+[107:03] we use tricks such as rags a rag or
+[107:06] tools to get around this issue. But
+[107:09] could we think of a system that learns
+[107:11] continuously? I think that is an open
+[107:13] question. Then there is a topic of
+[107:15] hallucinations which I put into
+[107:17] quotation marks because I'm not sure if
+[107:19] it's fair to say that the LLM
+[107:21] hallucinates just because we've trained
+[107:24] the LLM to predict the next token by
+[107:26] nature, not map statements to facts. So
+[107:31] hallucinating is in some sense a core
+[107:36] design uh choice of the these LLMs. Uh
+[107:40] personalization, interpretability,
+[107:42] safety, the the list goes on.
+[107:46] Um now I want to briefly cover
+[107:50] what you can um like how you can
+[107:52] exercise this muscle of staying up to
+[107:54] date from now. So you have archive that
+[107:58] uh usually contains all these great
+[108:00] greatest and latest papers that you can
+[108:02] take a look at. Of course the venues
+[108:05] like new rips right now are great to
+[108:08] highlight papers um like some papers
+[108:12] uh and then uh I highly encourage you be
+[108:16] besides the papers uh looking at the
+[108:18] associated code bases that the authors
+[108:20] provide. So right now it's a common
+[108:23] place to just provide the implementation
+[108:25] of what you are proposing and I think
+[108:27] it's very insightful to learn the
+[108:28] concepts
+[108:30] and uh there is a paper with code that
+[108:32] existed in the past and that has been
+[108:34] replaced by hugging facees uh trending
+[108:38] papers which I think is a good place to
+[108:41] to take a look at the latest uh methods
+[108:45] and then um on the uh social network
+[108:49] side uh Twitter or X uh has a lot of u a
+[108:55] lot of the latest that is often
+[108:56] discussed. So you have a strong
+[108:58] community there and if you have an
+[108:59] account on that social media you have a
+[109:02] lot of great people to follow um to like
+[109:05] stay updated but also you have resources
+[109:08] on YouTube uh with a highlight on Yanik
+[109:12] Kilchshire which I think was the first
+[109:15] uh YouTuber to cover the transformer
+[109:17] paper back in 2017 in great detail and I
+[109:20] think you know some of these YouTubers
+[109:22] they're very good at um talking through
+[109:25] um like papers in great detail.
+[109:28] And another highlight is Andrish Karpath
+[109:32] uh who was at Stanford about 10 years
+[109:34] ago and he's I think one of the best
+[109:37] educators out there. So I highly
+[109:39] recommend his videos and you have a
+[109:42] company blogs that are also great
+[109:45] and
+[109:47] uh like this study guide that we
+[109:49] associated with the class. Um, so we've
+[109:52] had it for this year and what we'll try
+[109:54] to do uh in the coming years is try to
+[109:57] keep it updated at least on a yearly
+[109:59] basis. So you can consider this resource
+[110:02] as maybe some companion and we've got
+[110:05] the chance to collaborate with uh
+[110:08] experts around the world to make it
+[110:10] available in other languages in case
+[110:11] you're interested.
+[110:14] And taking a step back, just want to say
+[110:16] that Afin and I were very grateful to
+[110:19] teach this class this quarter. Um, thank
+[110:23] you so much for coming here, you know,
+[110:25] on Friday evening, which is quite
+[110:28] telling cuz, uh, you know, Friday
+[110:29] evening is usually time for fun, not for
+[110:32] lectures. And also now I think it's
+[110:34] probably your last lecture of the whole
+[110:36] quarter because uh, yeah, next week is
+[110:39] finals. So yeah, thank you for coming
+[110:41] and for asking all these great
+[110:43] questions. You were one of the reasons
+[110:45] why this class was so great and
+[110:48] interactive.
+[110:49] Also, thank you to the folks who are
+[110:52] watching online from home. I was one of
+[110:55] you uh eight years ago. I would uh
+[110:57] almost never go to class, always
+[110:59] watching lectures from home from a cozy
+[111:01] place. I hope the lectures were
+[111:03] entertaining
+[111:04] and that you got something from it.
+[111:07] Um, and I couldn't conclude
+[111:11] uh without bringing our favorite teddy
+[111:14] bear one last time. Thanking you uh all
+[111:18] for your attention and wishing you all
+[111:20] the best. Thank you.

@@ -1,0 +1,2215 @@
+[00:05] Hello everyone and uh welcome to lecture
+[00:09] 7 of CME 295.
+[00:12] So today we're going to uh focus on
+[00:17] practical techniques to let our LLM
+[00:21] interact with the outside world with
+[00:24] other systems because um up until now
+[00:28] our LLM was purely on its own. We've
+[00:31] trained it. We've seen how it can reason
+[00:34] on problem math, coding math, coding
+[00:37] problems. And uh now what we want to do
+[00:40] is to use our LLM in the context of
+[00:43] other systems. So today's class we'll
+[00:46] focus on rag that you may have heard
+[00:51] tool calling
+[00:53] and agents.
+[00:55] But before we start as usual I'm going
+[00:58] to recap what we did uh last time. So if
+[01:02] you remember last time we focused on
+[01:06] reasoning models and we saw the
+[01:09] differences between reasoning model and
+[01:12] what we call the vanilla LLM and in
+[01:15] particular up until the lecture before
+[01:19] last lecture. What we saw was we fed a
+[01:23] prompt to the LLM and it gave us
+[01:25] directly a response. But what we saw
+[01:28] last time was that if we let the LLM
+[01:32] reason before outputting the response,
+[01:36] then we can gain some performance when
+[01:39] it comes to reasoning tasks such as math
+[01:42] and coding. And so in particular
+[01:45] reasoning models what they do is they
+[01:48] take a prompt as input and then what
+[01:51] they output is both a reasoning chain
+[01:55] which is typically hidden from the user
+[01:58] and then a response.
+[02:02] So with that we saw how we could train a
+[02:06] model to be more of a reasoning model.
+[02:10] And in particular we saw a core RL
+[02:13] algorithm called GRPO which stands for
+[02:17] group relative policy optimization.
+[02:20] And we saw that this algorithm had some
+[02:24] differences compared to the ones that we
+[02:26] saw previously. And in particular one
+[02:29] notable aspect is that it does not have
+[02:33] it does not train a value function.
+[02:38] So here this uh illustration shows a
+[02:41] little bit how gRPO is trained. So it
+[02:44] takes a query as input and then it
+[02:47] computes an advantage for each output by
+[02:53] um computing the rewards for different
+[02:56] completions of a same prompt and then
+[02:58] computing a quantity which is the
+[03:00] advantage that is relative to the other
+[03:04] rewards of that group of completions.
+[03:09] And then we saw that if we applied GRPO
+[03:13] with carefully chosen rewards which is
+[03:18] one rewarding the model for outputting a
+[03:22] reasoning chain and then second
+[03:25] rewarding the model to for producing a
+[03:28] good response. What we saw is that as
+[03:32] the RL training progresses, we have an
+[03:35] improvement of the model on these
+[03:38] reasoning tasks. And so we saw one of
+[03:42] the tasks being uh math problems. So
+[03:45] here on the left graph you see the
+[03:48] evolution of the performance of the
+[03:50] model on the AIM data set which is a
+[03:54] kind of a challenging math uh problem.
+[03:58] And
+[04:00] we saw that but we also saw that the
+[04:04] model kept on input outputting
+[04:08] responses that were longer and longer.
+[04:11] And in particular we saw that even
+[04:13] though you know towards the end of the
+[04:15] graph above uh that the performance was
+[04:18] kind of plateauing we saw that the
+[04:22] output length was still increasing.
+[04:27] So then what we did was go back to the
+[04:31] loss formulation that is used by gRPO
+[04:34] and realize that there is a term that
+[04:38] makes the contribution of a token
+[04:42] different if it is in a short response
+[04:46] or a long response.
+[04:49] So this is a phenomenon called length
+[04:51] bias and we saw some mitigation
+[04:55] strategies that were explored by some
+[04:58] papers that came out uh in the past few
+[05:00] months. So one was DAPo which um had a a
+[05:07] normalization factor that was not
+[05:10] dependent on where the token was located
+[05:12] on which sentence it was located. And
+[05:15] the other one was uh this paper called
+[05:17] GRPO done right which actually just
+[05:21] removed
+[05:22] the normalization term.
+[05:27] I'll go down that.
+[05:29] Cool. So this was last time and last
+[05:32] time what we said right before starting
+[05:34] the reasoning class was to enumerate the
+[05:40] strength and the weaknesses of vanilla
+[05:43] LLMs.
+[05:45] So last lecture was all about focusing
+[05:49] on how we can improve the limited
+[05:52] reasoning capabilities of vanilla LLMs.
+[05:57] And in this lecture what we will do is
+[06:00] two things. So the first one is see how
+[06:05] we can connect our LLM to the ever
+[06:11] evolving knowledge base
+[06:13] and in particular see how we can um have
+[06:18] access to the latest information.
+[06:20] And then the second one is how our LLM
+[06:23] can help us perform actions and we will
+[06:26] see this with Shervin uh with things
+[06:29] like tool calling and agentic workflows.
+[06:34] Cool. So with that let's start with the
+[06:36] first one and let's start with this
+[06:39] method called rag that you may have
+[06:42] heard.
+[06:44] So
+[06:46] let's suppose you have a model that you
+[06:49] have trained
+[06:51] uh but the problem is that the
+[06:54] pre-training data on which you have
+[06:56] trained your model is let's say a month
+[07:01] a month ago let's suppose
+[07:04] now let's suppose you want to prompt
+[07:05] your model about the winner of the
+[07:09] elections that happened a couple of
+[07:12] weeks ago. Well, your model will not be
+[07:15] able to respond to you or it will output
+[07:18] the incorrect answer because up until
+[07:21] now our LLM does not have any link to
+[07:25] outside sources. It only relies on the
+[07:30] knowledge that it has acquired during
+[07:31] training. So the response that it will
+[07:34] give us will only be based on the data
+[07:38] that has been trained up until the
+[07:41] cutoff which is a month ago in this
+[07:43] example.
+[07:45] And so we have this big limitation which
+[07:48] is our LLM only knows about things that
+[07:51] is it has been trained on. And you will
+[07:55] see that all the models out there. So
+[07:58] here I have an example with OpenAI GPT5.
+[08:02] So if you look at their model cards,
+[08:05] they always have these knowledge cutoff
+[08:08] dates that is written somewhere. And in
+[08:11] the case for instance of GPT5, the
+[08:13] knowledge cut off date is September
+[08:16] 30th,
+[08:17] 2024.
+[08:19] Which means that if you ask it in a very
+[08:22] naive way, anything that happen after
+[08:24] that like the base model will not be
+[08:27] able to answer you as is.
+[08:30] Well, you might you may tell me why not
+[08:33] just uh continue training your model uh
+[08:37] on you know data that happened after
+[08:39] that. Well, the problem with that
+[08:42] actually there are several problems with
+[08:43] this. So the first problem is that it's
+[08:47] very tricky to change the knowledge of
+[08:51] an LLM without causing regression on
+[08:54] other things. So this is typically a
+[08:57] task that people they try to avoid
+[09:00] doing. And the second thing is it's not
+[09:03] very practical because you may very well
+[09:06] have use cases that require you to
+[09:10] fine-tune this model.
+[09:12] So let's suppose you have a use case
+[09:14] one. You fine-tune from this model and
+[09:17] then somehow you want to update the
+[09:20] weights of your model to inject some
+[09:22] knowledge. Well, you somehow will have
+[09:26] to do that for all the use cases that
+[09:29] you are doing which basically adds a lot
+[09:33] of overhead for you and just uh you know
+[09:35] adds a lot of maintenance.
+[09:38] So people they typically prefer to not
+[09:42] do additional training to inject
+[09:44] knowledge. So one idea can be to somehow
+[09:50] take your prompt and just add anything
+[09:54] that happens after the cut off date
+[09:58] as a way for your model to just know
+[10:00] what happened.
+[10:02] Well,
+[10:04] the problem with that naive approach is
+[10:07] that as you know context length length
+[10:10] is limited and so typically models have
+[10:14] on the order of magnitude of oh of
+[10:18] hundreds of thousands of tokens in
+[10:21] context length.
+[10:23] Do you know what that is roughly like
+[10:26] what is this roughly equal to?
+[10:34] Yes. So one token is equal to four
+[10:36] characters. So like using this like
+[10:38] rough approximation
+[10:40] uh hundreds of thousands of tokens is
+[10:42] roughly like hundreds of pages like
+[10:46] something like a very big book. So so
+[10:48] it's not it's not I mean it's it's big
+[10:51] but it's not enough for us to go in that
+[10:54] very naive route. So
+[10:58] um so again going back to GPT5 uh so if
+[11:01] you go to the model card you have the
+[11:04] knowledge cutoff date which is uh
+[11:06] September 2024. You also have the
+[11:08] context window and in this case it's
+[11:10] 400,000
+[11:12] tokens.
+[11:14] U okay so let's suppose you actually uh
+[11:17] context is not a problem. It's actually
+[11:19] unlimited.
+[11:22] Let's imagine we actually put everything
+[11:23] in the context. Well, the problem then
+[11:28] is that people noticed that if you feed
+[11:32] a lot of irrelevant information to your
+[11:35] LLM,
+[11:37] the performance of the LLM will actually
+[11:39] degrade.
+[11:41] Meaning that if for instance you ask it
+[11:43] about I guess who was the winner of the
+[11:46] last elections and then you you feed it
+[11:48] a bunch of information that are not
+[11:50] relevant your LLM will tend to be
+[11:54] confused
+[11:58] and so people have run this test that's
+[12:02] called the needle in a haststack test
+[12:06] where the idea is
+[12:10] you give a big prompt to your LLM
+[12:14] which is your haststack
+[12:16] and you place a fact in the prompt and
+[12:23] you ask your model what that fact was.
+[12:26] So the idea is for your LLM to know I
+[12:31] guess among that huge prompt where is
+[12:34] the relevant information which is the
+[12:36] needle. And so when people have tried
+[12:40] doing this for several uh length of
+[12:43] prompts and tried different positions of
+[12:47] where to put the fact, they have seen
+[12:50] that
+[12:51] the length of the prompt and the
+[12:54] position at which you put the fact are
+[12:57] both important.
+[12:59] So here uh on the slide we have a heat
+[13:02] map um that was performed for GPT4 which
+[13:07] was I guess one or two years ago and uh
+[13:11] what the person did was place the fact
+[13:13] at different places in the document. So
+[13:16] this is document depth and the x-axis is
+[13:19] the length of your prompt.
+[13:22] And what we saw was that for prompts
+[13:25] that exceeded a certain amount of
+[13:27] tokens, the LLM actually had trouble
+[13:31] retrieving the correct piece of
+[13:33] information.
+[13:34] Um, and in particular, it had trouble
+[13:37] doing so when the fact was somewhere in
+[13:39] the first half of the prompt.
+[13:43] Um so this just tells us that you know
+[13:46] even if [snorts] like let's say our
+[13:48] context length was unlimited
+[13:51] we would still have a problem by just
+[13:53] going through that naive approach.
+[13:57] So that's another reason. Okay. So now
+[13:59] let's suppose context length is
+[14:02] unlimited. Let's suppose the problem
+[14:04] that I mentioned is not a problem. Well
+[14:08] the other problem is that you pay
+[14:13] So in particular, these calls, these LLM
+[14:17] calls, they are per token.
+[14:20] So the bigger your input prompt, the
+[14:23] more you will pay. So you have an
+[14:25] incentive to not put too much in your
+[14:29] prompt just from that standpoint.
+[14:33] And so for instance again going back to
+[14:35] GP5
+[14:36] uh order of magnitude is somewhere
+[14:39] around a dollar per million token. So I
+[14:43] guess it's not that expensive but it can
+[14:46] add up if you do that for all your
+[14:48] prompts.
+[14:50] So for all these reasons, I hope I
+[14:53] convinced you that we need a more clever
+[14:56] approach where instead of putting all
+[15:00] the new information all at once in the
+[15:03] prompt, what we do is we only somehow
+[15:07] find the relevant information and put
+[15:10] that in the prompt.
+[15:13] So that is the idea behind rag. Rag
+[15:17] stands for retrieval augmented
+[15:20] generation.
+[15:22] And the idea here is to augment the
+[15:25] prompt
+[15:27] with relevant information.
+[15:30] And here I put uh relevant in both uh
+[15:34] and this is the I guess the core part of
+[15:37] this technique is how can we get only
+[15:39] the relevant part in the prompt. So we
+[15:42] will see that in a second. So just at a
+[15:45] very high level. So you have let's say a
+[15:48] question as input. So in this case who
+[15:51] was the winner of let's say the local
+[15:55] election. The idea here is to somehow
+[16:00] fetch the correct or the relevant piece
+[16:03] of information and then augment that
+[16:06] here in order to output your answer.
+[16:11] So that's the rough idea.
+[16:14] So does this uh method make sense so
+[16:17] far?
+[16:20] Yeah. Okay. Cool. So that is the idea
+[16:23] behind rag and now we're going to go
+[16:25] into more details.
+[16:28] Um so what I mentioned is the rough
+[16:30] idea. Um and here I just want to
+[16:33] emphasize on the three main steps of
+[16:35] rag. So first one is you have your
+[16:39] prompt and you somehow want to retrieve
+[16:43] a relevant piece of information that
+[16:46] will help you in answering your prompt.
+[16:48] So here the first step is to retrieve
+[16:52] relevant documents and so you can think
+[16:54] of your prompt as being one entity and
+[16:57] then you can have some other uh space
+[17:01] which maybe like I don't know knowledge
+[17:02] base where all your documents live and
+[17:07] so the idea is to somehow fetch the
+[17:10] relevant documents.
+[17:12] So this is the retrieve step. The second
+[17:14] step is once you have fetched the
+[17:17] relevant information, you augment your
+[17:20] prompt. So you take that retrieved info,
+[17:24] you just put it in your prompt and then
+[17:27] uh ask the question. So in the local
+[17:29] election example, it's as if I was
+[17:32] saying who is the winner of this
+[17:34] election and then I retrieve the
+[17:38] relevant piece of information and now
+[17:40] the prompt becomes um who is the winner
+[17:43] of this election and by the way uh this
+[17:46] election was held blah blah blah and
+[17:48] this was the winner and this is what
+[17:50] we're feeding to our LLM.
+[17:53] So in other words, we're giving the
+[17:56] answer in the prompt
+[17:59] and the third step is to feed that
+[18:02] prompt to the LM to generate the
+[18:06] response. Yeah.
+[18:20] >> Yeah, exactly. So the question is uh you
+[18:22] may very well somehow do a bad job at
+[18:25] retrieval stage. So yes um so this is
+[18:28] why the retrieval stage is so important
+[18:31] and we're going to focus on what we can
+[18:34] do to make sure that one part like does
+[18:36] well.
+[18:38] Um so yeah uh we'll see how we can
+[18:43] evaluate um I guess our our setup and
+[18:46] different methods. But when we talk
+[18:49] about rag, we're mainly focusing on
+[18:52] making the retrieval part as good as it
+[18:55] can.
+[18:58] Cool. And I just want to emphasize once
+[19:01] again on why it's called rag. So you
+[19:05] have retrieve,
+[19:07] augment, generate
+[19:11] rag.
+[19:13] Cool. And as you pointed out the first
+[19:16] step which is the retrieval step is very
+[19:19] important which is why we'll spend a
+[19:21] little bit of time over there.
+[19:25] So I guess the first step is for us to
+[19:30] somehow
+[19:31] clean the set of documents that we may
+[19:36] need.
+[19:37] So I said you know uh we may um want to
+[19:41] look into outside information but we
+[19:44] need to somehow uh sort that order that
+[19:47] put that somewhere and this whole thing
+[19:50] is usually called a knowledge base.
+[19:54] So in order to form our knowledge base
+[19:57] what we do is typically collect the set
+[20:00] of documents that are or may be useful
+[20:04] and once we do that what we do is we
+[20:07] divide them into what we call chunks.
+[20:12] So a chunk is you can think of it as a
+[20:16] subset of the document which has a given
+[20:20] maximum length which is uh measured in
+[20:23] number of tokens which is typically on
+[20:25] the order of hundreds of tokens.
+[20:29] And the idea here is you know whenever
+[20:32] you hear retrieval you should think
+[20:35] about embeddings.
+[20:37] And here what we do is
+[20:40] we compute embeddings corresponding to
+[20:43] each of these chunks.
+[20:46] Now when you create your knowledge base
+[20:50] there are a few hyperparameters that you
+[20:52] need to tweak.
+[20:54] So the first one uh obviously is the
+[20:57] size of the embedding. So typically you
+[21:00] would want a bigger size if let's say
+[21:02] your documents are maybe more nuanced,
+[21:05] more complex.
+[21:07] But then if you have like a higher size
+[21:10] uh maybe it will take more space, maybe
+[21:13] you'll have more computation at
+[21:14] inference time. So I guess it's a
+[21:15] trade-off. You don't necessarily want
+[21:18] too big of a of an embedding size. So
+[21:20] here typical embedding sizes are on the
+[21:23] order of thousands. So for instance like
+[21:26] 1,500 something like this.
+[21:30] So then you have the chunk size. Chunk
+[21:32] size is how big your little pieces here
+[21:37] are. So you don't want them to be too
+[21:40] small because otherwise the text may be
+[21:44] out of context. You don't want it to be
+[21:46] too large because maybe the embedding
+[21:49] will not represent in a meaningful way
+[21:51] what is inside. So again, it's a
+[21:53] trade-off. But typically people they
+[21:57] choose a chunk size of around 500 tokens
+[22:01] like on the order of hundreds of tokens.
+[22:05] And then you also have a oh yeah you
+[22:07] have a question. Yeah.
+[22:10] So the question is do you train an
+[22:12] embedding model for this? So you have
+[22:14] two choices. Either you can use a
+[22:16] pre-trained embedding model which people
+[22:19] typically do or you can train your own.
+[22:23] We will see that in a bit more detail in
+[22:26] a few slides.
+[22:34] So the question is what is the purpose
+[22:36] of the embedded model? So we will see
+[22:37] this in a second but long story short it
+[22:41] tries to represent chunks such that it
+[22:46] achieves your end goal which is to fetch
+[22:50] relevant documents.
+[22:52] So we will see a little bit how they're
+[22:54] trained but this is uh the general idea.
+[22:58] Cool. Um so that's this and then we have
+[23:02] a third hyperparameter
+[23:04] which is how much overlap you want to
+[23:07] have in between your chunks.
+[23:11] So here
+[23:12] um when you do the division uh you know
+[23:15] you uh like in a very naive way you have
+[23:18] everything be like independent no
+[23:19] overlap in between but typically you
+[23:22] have some part that is from the previous
+[23:25] chunk that is relevant to understand the
+[23:28] current chunk which is why we want to
+[23:30] have some overlap and which is why
+[23:33] people they typically also have that. So
+[23:35] it's typically in the low hundreds of
+[23:38] tokens.
+[23:42] Cool. So let's suppose you have your
+[23:44] knowledge base. Now the question is
+[23:47] given a prompt how can you retrieve
+[23:50] relevant documents
+[23:53] and the answer to that is we typically
+[23:56] proceed in two steps.
+[24:00] So I'm not sure if any of you has
+[24:02] background in recommendation systems or
+[24:05] search does any Yeah. So the methods
+[24:09] we're seeing here are very similar to
+[24:11] that space. So I guess people in the LLM
+[24:15] community they have borrowed ideas and
+[24:18] just leverage some techniques that we
+[24:19] have over there. And this is typically a
+[24:23] setting that we'll also have for
+[24:24] recommendation problems.
+[24:27] So we have two stages.
+[24:29] So the first stage is typically called
+[24:33] candidate retrieval.
+[24:35] And the goal here is to go from a set of
+[24:39] many many many chunks and filter it down
+[24:43] to a much smaller set of potentially
+[24:46] relevant candidates.
+[24:49] So during that stage, what we're trying
+[24:51] to do is to somehow maximize recall.
+[24:55] just do a rough operation
+[24:58] so that we get as many potentially
+[25:01] relevant candidates as possible.
+[25:04] And then we have a a second stage which
+[25:07] is sometimes optional, but this stage is
+[25:11] to really make sure we have the top
+[25:14] documents being the really the relevant
+[25:16] ones. And this one is called ranking.
+[25:21] So the idea here is
+[25:24] based on the list of potentially
+[25:27] relevant documents to really rank them
+[25:30] in a way that really the relevant ones
+[25:33] come at the top and so on.
+[25:36] And typically during that stage, we're
+[25:39] going to use a model, a method that's
+[25:42] going to be a bit more compute inensive
+[25:45] because we have a much smaller set of
+[25:48] candidates to rank compared to the first
+[25:50] one.
+[25:52] So going back to your question on how do
+[25:55] we want our embeddings to be. So here it
+[25:58] will really impact uh the first stage
+[26:00] and we will see that in a second, but
+[26:02] the second stage is also quite
+[26:04] important.
+[26:08] Cool. So far so good. Is everyone uh
+[26:11] clear with the two-stage approach
+[26:13] approach?
+[26:15] Yep. Yep.
+[26:18] Yeah.
+[26:27] Very good question. So the question is
+[26:28] do we chunk things in a naive way as in
+[26:31] we just go with the number of tokens
+[26:33] regardless of what happens. So it's a
+[26:35] great question and the answer is that we
+[26:38] will see some extensions that will
+[26:42] mitigate the problem of when you chunk
+[26:45] it in a way that does not make sense in
+[26:47] a naive way you want to somehow put that
+[26:50] into context and we will see a method
+[26:52] that does that. So in a few slides we
+[26:54] will see that.
+[26:56] Um but I think your question is also a
+[26:58] great question because depending on the
+[27:00] kind of document that we have like for
+[27:02] instance if we have uh I don't know like
+[27:05] a JSON file or a markdown or like
+[27:08] depending on the kind of file that you
+[27:10] need to chunk you also need to be aware
+[27:13] of the structure that is within those
+[27:15] files. So there is also some nuance
+[27:18] there that we will not go into details
+[27:20] but I just want to call that out
+[27:23] but yeah great question.
+[27:26] Any other questions?
+[27:29] Okay cool. So now that we're clear on
+[27:32] the two main stages of retrieval we're
+[27:37] going to focus on each one of these
+[27:38] steps.
+[27:40] So as I mentioned the first step is
+[27:43] candidate retrieval.
+[27:46] So here what we want is among that
+[27:50] potentially huge knowledge base to
+[27:53] somehow filter it down to let's say over
+[27:57] 100 potentially relevant candidates.
+[28:02] So here what we do is well we will
+[28:05] leverage the embeddings that we um I
+[28:08] guess computed during the knowledge base
+[28:10] initialization
+[28:12] and
+[28:14] we will try to fetch
+[28:18] potentially relevant candidates by doing
+[28:21] a semantic similarity search.
+[28:25] So do you recall how we compare
+[28:27] embeddings?
+[28:31] Yes. Yes. So cosign similarity is
+[28:33] typically one way one good way to
+[28:35] compare embeddings. So the idea here is
+[28:39] to represent our query with an
+[28:41] embedding.
+[28:43] We already have
+[28:45] embeddings of all our chunks. So the
+[28:48] idea here is
+[28:52] to somehow find the most relevant chunks
+[28:55] by doing this similarity search and
+[28:58] filtering out the ones that come at the
+[29:01] top.
+[29:03] So the idea here is you have your query,
+[29:05] you have your chunk both of them, you
+[29:08] find an embedding
+[29:10] and then you perform a similarity
+[29:13] operation which is most of the time
+[29:15] cosign similarity
+[29:17] and you obtain a similarity score.
+[29:20] So the idea here is you just just keep
+[29:24] top I don't know 100 and you go with
+[29:27] that.
+[29:28] So I just want to call out that there is
+[29:31] some complexity in that stage because
+[29:35] your knowledge base can potentially be
+[29:38] huge.
+[29:40] So what people do is typically use what
+[29:44] we call approximate nearest neighbor
+[29:46] methods.
+[29:48] So you may have heard of some libraries
+[29:50] [music] that do that. So typically this
+[29:51] is something that will be relevant here.
+[29:54] We're not going to go into details, but
+[29:56] I just want to call that out. So here,
+[29:58] the idea here is that
+[30:02] when you build your knowledge base, you
+[30:04] somehow partition the embeddings in a
+[30:09] way that will avoid like make you avoid
+[30:13] doing like just a naive linear search.
+[30:18] So that's the idea. But uh you you may
+[30:20] see some techniques uh like ANN
+[30:23] techniques approximate near nearest
+[30:25] nearest neighbor techniques and these
+[30:27] are typically happening here.
+[30:30] So another thing that I want to point
+[30:33] out is
+[30:36] a name of the architecture that we
+[30:38] typically use here that you may also
+[30:40] hear
+[30:42] and for that we need to recall that
+[30:45] these embeddings they're actually
+[30:48] obtained by passing them through a
+[30:50] model. So typically encoder only.
+[30:53] So you may hear the term by encoder and
+[30:58] this one refers to the fact that we are
+[31:01] passing the query through an encoder and
+[31:05] then passing the chunk through an
+[31:07] encoder. So both of them are independent
+[31:11] and we're comparing the embeddings
+[31:16] and uh yeah so this is another question
+[31:17] I wanted to ask you but I guess I didn't
+[31:19] get the chance to but um so if you
+[31:22] remember I think lecture two or three we
+[31:26] had seen the birds model
+[31:30] and so typically you would have
+[31:32] something like a birdlike model that you
+[31:35] would use to um encode these documents.
+[31:41] So going back to your question, how do
+[31:43] you compute these embeddings? So there
+[31:44] is a a paper that I highly recommend
+[31:47] reading actually that's called sentence
+[31:50] BERT.
+[31:52] And so that paper explains so it's first
+[31:55] of all it's an extension of BERT as the
+[31:58] name suggests and it's an extension that
+[32:02] allows you to compute an embedding per
+[32:07] let's say sequence for your query for
+[32:09] your document
+[32:11] that is tailored
+[32:13] to be used for similarity search
+[32:16] purposes.
+[32:18] So the idea here is to have a loss
+[32:20] function that will incentivize having a
+[32:24] high cosine similarity for relevant
+[32:27] entities and low cosine similarity for
+[32:30] entities that are not relevant.
+[32:34] So yeah, so feel free to check that
+[32:35] paper out uh if you know birds which I I
+[32:38] know right now you do. Uh it's quite
+[32:41] easy to read. So yeah, highly recommend.
+[32:45] So far so good.
+[32:48] Yeah. Yep.
+[32:54] So the question is what is the default
+[32:56] way to compute the similarity? So yes
+[32:58] it's cosign similarity but again you
+[33:01] will see in different implementations
+[33:03] that people can use other distances and
+[33:07] I would encourage you to think about how
+[33:09] they relate to one another. So you will
+[33:12] see for instance the L2 distance but
+[33:15] then if everything has a norm of one
+[33:19] there's a lot of simplifications that
+[33:21] can happen. So you may see some variance
+[33:24] but I would say they're all more or less
+[33:26] cosign similarities.
+[33:29] Yeah great question.
+[33:32] Cool. So we're still at the candidate
+[33:35] retrieval stage and what we saw was one
+[33:39] way of retrieving documents from a
+[33:43] similarity sorry from a semantic
+[33:47] similarity standpoint. So by the way
+[33:48] what does semantic similarity mean? It
+[33:51] means finding documents or finding
+[33:55] entities that have the same meaning or
+[33:59] that are relevant.
+[34:01] But in the way that we compute these
+[34:03] embeddings, we're not enforcing any kind
+[34:08] of uh keyword match.
+[34:12] Like when we re when we retrieve
+[34:14] documents in this way, it can very well
+[34:17] be that the documents that are matched,
+[34:20] they do not have any word in common, but
+[34:23] they mean the same.
+[34:26] Well, sometimes
+[34:29] you want to ensure that your what you're
+[34:31] looking for, what you're searching for
+[34:33] is exactly containing the keywords that
+[34:36] is in your prompt.
+[34:38] And in that case you would want to have
+[34:41] a second way of doing things. So you may
+[34:45] have seen BM25
+[34:47] out there. So BF20 BM25 is a relevant
+[34:51] score that is actually a huristic score.
+[34:56] It is based on some function of the
+[34:59] overlap
+[35:01] between what is in your query and what
+[35:05] is in your document.
+[35:09] And so that one is actually quite handy
+[35:12] for cases where you have a query where
+[35:16] you absolutely want to have documents
+[35:20] that contain keywords of this query.
+[35:24] So here I have an example that I
+[35:26] actually passed super briefly for the
+[35:28] previous one and we will come back to
+[35:29] it. Uh but let's suppose we have let's
+[35:33] say two teddy bears. One is named cuddly
+[35:37] and the other one is named huggy. So
+[35:41] what you want is to figure out where is
+[35:43] cuddly. So this is your query.
+[35:47] So if you use BM25
+[35:50] well the answers that you you're going
+[35:52] to get are
+[35:55] by definition going to contain some
+[35:58] overlap of words that were in your
+[36:02] query. And so here you will have let's
+[36:05] say uh documents that contain let's say
+[36:08] where cuddly is. But if let's say you
+[36:11] you only used this semantic similarity
+[36:15] search you would not have that
+[36:19] guarantee.
+[36:21] you would only have documents that are
+[36:24] kind of semantically similar and those
+[36:28] are not
+[36:30] they are not guaranteed to contain
+[36:32] keywords of your prompt and so just just
+[36:34] to illustrate that. So here huggy and
+[36:37] cuddly they they can be thought of you
+[36:40] know semantically similar. So you you
+[36:43] will probably not have cuddly. I mean
+[36:45] you may not necessarily have cuddly in
+[36:47] there
+[36:49] just to illustrate that and that is the
+[36:53] reason why nowadays what people do is to
+[36:58] look at the use cases that they have and
+[37:01] think about whether having some heristic
+[37:05] as well in the relevant score is useful
+[37:08] for their use case. So some people they
+[37:11] go with the hybrid combination
+[37:14] of this embedding based search and the
+[37:17] huristic based search. So some
+[37:20] combination of uh embeddings and BM25 in
+[37:24] which case you may have even more
+[37:27] relevant documents depending on your use
+[37:28] case.
+[37:32] Does that make sense? Yeah.
+[37:36] So now I'll come back to what you
+[37:37] mentioned about whether cutting chunks
+[37:41] in a naive way will necessarily lead you
+[37:44] to things that are coherent. Well,
+[37:46] you're completely right. Sometimes you
+[37:48] will not. Um but before we answer this
+[37:52] question, we actually are going to
+[37:55] address another concern
+[37:59] which is that typically
+[38:02] when people want
+[38:05] to ask about something in their LLM,
+[38:08] the query that they input is of a
+[38:11] different nature
+[38:14] compared to what is in the knowledge
+[38:15] base. So your query is typically going
+[38:18] to be maybe something uh short, maybe a
+[38:21] question,
+[38:22] but what is in your documents is
+[38:24] typically going to be, you know, longer.
+[38:26] These are like sentences and sentences.
+[38:28] So if you really think about it,
+[38:31] if you use the same encoder
+[38:34] to embed your query and to embed your
+[38:38] documents,
+[38:40] well, these two embeddings, they're not
+[38:42] super comparable
+[38:45] because one is for a question and the
+[38:47] other one is for a document.
+[38:50] So there's one extension that tries to
+[38:52] mitigate that issue and uh I linked the
+[38:56] paper down there. It's called the
+[38:57] height.
+[38:59] So what it does is instead of computing
+[39:03] the embedding
+[39:06] related to the prompt, it will first
+[39:10] generate a fake document. So it's just
+[39:13] an LM call, a fake document based on
+[39:16] that prompt
+[39:19] and then embeds
+[39:21] that fake document to find relevant
+[39:24] chunks.
+[39:26] So it may or may not work. It's not used
+[39:31] all the time by everyone. So I would say
+[39:33] just something that is good to try to
+[39:35] see if that that works. But this is one
+[39:38] way of mitigating this. Another way it
+[39:41] could be to simply have encoders that
+[39:44] are specifically trained to encode the
+[39:47] query on one side and encode the
+[39:50] documents on the other side.
+[39:52] So in other words to not use the same
+[39:54] encoder.
+[39:56] People typically don't do that just
+[39:58] because of maintenance purposes but this
+[40:00] could also be another solution.
+[40:04] Okay. So now finally going to your your
+[40:07] question regarding how we can make sense
+[40:09] of these chunks. If they are taken out
+[40:12] of context they may not make sense.
+[40:14] And so here the idea here is to prepend
+[40:21] some piece of text that just sums up
+[40:26] what you need to know in order to
+[40:28] understand that chunk.
+[40:30] So here the idea is that you have all
+[40:32] your documents. Let's say you have one
+[40:35] document that you divide it into n
+[40:38] chunks.
+[40:39] The idea here is instead of considering
+[40:43] these chunks separately,
+[40:46] you're going to
+[40:49] compute some kind of context that is
+[40:52] relevant to each chunk and that is based
+[40:55] on the whole document.
+[40:59] So how are you going to do that? So well
+[41:01] it's again an LLM call. So what you do
+[41:04] is typically uh have let's say the whole
+[41:07] document and then you have the chunk
+[41:09] that you want to contextualize and you
+[41:12] ask your model well please give me a
+[41:15] short 16 context to just make sense of
+[41:19] that chunk
+[41:21] and now you may tell me well that's a
+[41:23] lot of LM calls you have potentially a
+[41:26] lot of chunks and that's just going to
+[41:29] be very pricey. Well, there's one
+[41:33] strategy to make this less expensive.
+[41:37] And I'm not sure if you've heard that uh
+[41:40] option. It's called prompt caching.
+[41:44] So now that you know very well how LLM
+[41:46] work, you know like typically these are
+[41:49] decoder only and so on. So you know that
+[41:54] if
+[41:56] you use
+[41:58] the same prefix
+[42:01] for all your prompts,
+[42:04] well it's going to be the same
+[42:06] computations that you just do again and
+[42:08] again and again.
+[42:10] So the idea here is you just do it once
+[42:14] and you save all the relevant
+[42:16] activations
+[42:18] and instead of computing them again
+[42:21] you're just going to look them up just
+[42:23] do a lookup and then decode the rest.
+[42:29] Does that does that make sense?
+[42:32] >> Yeah.
+[42:35] >> Um the question is activation from a
+[42:36] language model. Yes. Because when you
+[42:39] feed a prompt to your model and you ask
+[42:42] it to generate a response,
+[42:44] what the model needs to do is well to
+[42:47] take all this like input and then
+[42:49] compute the activations of all the
+[42:51] layers and then have uh you know for the
+[42:54] generation process to have uh this
+[42:56] attention across all these other
+[42:58] components. Well, given that it's
+[43:01] decoder only, meaning it's only left to
+[43:04] right,
+[43:07] the thing that you input, if it's the
+[43:09] same, then it will lead to the same
+[43:12] activations.
+[43:14] Yeah.
+[43:20] The question is, what if you have a
+[43:22] closed model? where prompt caching and
+[43:24] I'm going to just talk about this in
+[43:26] just one slide is an option that these
+[43:30] uh like closed models or providers
+[43:34] offer. And what they tell you is well
+[43:39] this is the same prefix for all your
+[43:41] prompts. So what we're going to do is
+[43:44] we're just going to make it cheaper for
+[43:45] you.
+[43:47] So if you look at the model pricing
+[43:50] page,
+[43:52] you will see that there is a price
+[43:54] for regular inputs. So inputs that are
+[43:57] not cached and then you have the price
+[44:01] per cached input token. And here you see
+[44:05] for the let's say open model it's
+[44:08] one10enth
+[44:10] of the price. So I guess what do I want
+[44:12] to tell you by this? Well, just try to
+[44:15] be smart with the prompts and try to
+[44:18] gather all the things that are likely to
+[44:22] be repeated across prompts in the
+[44:24] beginning so that you can uh leverage
+[44:28] this nice uh uh percentage of
+[44:32] that make sense.
+[44:35] Okay, cool.
+[44:38] Great. So up until now we have seen how
+[44:43] we can go from potentially thousands or
+[44:46] even like let's say millions of chunks
+[44:48] up to uh or down to uh let's say
+[44:52] hundreds of potentially relevant chunks.
+[44:55] Now what we want to do is to sort them
+[44:59] in a more meaningful way. And the second
+[45:02] part is more optional because maybe
+[45:04] sometimes this first cut that we've done
+[45:08] may be good enough. But I guess this
+[45:11] second step is about being more
+[45:13] intentional in how we give the final
+[45:16] score to be able to really like select
+[45:20] the final let's say top K chunks.
+[45:24] So this second stage is called ranking
+[45:27] or even reranking.
+[45:30] reranking because I guess with the first
+[45:33] step you already have some kind of
+[45:34] ranking. So we're reranking
+[45:37] and what we're doing is instead of using
+[45:41] this very quick operation similarity
+[45:44] operation between embeddings that we've
+[45:47] computed,
+[45:48] we're going to use something that is
+[45:50] maybe a bit more sophisticated.
+[45:53] So instead of considering the query and
+[45:56] the chunk separately,
+[46:00] what we're going to do is to actually
+[46:02] put them both in the encoder, both of
+[46:06] them, and have a relevant score out of
+[46:09] that.
+[46:11] So the reason why it's maybe a little
+[46:13] bit more meaningful to do it this way is
+[46:16] that you have a model that takes a look
+[46:19] at both your query and your chunk at the
+[46:22] same time and gives you gives you a
+[46:25] score.
+[46:27] Whereas in the first step you had one
+[46:30] embedding for the query and one
+[46:32] embedding for the chunk which didn't
+[46:35] have that like interaction that a model
+[46:37] could capture.
+[46:40] And you will also see out there that
+[46:42] this setup is called cross encoder setup
+[46:47] because you have both your inputs
+[46:51] fed to your encoder. So there's like
+[46:53] some cross interactions.
+[46:55] So if you remember the first approach is
+[46:57] a by encoder kind of setup and this one
+[47:00] is a cross encoder.
+[47:09] Yeah, the question is you will actually
+[47:11] compute the attention between the two.
+[47:13] Yes,
+[47:15] absolutely.
+[47:17] And uh here I mean um sentence bird
+[47:20] there they have a lot of uh good
+[47:22] documents. So I highly recommend just
+[47:23] reading their docs there at the bottom
+[47:26] of the slide.
+[47:28] Cool. Well, you do that uh on all your
+[47:32] uh potentially relevant chunks. So you
+[47:35] have uh this uh score that is computed
+[47:38] for each of these chunk with the prompts
+[47:42] and then you finally obtain the ranking.
+[47:46] And now the question is are you happy
+[47:49] with the ranking?
+[47:51] And in order to answer that question,
+[47:53] you need to have a way to quantify your
+[47:56] performance.
+[47:58] And that's why we're going to see in the
+[48:00] next five minutes what are the metrics
+[48:03] that we typically use to do that. So
+[48:06] again this is very similar to you know
+[48:09] if you do search or recommendation. So
+[48:12] in case you have a background there you
+[48:14] will see some commonalities.
+[48:18] So here's the setup.
+[48:20] You have a bunch of chunks.
+[48:23] You do this first and second step
+[48:27] and at the end of the day you will have
+[48:30] k chunks that will come at the top that
+[48:32] you will qualify as being relevant
+[48:37] and you want to compare that with
+[48:40] respect to
+[48:42] actually relevant chunks. So you can
+[48:44] think of it as you know you have label
+[48:47] like same as in binary classification.
+[48:50] So you have relevant and not relevant
+[48:52] and you predict some that are relevant
+[48:54] and you want to know how well you're
+[48:56] doing.
+[48:58] So this is the setup.
+[49:00] Well, when it comes to ranking,
+[49:04] you need to somehow incorporate this
+[49:08] information of how high in the ranking
+[49:10] you've put stuff.
+[49:12] So here let's suppose that you have
+[49:14] ranked these n chunks from most
+[49:19] important to least important. So let's
+[49:21] suppose you have like first, second, uh
+[49:24] third and so on and so forth.
+[49:27] And you only care about the first K
+[49:31] because in the rack setting you
+[49:33] typically retrieve the top K that are
+[49:36] relevant and you put all these top K in
+[49:39] your prompt.
+[49:41] Well, the first metric that you will
+[49:44] likely use is called NDCG.
+[49:49] So, it's a lot of letters. I'm going to
+[49:51] just explain what that means. So, NDCG
+[49:56] tries to quantify how good your ranking
+[50:00] is by taking into consideration
+[50:04] where you ranked relevant documents.
+[50:08] So you have this formula that may seem
+[50:11] scary, but it's actually quite simple
+[50:15] what it's trying to do. So it's trying
+[50:17] to
+[50:20] incentivize the score to be higher if
+[50:24] you're ranking the relevant documents
+[50:28] closer to the first position.
+[50:31] So what it does is it is a sum over the
+[50:35] first k positions that you've ranked and
+[50:40] it is looking at whether what you've
+[50:42] ranked for each of these positions is
+[50:44] relevant or not.
+[50:47] So for instance it checks the first
+[50:49] position. Okay, first position is it
+[50:51] relevant or not? So relevance if it's
+[50:53] relevant it's one. So it's one over some
+[50:57] quantity that is a function of the rank
+[51:01] and it does that for all the ranks.
+[51:05] So this score score will be higher if
+[51:09] you rank relevant documents high.
+[51:13] So that's basically the goal of this
+[51:15] metric. Um so this part is the
+[51:18] discounted cumulative gain. So it's
+[51:22] cumulative grain because you're looking
+[51:24] at
+[51:25] basically if you had relevant documents
+[51:28] in your first k positions which is the
+[51:31] cumulative part
+[51:33] it's discounted because it's better for
+[51:36] you to have a relevant document in
+[51:40] position one let's say than position k
+[51:43] and you can see that in the denominator.
+[51:48] Now why do we say NDCG like what is the
+[51:51] normalization part? Well, this metric
+[51:55] can take a lot of different values
+[51:57] depending on how many relevant documents
+[51:59] there are. So what people do is they
+[52:03] compute the quote unquote ideal or
+[52:08] optimal or upper bound DCG that you can
+[52:11] get for a given query.
+[52:13] And they call that ideal DCG.
+[52:17] and they just normalize DCG over IDCG.
+[52:23] So the reason why they do that is
+[52:27] they want you to score a score of one if
+[52:30] you are matching the optimal ranking.
+[52:33] They want they basically want to make
+[52:35] the score meaningful.
+[52:39] So does this make sense?
+[52:42] Yeah.
+[52:51] So, so the question is how do they
+[52:53] compute the relevance uh score? So, you
+[52:56] can think of step one and step two as
+[52:59] being a two-step process
+[53:02] for you to say which documents you're
+[53:06] saying are relevant. So at the end of
+[53:08] this two two-step stage, the ones that
+[53:12] you say are relevant are here.
+[53:16] Now you typically have a score for each
+[53:19] retrieved chunk. So you're going to sort
+[53:22] these chunks.
+[53:25] You're going to sort them by the score
+[53:27] in a descending order.
+[53:30] And the relevance here that you're going
+[53:32] to use is the actual label. So is the
+[53:35] chunk actually
+[53:37] relevant or not? So you're going to look
+[53:40] at your k retrieved chunks and you're
+[53:44] going to ask yourself, okay, is the
+[53:46] first chunk actually relevant? So you
+[53:49] have a label? You know which ones are
+[53:51] relevant, which ones are not? And these
+[53:53] ones are going to be the ones you will
+[53:55] use in the formula.
+[53:58] Yes, that's the ground truth. Exactly.
+[54:00] Yeah.
+[54:04] Cool. Does that make sense?
+[54:07] Yeah. Okay, great. Uh, so you have a
+[54:11] bunch of other metrics. You have another
+[54:13] one that's called the reciprocal rank.
+[54:16] So this one is much simpler. Uh, it
+[54:20] takes the
+[54:22] uh inverse of the rank of the highest
+[54:25] rank
+[54:27] of all the relevant documents. So if
+[54:30] let's suppose in your first in your top
+[54:33] K documents let's suppose the first
+[54:36] relevant document let's say comes at
+[54:38] rank number two then rank will be equal
+[54:41] to two. So it basically does not care
+[54:44] about
+[54:46] uh any relevant documents that are
+[54:48] passed that first relevant document. So
+[54:52] this is just like a simpler metric that
+[54:54] typically correlates well. So that's why
+[54:57] people use it.
+[54:59] And then of course I mean you're
+[55:00] familiar with the classic classification
+[55:03] metrics recall and precision. So if you
+[55:07] remember if you have two classes you
+[55:09] have the positive class you have the
+[55:12] negative class. So recall what it does
+[55:15] is it takes a look at all the actually
+[55:21] positive observations
+[55:24] and it tries to ask itself among all
+[55:27] these actually positive samples which
+[55:29] are the ones that you actually predicted
+[55:32] positive
+[55:34] that's a recall that you all know and
+[55:37] there is a I guess a ranking equivalent
+[55:40] which is out of all the documents that
+[55:44] are relevant actually relevant. So this
+[55:46] is like your positive class
+[55:49] which are the ones that you actually
+[55:52] predicted as being relevant.
+[55:55] So this is basically which ones are in
+[55:58] the top K.
+[56:01] And similarly you also have the
+[56:03] precision equivalent. So if you remember
+[56:06] precision is out of all the ones that
+[56:09] you have predicted to be positives.
+[56:13] How many of them are actually positive?
+[56:17] So this is the equivalent here. So which
+[56:19] are the ones that you've predicted to be
+[56:21] positive? So which are the ones that you
+[56:23] have selected in your top k
+[56:27] and among those ones which ones are
+[56:29] actually positive. So which one are
+[56:31] actually relevant?
+[56:35] Does that make sense?
+[56:38] So I guess uh these four metrics so
+[56:40] NDCG, MRR, precision at K, recall at K,
+[56:44] you will see this see this in a bunch of
+[56:46] papers. So I just highly recommend you
+[56:49] just get familiar with their ideas maybe
+[56:51] with the formula and uh these would be
+[56:55] the ones that you would use to quantify
+[56:57] whether your retriever is doing a good
+[56:59] job or not. So you have a bunch of
+[57:02] benchmarks out there. So there is one
+[57:04] that is actually quite popular. It's
+[57:06] called massive text embedding benchmark.
+[57:10] So if you want to test your retriever if
+[57:12] uh it performs well or not, you would
+[57:15] typically uh take it and then just
+[57:18] evaluate it on that benchmark and then
+[57:21] have all these metrics computed and then
+[57:23] if you have like different solutions you
+[57:25] would typically compare this metric.
+[57:30] And with that, I guess we uh I guess
+[57:32] hopefully have a better sense of how to
+[57:35] build a rack system and specifically how
+[57:39] to have a good retriever. So we have
+[57:42] just [snorts] maybe one more minute. Uh
+[57:44] is there any questions on that first
+[57:46] part?
+[57:48] >> Yep.
+[57:58] So the question is so for the reranking
+[58:00] we're using an encoder that will output
+[58:02] the relevant score. So we will typically
+[58:04] train a model that does that. Um so
+[58:07] there are typically I don't know I
+[58:09] believe there are some pre-trained ones
+[58:10] but out there you you can very well have
+[58:13] your custom one. Um, so yes, so that
+[58:16] model will typically be a bit more
+[58:18] sophisticated compared to the first step
+[58:22] because here you can afford to spend
+[58:24] more time to produce that score because
+[58:27] you're operating out of let's say of
+[58:29] hundreds possible candidates as opposed
+[58:32] to let's say O of much more like
+[58:34] millions or hundreds of thousands. So
+[58:37] yeah, so that's the idea.
+[58:41] Yep.
+[58:46] So the question is uh how about training
+[58:48] with contrastive loss? So here this is a
+[58:51] detail we will not uh I guess um cover
+[58:53] here but uh yeah in order to train these
+[58:56] models you'll have a bunch of different
+[58:59] uh types of loss function. So I highly
+[59:02] recommend you read the espert paper
+[59:05] because in that paper there are several
+[59:07] loss functions that the paper tries to
+[59:09] compare and this is one of them. So uh
+[59:12] yeah, so that's a great question. I
+[59:13] highly recommend reading the expert
+[59:14] paper for that.
+[59:17] Cool. With that, I'll give it to
+[59:20] Shervin. Thank you.
+[59:24] So thanks a lot for covering uh the rag
+[59:27] methodology. So now we arrive at my
+[59:29] favorite part of the lecture. Um, we're
+[59:32] going to see tool calling and the
+[59:35] agentic world and we're going to see how
+[59:37] much more powerful your LLMs are going
+[59:40] to become just in a second.
+[59:42] So, what Ashin just mentioned is how you
+[59:45] would deal with incorporating data that
+[59:48] is not structured as part of your uh
+[59:51] prompts to the LLM. And now we're going
+[59:54] to see what we could do more in the case
+[59:58] the data that we want to inject is
+[60:00] structured. So in the case of rag, you
+[60:03] have documents with words and words and
+[60:05] words and you just want to fetch the
+[60:08] relevant documents to answer your
+[60:10] prompt. But here let's suppose that you
+[60:13] have some structure that determines
+[60:17] uh input outputs in uh in your data. So
+[60:21] typically you could represent it maybe
+[60:22] as a table. So you have uh separate
+[60:25] columns and then depending on the value
+[60:27] of uh given columns you have a given
+[60:29] output.
+[60:31] So we could probably reframe that setup
+[60:36] into a function setup. So we c we
+[60:40] mentioned tool calling and then this is
+[60:43] this rephrasing is called a function
+[60:45] calling. So let's um suppose that you
+[60:48] get this relationship between input and
+[60:51] output through a function for the rest
+[60:53] rest rest rest rest rest rest rest rest
+[60:53] rest rest rest rest rest rest rest rest
+[60:53] rest rest rest rest rest rest rest rest
+[60:53] rest rest rest rest rest rest rest rest
+[60:53] rest rest rest rest rest rest rest rest
+[60:53] rest of this part and then here if I had
+[60:57] to transpose what the result of a given
+[61:01] ID and field and other arguments would
+[61:04] look like you could interpret it as a
+[61:06] function with these as arguments and the
+[61:10] output would be simply what you have as
+[61:12] an output to the function
+[61:15] And um in the world of tool calling and
+[61:19] function calling very often times you're
+[61:21] going to see that LLMs tend to use
+[61:24] Python as a language just because it's
+[61:27] so simple to read. Uh so this is what
+[61:30] we're going to use as an example as
+[61:32] well. But there is nothing that ties us
+[61:34] to Python necessarily. So you could well
+[61:37] have tool calling in other languages. Uh
+[61:40] but yeah just as a note. Any questions
+[61:45] on the setup?
+[61:48] Okay, awesome.
+[61:50] Um, so there is nothing controversial
+[61:52] about tool calling, but I'm going to
+[61:55] still state a full definition to make
+[61:57] sure that we're on the same page.
+[62:00] So I was browsing here and there and
+[62:02] then try to find an authorative source
+[62:05] and this website uh like on IBM there is
+[62:08] an article that defines that tries to
+[62:11] define what tool calling is. So I'm
+[62:13] going to anchor on their definition from
+[62:15] now on. Uh so I'm going to read out
+[62:18] loud. So tool calling allows autonomous
+[62:21] systems to complete complex tasks by
+[62:24] dynamically accessing and may act upon
+[62:28] external resources.
+[62:30] So the things that I want you to get
+[62:32] from that are two things. So first you
+[62:36] have the notion of completing some task.
+[62:39] So you're given an input and you you
+[62:41] have to complete some task and then uh
+[62:44] the reliance potentially on external
+[62:48] resources.
+[62:49] So it doesn't have to be external. You
+[62:51] don't have to rely on external
+[62:53] resources, but this is one potential
+[62:56] property that can help you um fill the
+[63:00] gap that Afin was mentioning at the
+[63:02] beginning of the lecture regarding
+[63:05] filling uh the knowledge gap that your
+[63:08] pre-trained LLM has. So, we're going to
+[63:11] see examples in a few minutes regarding
+[63:15] what that could mean. But, uh yeah, this
+[63:17] is one u like magical part of it.
+[63:22] Okay, great.
+[63:25] And just to make these uh statements
+[63:30] very grounded in a real life
+[63:32] applications, let's just walk through
+[63:35] what would a tool call give us uh in the
+[63:38] case of a very specific example. So
+[63:41] let's suppose you love teddy bears.
+[63:44] You're currently, you know, here at
+[63:46] Stanford and you want a teddy bear near
+[63:48] you. You know what? If you pull your
+[63:51] phone out and you just ask, you know,
+[63:53] find a teddy bear near me. Well, your
+[63:56] current LLM without any tools would not
+[63:59] know uh you know some real life or like
+[64:03] real time update of uh of you know
+[64:07] availability of teddy bears near you. So
+[64:10] it would probably answer you something
+[64:11] in the flavor of you know I don't know
+[64:13] or you know not sure. And I just want to
+[64:17] say that with the use of tools, uh,
+[64:20] let's see how we could get to a stage
+[64:23] where we can inject the information that
+[64:26] is necessary for the LLM to know how to
+[64:29] respond to your query.
+[64:31] And the goal of the next few minutes is
+[64:34] going to be for us to figure out both
+[64:38] what we could do uh like what we could
+[64:40] inject in the preamble of the LLM and
+[64:44] what would be the steps that we could go
+[64:47] through in order to complete such a
+[64:49] request.
+[64:52] Does that make sense so far?
+[64:56] Yep.
+[65:02] So the question is are those function
+[65:04] APIs premputed? So that's a great
+[65:06] question. So yes, you define them
+[65:09] beforehand. You have some API and we're
+[65:12] going to see that in a second. They're
+[65:13] not LLM generated on the fly.
+[65:17] Y
+[65:19] Okay, great. Any other questions on the
+[65:21] setup?
+[65:23] So I know it will be a lot lot to take
+[65:25] in. So
+[65:27] yep. Okay, great. So in order to be
+[65:32] grounded in real life, let's take a full
+[65:35] example of what a function definition
+[65:38] could be. So in the case of finding a
+[65:40] teddy bear, you could imagine a function
+[65:44] definition that is called find teddy
+[65:47] bear and depending on your location
+[65:52] calls some API and retrieves potential
+[65:56] candidates.
+[65:58] So I'm going to go through the uh main
+[66:02] characteristics of what a function call
+[66:05] contains and link it to the definition.
+[66:08] So you have okay so first of all when we
+[66:11] want to display such an API to the model
+[66:14] you need to document it uh its input and
+[66:18] output in order for the model to know
+[66:20] what this function is for. So typically
+[66:24] uh the description that you have in
+[66:25] example of Python under a given function
+[66:29] would be crucial for the model to know
+[66:31] what it is about.
+[66:34] And then
+[66:36] um we saw in the definition of tool call
+[66:38] that we uh that we just gave that we
+[66:41] have the ability to make backend calls.
+[66:43] And this is exactly what we would need
+[66:46] to do in the case of finding uh like
+[66:48] teddy bears around you. you would need
+[66:50] to query some API to retrieve available
+[66:53] teddy bears and based on your location
+[66:57] return the nearest ones. So this is
+[66:59] exactly what this um what this function
+[67:02] implementation is doing
+[67:05] and uh and as um like it returns
+[67:09] something that is well structured. So
+[67:12] you see uh maybe it's it's small from
+[67:14] where where you are but you have some uh
+[67:17] class definition that puts some
+[67:20] structure into the output and makes it
+[67:22] interpretable.
+[67:24] And we're going to see very soon that
+[67:26] this output is going to be what the
+[67:28] model will anchor on in order to give
+[67:32] its final response.
+[67:36] Okay, great.
+[67:38] And one other thing I will say is all of
+[67:42] this that we see here is what you have
+[67:45] implemented.
+[67:47] You will not see all of this. Uh you
+[67:50] know if you are an LLM, you will not see
+[67:51] all of this. All you care about as an
+[67:53] LLM is the function API, the input and
+[67:58] output as well as the main lines of
+[68:01] documentations. So all these
+[68:03] implementation details, you're going to
+[68:05] have it on your uh codebase, but the LLM
+[68:08] is not going to see it.
+[68:12] Okay, great. So now let's go u step by
+[68:16] step into how we could make make this
+[68:19] work.
+[68:20] So uh the first stage is uh as you ask a
+[68:25] question that is related to your
+[68:27] function, you would insert at the
+[68:31] beginning of your preamble the function
+[68:33] API and as I mentioned without its
+[68:36] implementation. So you just have u like
+[68:39] the function itself and then a full
+[68:41] documentation.
+[68:43] So here uh you would want the LLM based
+[68:47] on your user query to feed the right
+[68:50] arguments to your function. So to your
+[68:53] point the goal of the LLM here is not
+[68:56] going to be to infer any of the
+[68:58] functions implementations rather only
+[69:01] what arguments we should put to it. Yep.
+[69:14] Yep.
+[69:18] Yep.
+[69:20] So the question is how do you even train
+[69:21] this? So we're going to see uh that in
+[69:23] just a few slides. Yeah. So great point.
+[69:25] That's the next question u you know we
+[69:27] need to ask ourselves. Yeah.
+[69:33] Yeah. So we're going to see how we train
+[69:36] this. Um so but here um let's say it has
+[69:40] been trained uh the LLM would have from
+[69:44] its context probably our localization
+[69:47] because let's say you have activated
+[69:49] your uh you know location permissions
+[69:52] and your LLM knows where you are so it
+[69:54] knows you are at Stanford and these
+[69:56] would be the coordinates being fed to
+[69:58] your LLM
+[70:00] and then the second stage is to actually
+[70:03] do that function call. So nothing it has
+[70:06] nothing to do with LLMs. You just take
+[70:09] your function your argument and you
+[70:11] execute that
+[70:13] and you get some answer and the answer
+[70:16] as we mentioned is structured in a way
+[70:19] that's understandable. So in that
+[70:21] function implementation you return some
+[70:24] object that informs characteristics
+[70:28] about the return teddy bear. So for
+[70:30] example you have its name, maybe
+[70:32] location and so on.
+[70:35] and you feed that response back to the
+[70:38] LLM in order to get a final response. So
+[70:42] when you ask to the LLM a given
+[70:44] question, you don't want to have this uh
+[70:47] you know JSON like response but rather a
+[70:50] response in natural language. And this
+[70:53] exactly is the motivation for that last
+[70:55] stage.
+[70:57] So, I'm going to pause here for a second
+[70:59] and check that this three-stage
+[71:03] mechanism makes sense to everyone.
+[71:08] Yeah. Okay. Great.
+[71:12] And
+[71:14] and exactly what you were mentioning
+[71:15] here is going to be the next focus. How
+[71:17] do you even train that? So, okay. So,
+[71:20] let me ask you this question.
+[71:22] If you were to train an LLM to use this
+[71:26] tool, what steps would you need to focus
+[71:29] on?
+[71:36] Right? So the answer is you're going to
+[71:38] feed the API implementation. Yes.
+[71:42] So you would need the first LLM call to
+[71:46] be somehow recognizing the pattern of
+[71:49] the function implementation and the
+[71:51] query and link it to the um the
+[71:56] arguments that you would put in your
+[71:58] function. So yeah, great. So tool
+[72:00] prediction
+[72:01] and do you need a second set of SFT
+[72:04] pairs?
+[72:11] So you have this last stage that is
+[72:13] still LLM driven where you have your
+[72:16] tool answer and you need to output a
+[72:19] final response.
+[72:21] So
+[72:22] you might say, okay, hey, the LLM has
+[72:25] seen a bunch of structured data and
+[72:27] knows how to put into words things that
+[72:29] it sees, which is a fair point, but
+[72:32] usually you might want your responses to
+[72:35] be formatted a given way. So you might
+[72:38] want to also have SFT pairs that do this
+[72:41] mapping the way you want it to.
+[72:44] So this is why you typically have these
+[72:47] two SFT pairs. And if I have to be a bit
+[72:50] more precise, the second pair isn't just
+[72:53] mapping the JSON response to the final
+[72:56] response. It's actually linking all the
+[72:58] conversation history so far. So that it
+[73:01] knows that the initial query was someone
+[73:04] in search of a teddy bear. It knows
+[73:06] there has been a tool call and it knows
+[73:08] that the results correspond to that tool
+[73:11] call. So it would be a slightly longer
+[73:14] input uh in this SFT pair.
+[73:18] Does that make sense?
+[73:22] Okay, great. Yep.
+[73:29] Yeah. Uh so great point. So the question
+[73:31] is what if we have more tools? Do we
+[73:34] need like some tool selection or like
+[73:36] more examples? So this is a great topic.
+[73:38] We're going to see it uh like in in in a
+[73:41] few slides. Yeah. So it's slightly more
+[73:44] complex way of doing things. But if you
+[73:46] want a very quick answer, if you go the
+[73:48] SFT way, you could show multi- uh tool
+[73:53] kinds of inputs. So you could include
+[73:55] all of that in your SFT data sets. But
+[73:58] we're going to see the topic of tool
+[73:59] selection very soon.
+[74:03] Great. Any other questions?
+[74:08] Okay. Awesome. So uh so this is what I
+[74:12] just mentioned. Yeah, the conversation
+[74:14] history so far is always what you get as
+[74:16] part of the inputs and then the output
+[74:18] is what you would want the LLM to
+[74:20] predict at that given stage. And since
+[74:23] you're doing SFT here, you don't have
+[74:25] just one but multiple such examples and
+[74:29] you would want your examples to be
+[74:31] varied and representing the typical user
+[74:35] distribution.
+[74:36] So I was asking find a bear near me and
+[74:41] this example showed to the model how you
+[74:44] could ground the information of location
+[74:47] based on the user's location even though
+[74:49] you didn't give it. And in these other
+[74:52] examples, you could give uh the model
+[74:54] other kinds of instructions like
+[74:56] directly saying uh I want a bear at that
+[74:59] location to teach the model to look at
+[75:02] like to ground the argument at different
+[75:04] places. And you could expand this set by
+[75:08] also uh varying the kind of input so it
+[75:11] doesn't have to be worried that way. You
+[75:13] could do it multi-turn maybe in the
+[75:15] middle of a conversation you ask for a
+[75:17] bear and so on. Yeah.
+[75:21] Okay, great. But this is not the only
+[75:24] way of uh of training a model to do so.
+[75:28] So these days, LLMs become more and more
+[75:33] powerful in their reasoning. And the
+[75:35] kind of data they are trained at
+[75:38] pre-training and initial instruction
+[75:40] tuning is typically these kinds of code
+[75:43] data. So at the end of it, they know how
+[75:46] to manipulate Python codes very well. So
+[75:50] you might ask yourself, is it really
+[75:52] needed for me to teach the model how to
+[75:55] map a query to a function to a function
+[75:59] call? And that is a very uh interesting
+[76:03] observation.
+[76:04] And you see these days that you can
+[76:08] forgo
+[76:09] specific SFT training and try to get
+[76:12] around it with only training.
+[76:15] So here
+[76:18] instead of um you know writing SFT and
+[76:22] then retraining the model, we're going
+[76:24] to see that you could actually replace
+[76:27] it with only an explanation.
+[76:30] And does anyone have an idea of how we
+[76:33] could even come up with such an
+[76:34] explanation?
+[76:38] So let's say I have a new tool. I have
+[76:41] the API. I want my model to use it.
+[76:45] How would you go around it?
+[76:52] Yep, there's a great point. So, one
+[76:54] method could be fshot learning. You just
+[76:57] uh show in the context window um samples
+[77:01] of input output. This this is a great
+[77:03] point. You could definitely do that. And
+[77:05] this is typically one accepted practice.
+[77:08] Um but if I if I told you that fshot
+[77:12] learning has um challenges when it comes
+[77:15] to generalization because you would need
+[77:18] to give specific points as input output.
+[77:21] So it might fit to some cases and not
+[77:24] necessarily generalize to the whole span
+[77:27] of human language. Um you know is there
+[77:29] another way you you could go around it?
+[77:39] Yeah. So the the answer is ask it to do
+[77:42] reasoning. You know, great points and
+[77:46] writing a prompt that does the reasoning
+[77:49] in a way that makes sense is very hard.
+[77:52] So in practice, you wouldn't write it
+[77:54] yourself. You would take these SFT
+[77:58] pairs. Okay, so these are the behavior
+[78:00] that you want to enforce and you could
+[78:03] use it as some evaluation set. So you
+[78:06] could say okay if I do if I ask this
+[78:09] question I want that tool call and you
+[78:13] have a set of pairs and you could run
+[78:18] whatever you have so far in terms of
+[78:21] explanation.
+[78:22] You evaluate these prompts against the
+[78:25] evaluation set. So you have some wins
+[78:28] and losses. Maybe find a bear in Paris
+[78:30] doesn't work well. Some other prompts
+[78:33] do. So you have a list of um of like
+[78:38] each sample with like a score and you
+[78:40] could feed it back to a reasoning model
+[78:44] typically to do the explanation writing
+[78:47] for you. So yeah, this is a trick to
+[78:52] you know help you avoid doing that hard
+[78:55] work. basically showing the model, you
+[78:58] know, hey, with the current prompt,
+[79:00] here's what we get. What would you have
+[79:03] changed in order to make the evaluation
+[79:06] results better? So, you get with that
+[79:08] process an iteration on the detailed
+[79:11] explanation. And if you have to see
+[79:13] results in practice, you would be
+[79:15] surprised at how well it does the
+[79:17] explanation for you. So, the takeaway
+[79:21] here is I do not recommend you write it
+[79:24] end to end. maybe just a draft and you
+[79:26] let some very powerful model with
+[79:29] excellent
+[79:31] knowledge of uh logic do it for you.
+[79:36] Yep.
+[79:51] >> Yep. So the question is what you just
+[79:53] mentioned is it training or inference.
+[79:55] So it's training. So you do it at the
+[79:57] very beginning. You want a fixed prompt
+[80:00] that explains to the LLM how to use it,
+[80:03] how to use that function. So you would
+[80:05] typically do that offline. offline you
+[80:07] iterate on the explanation that says
+[80:10] exactly how you use the prompt uh how
+[80:12] you use the function and then at
+[80:15] inference time you would put that fixed
+[80:17] explanation alongside the function API
+[80:20] such that for any query it knows what to
+[80:22] do
+[80:24] does that make sense
+[80:28] okay great
+[80:30] any other questions here
+[80:35] okay amazing
+[80:36] So
+[80:38] I just mentioned an example with teddy
+[80:40] bears that would be in the category of
+[80:44] maybeformational.
+[80:46] So you have um so you have a question
+[80:49] and you want to ask some external API to
+[80:52] retrieve that and you have in reality a
+[80:55] lot more use cases that you might see.
+[80:57] So when I've mentioned you have some
+[81:00] cutoff dates and let's say you ask your
+[81:02] LLM about news of the day. So you
+[81:05] typically wouldn't have anything that
+[81:07] comes from the model itself. You would
+[81:09] have an API that fetches it from a tool
+[81:12] called maybe search,
+[81:15] but you have also other kinds of tools
+[81:17] available in in the information
+[81:19] category. So for example, weather,
+[81:22] stocks, and um let's see um you know,
+[81:27] but you also have other categories. For
+[81:30] example, if you want to ask the model to
+[81:33] do some calculation for you,
+[81:36] you could let the model figure it out
+[81:38] with some reasoning chain. But one way
+[81:41] to get around it is to transform the
+[81:44] query into code, execute that code and
+[81:49] then read out the answer. So this is why
+[81:52] uh like tool call has a whole span of
+[81:56] applications in the computation.
+[81:59] um area. So you have calculations and uh
+[82:04] you have another category that we can
+[82:05] site here. So you can take actions on
+[82:08] behalf of the user. So let's say you
+[82:11] have a tool that sends emails. You could
+[82:14] ask the model to send an email for you
+[82:17] and it could um put the right things
+[82:20] into uh the header and the message body
+[82:23] and even hit send for you because you
+[82:26] have that component that interacts with
+[82:28] the external world as part of the as
+[82:31] part of the tool API.
+[82:33] Um yeah so these are just a few examples
+[82:35] but I just want to say that uh the field
+[82:38] of tool calling is so powerful you can
+[82:40] do anything you want
+[82:43] and
+[82:45] in practice exactly as you mentioned you
+[82:48] wouldn't have just a single tool API as
+[82:50] part of the uh context
+[82:53] you would have several ones because your
+[82:56] LLM is not just an LLM for finding bears
+[82:59] right you might want to do other things
+[83:01] with your LM maybe you want to hug a
+[83:04] teddy bear or check a teddy bear's
+[83:06] moods, send teddy bears a gift, you
+[83:10] know, and other things. So, you have a
+[83:13] lot more functions that might be
+[83:16] relevant to be added as a preamble just
+[83:19] because you don't know what function
+[83:22] would need to be used. You just need to
+[83:23] put all of that just in case.
+[83:26] So the setup is exactly the one that you
+[83:29] mentioned where you don't have just one
+[83:32] API but multiple ones.
+[83:35] Um does anyone see any issues by do with
+[83:40] doing so?
+[83:43] Yeah. So the suggestion is that that's a
+[83:45] lot of tools. Yeah. And then you're
+[83:46] right. So typically if you have too many
+[83:48] tools you have the problem that Afin
+[83:51] mentioned at the beginning of a needle
+[83:53] in a haststack where maybe some tool API
+[83:56] will get lost in the context and you
+[83:58] don't really know what to use you have a
+[84:01] lot of conflicting APIs maybe and we're
+[84:04] going to see very soon how to um kind of
+[84:08] overcome that issue.
+[84:11] Okay, great.
+[84:13] So I want to take a pause here and
+[84:16] summarize how far we've come and some of
+[84:20] the drawbacks that we that we have and
+[84:23] see together what we could do to remedy
+[84:25] these drawbacks.
+[84:27] So, first we saw that we came from an
+[84:30] LLM that just responded back at you with
+[84:34] a normal words to an LLM that can
+[84:37] actually interact with the outside
+[84:39] world, fetch real-time information or
+[84:42] even extend computing capabilities
+[84:46] um and uh and exactly like overcomes the
+[84:51] issue that Afin was mentioning the
+[84:53] knowledge cut off one in a different way
+[84:55] that than what rag would do. So you
+[85:00] could see these two methods as being
+[85:02] complimentary
+[85:03] and yeah both try to do the same thing
+[85:06] in some sense
+[85:08] but uh exactly as someone mentioned here
+[85:11] uh if you have more tools then your
+[85:15] context window might have things that it
+[85:18] doesn't needs and um and then if you try
+[85:21] to support so many cases you might end
+[85:24] up being mediocre at all of them.
+[85:27] So this is an issue and even if that
+[85:31] wasn't an issue, you still have the
+[85:33] context window that is finite. So let's
+[85:36] say you have uh hundreds of millions of
+[85:39] users that use your LLM and that want to
+[85:42] you to do a lot of things. You cannot
+[85:45] support everyone's use cases at once
+[85:48] just because you couldn't possibly fit
+[85:51] all of such tools in your context.
+[85:54] Yeah.
+[85:55] And then uh last
+[85:58] when I mention these tools, these are
+[86:01] things I hand wrote and maybe each LLM
+[86:05] has their own way of defining and using
+[86:07] tools. We're going to see if there is a
+[86:10] way to standardize maybe the way we
+[86:12] define and use tools uh later on. So do
+[86:16] these drawbacks make sense?
+[86:19] Yeah. Okay, great.
+[86:22] So let's move on to tool selection. Uh
+[86:26] so let's see what we could do in order
+[86:29] to make um tool use more scalable. So
+[86:34] I'm going to site uh here
+[86:38] um a technical paper from Google deep
+[86:40] minds uh which uses a tool selector
+[86:44] system. So it functions in two steps. So
+[86:49] first you have your query and you have a
+[86:52] list of tools that can be as big as you
+[86:55] want and that list of tools only
+[86:57] contains the API name and maybe one or
+[87:01] two words about what it does.
+[87:03] So you have uh like this this prompt and
+[87:06] the list of tools and we ask the LLM to
+[87:11] pick the tools that might be relevant.
+[87:15] So this is why the technical paper calls
+[87:18] this system a tool selector. You could
+[87:22] even see the term router um like being
+[87:26] pronounced in the literature. So tool
+[87:27] selection routing are similar concepts.
+[87:31] And the goal here is to restrict the
+[87:34] number of tools to only those that might
+[87:37] be useful. And in the second stage, you
+[87:40] take all the selected tool APIs and feed
+[87:44] only those to the context alongside your
+[87:47] query. And this is uh one way you could
+[87:51] take to overcome this um
+[87:56] this this issue of having too many tools
+[87:58] at once.
+[88:01] Is everyone convinced that tool
+[88:02] selection could be a good way to to fix
+[88:06] the problem here?
+[88:08] Yep.
+[88:14] Yeah. So, the question is, is that
+[88:15] basically rag? You could do it with rag,
+[88:17] you know, that's a great point, but it
+[88:19] doesn't necessarily have to. So, you
+[88:21] could uh have uh an LLM that does this
+[88:25] job just uh picking the right the right
+[88:28] tools and you ask some instructions to
+[88:31] the LLM to output the right answer. You
+[88:33] could definitely do it with drag. U that
+[88:35] that is just a great point. Yeah.
+[88:40] Yep. So, does it make sense to everyone?
+[88:44] Okay, great. And I see time is flying.
+[88:47] So, we're going to go very quickly on
+[88:50] the standardization
+[88:52] uh issue. So as I mentioned every tools
+[88:56] implementation like the way you specify
+[88:59] a tool implementation can be bespoke to
+[89:02] a given LLM and you wouldn't want that
+[89:04] because for every LLM you might need to
+[89:08] implement always the like these tools
+[89:11] like over and over again and duplication
+[89:15] is not what you want. This is why there
+[89:18] is a standard called MCP that I know um
+[89:22] no know a lot of people talk about it.
+[89:24] Uh so so it's something from the
+[89:27] anthropic team that's uh like
+[89:30] standardizes the way tools are exposed
+[89:33] to models. So it's a protocol. It's
+[89:35] called the model context protocol and it
+[89:38] defines um you know standard way of
+[89:41] presenting these tools. So I'm going
+[89:44] just to say the very uh big lines of it
+[89:48] where uh so you have this kind of
+[89:50] vocabulary as part of MCP. So you have u
+[89:54] an MCP server which is the instance that
+[89:59] serves tools. Okay. And then tools are
+[90:03] implementations of the functions that
+[90:06] you want people to use. Prompts are
+[90:09] sorts of templates that could show the
+[90:12] user how to use these tools. And then
+[90:15] all of these can anchor on resources
+[90:18] which are external
+[90:20] um sort of databases that you can use to
+[90:24] complete the task. And then an MCP
+[90:27] server when you use it has a onetoone
+[90:30] connection with a piece of
+[90:31] infrastructure in your LLM host that is
+[90:34] called MCP clients. But these are maybe
+[90:36] infrastructure details. Uh and I just
+[90:39] want to ground what I just mentioned in
+[90:42] reality. So we know our teddy bear loves
+[90:45] to read poetry. Um so in the case of
+[90:49] recommending a poetry book to to our
+[90:51] teddy bear, you could think of a MCP
+[90:54] server that provides tools that are
+[90:57] linked to uh you know books. So your LLM
+[91:01] host here. So let's just take the
+[91:03] example of cloud since you know MCP is
+[91:05] from anthropic. So cloud would be your
+[91:07] LLM host. Your MCP server would be
+[91:12] probably implemented by your book
+[91:14] provider because typically they are the
+[91:16] most experts as at serving such content.
+[91:20] And we could assume that the book
+[91:22] provider MCP server has tools regarding
+[91:26] finding books or recommending
+[91:28] them. And then the prompts here could be
+[91:31] a ways to
+[91:33] show you how to find a given title or
+[91:36] maybe recommend it with respect to like
+[91:38] some flavor maybe with respect to the
+[91:40] users test taste and some example of
+[91:43] resources here could be the teddy bears
+[91:46] personal collection or maybe top books
+[91:49] that people buy.
+[91:52] Yeah, just just as an example.
+[91:55] Okay, awesome. So now I'm going to come
+[91:58] to potentially the most exciting part of
+[92:02] today today's lecture which is agents.
+[92:05] So we saw how much more powerful LLMs
+[92:09] could become with tools.
+[92:11] Agents could be seen as one layer up
+[92:15] from it. So I'm going to give first uh
+[92:20] definition just so that we agree uh of
+[92:23] like what agent means here. So it's a
+[92:26] system that autonomously pursues goal
+[92:29] and completes tasks on a user's behalf.
+[92:32] So compared to tools, you not only can
+[92:38] perform like tasks uh but you have also
+[92:42] some reasoning uh involved in it. So you
+[92:45] could have like multiple loops of
+[92:46] iterations and this is what different
+[92:49] differentiates an agent from a tool. um
+[92:52] in plain terms when usually people talk
+[92:54] about agents it has that uh recurrence
+[92:58] or like higher level of reasoning baked
+[93:03] into it.
+[93:04] And so I'm going to contrast like the
+[93:08] agentic world with respect to the world
+[93:10] we have seen where um you know you may
+[93:14] have multiple calls to tools
+[93:17] and this new agentic framework is not
+[93:20] necessarily
+[93:22] disjoint from the ones that we presented
+[93:25] before. You could well have reasoning
+[93:27] chains in inside of it. So it's like a
+[93:31] potentially overlapping but the
+[93:33] structure is uh consists of like tool
+[93:37] calls and iterations.
+[93:41] Okay, great. And now I'm going to talk
+[93:44] about a hallmark paper called
+[93:48] um react. So reason plus act which
+[93:53] decomposes possible loops into different
+[93:56] stages.
+[93:58] So
+[94:00] very often times when you have a query
+[94:02] and you want to pursue a goal, you
+[94:05] cannot do it one shot. You need somehow
+[94:08] to decompose the goal into actionable
+[94:11] substeps,
+[94:13] perform each of these substeps and then
+[94:16] come up with the answer. And this is
+[94:19] exactly what React is about. It's about
+[94:21] decomposing
+[94:23] um complex tasks into
+[94:26] uh into loops of things that can be done
+[94:29] atomically.
+[94:31] So here I just want to say one thing. We
+[94:34] decompose these steps into observe, plan
+[94:38] and act. Uh but it doesn't necessarily
+[94:41] have to be called that way or be in that
+[94:43] order. For example, the react paper I
+[94:45] think introduces terms of think,
+[94:49] observe, act. So yeah, you might see the
+[94:53] language changing a bit from paper to
+[94:56] paper, but the high level intuition
+[94:59] remains.
+[95:02] So let's just ground on a very specific
+[95:05] example. So to be in the theme of these
+[95:08] days
+[95:10] weather
+[95:11] uh starts becoming a bit cold and our
+[95:14] teddy bear might be cold in its home. So
+[95:18] let's just have that as an input. Uh you
+[95:21] know my teddy bear is called please do
+[95:22] something and let's see what uh an
+[95:26] agentic workflow could do about it.
+[95:28] So first you have this observe stage
+[95:31] which translates the user query into an
+[95:36] actionable formulation. So when you say
+[95:39] that your teddy bear is cold and you ask
+[95:41] it to do something uh like here in this
+[95:44] observe stage you would link it back to
+[95:48] the notion of temperature. Uh you know
+[95:51] the user teddy bear is cold which may be
+[95:52] due to the current temperature of the
+[95:54] room which is currently unknown. So
+[95:58] right off the bat, you now know that you
+[96:01] need to do something with temperatures.
+[96:03] So this brings us to the next step
+[96:06] called plan where you know that
+[96:09] something is unknown and you need to
+[96:11] find it. Plan will spell that out for
+[96:14] you. So here you want to determine the
+[96:17] temperature of the room. And luckily
+[96:20] among your tools you might have
+[96:22] something that does something in these
+[96:24] lines and this is where you use it. So
+[96:27] the act stage is using all these APIs
+[96:30] that might be in the context. So for
+[96:32] example here if you have get current
+[96:34] room temperature this is the way to use
+[96:36] it. And as I mentioned these tools are
+[96:41] useful when you to the LLM when you
+[96:44] output information back to it that it
+[96:46] can interpret. So this tool returns the
+[96:50] temperature and you need now to
+[96:53] interpret what the temperature means. So
+[96:56] this is why you go back to the observe
+[96:58] stage. You you do um like you you
+[97:02] describe what the world looks like and
+[97:05] what you should do about it. So here uh
+[97:07] you can read that the temperature of the
+[97:09] room is cold. 65 fah
+[97:13] and the observe stage might indicate
+[97:15] that it's colder than expected. So this
+[97:19] is why you need to plan something and
+[97:23] then at the plan stage you're like you
+[97:24] know this this was colder than expected
+[97:27] so I need to increase the temperature
+[97:30] and then you go back to the act stage.
+[97:32] Okay, luckily I know how to increase the
+[97:34] temperature and it has a a function that
+[97:38] can have uh the temperature increase
+[97:41] arguments inputed to it. So you can
+[97:44] adjust the temperature and then uh once
+[97:48] it's done the observe stage
+[97:51] um concludes that the temperature is not
+[97:55] set at the like to the correct
+[97:57] temperature
+[97:59] and this is the time where you can exit
+[98:01] the loop and return the response to the
+[98:03] user.
+[98:06] So here we have increased the
+[98:08] temperature by 5° and then the output
+[98:11] reads that back to the user in the hope
+[98:13] that it has fulfilled the user's query.
+[98:18] So what I described within the loop is
+[98:24] what makes a workflow an agentic one. So
+[98:27] you have some initial query, you have
+[98:29] some actions that you can perform and
+[98:32] then at each stage the LLM tries to see
+[98:35] if it has reached the goal yet. Uh and
+[98:39] then if it has then it will go to the
+[98:42] output stage otherwise it may have more
+[98:45] reasoning loop where uh where it does uh
+[98:49] more work.
+[98:51] So does the definition of agent that I
+[98:54] propose here make sense?
+[99:00] Okay, great. So now taking this a bit
+[99:03] further, you could think of way more
+[99:06] than one agent. You could have an agent
+[99:08] for setting the thermostat. Uh but maybe
+[99:11] in your home you want to manage how
+[99:14] energy is distributed or uh you know air
+[99:17] quality if you have some some settings
+[99:19] to tune. So you can have different
+[99:22] agents and one interesting use case is
+[99:25] to have the user say something to an
+[99:28] agent and potentially have all of them
+[99:31] communicate together.
+[99:33] So um this prompts
+[99:37] uh potential needs for also a
+[99:40] standardization of communications with
+[99:43] uh between agents similarly to what we
+[99:46] have seen between LLM hosts and tools
+[99:50] and this is what prompted Google to
+[99:52] release the agentto agent protocol
+[99:55] earlier this year. So uh yeah, I highly
+[99:59] recommend taking a look at their uh
+[100:01] document specification but just to give
+[100:04] the main lines around it um you you have
+[100:08] some standardization of what an agent
+[100:11] can expose. So it typically exposes a
+[100:14] set of skills. So it can do things and
+[100:18] um and then you know it gives examples
+[100:20] about it so that other agents are aware
+[100:22] of it and what you need to do as a
+[100:26] developer would be to define these
+[100:28] skills and also another key thing is to
+[100:32] define how um the agent executes a given
+[100:36] request. So for example when you execute
+[100:39] a given query what is the status that
+[100:42] you emit to other agents or there is a
+[100:46] cancel method as well where let's say an
+[100:48] agent says you know stop what you're
+[100:50] doing what is the process to cancel an
+[100:53] action. So yeah these are uh kind of
+[100:55] some of the main functions that are that
+[100:58] that people like the agentto agent
+[101:00] protocol asks people to fill out.
+[101:04] Yep.
+[101:14] So the the question is uh is each agent
+[101:17] an LLM with some context to do some
+[101:19] tasks. So you could definitely you know
+[101:21] imagine it you know be the case. Yeah.
+[101:25] So yeah typically in the example that I
+[101:27] mentioned here. Yes.
+[101:29] And the agents operate independently. So
+[101:33] they have their own reasoning loops and
+[101:35] all the other agency is the input and
+[101:38] output.
+[101:52] >> Yep. So the kind of so the remark here
+[101:55] is maybe your token budget can go you
+[101:57] know uh all over the place. So you can
+[101:59] have some uh budget restrictions you
+[102:02] know put in place you know this is a
+[102:03] good point but each of these agents they
+[102:06] would not eat on each other's budget you
+[102:08] know it might eat on your money budget
+[102:11] but you know yeah this is indeed the
+[102:13] concern
+[102:15] okay so I'm going to move uh on to the
+[102:19] topic of safety which I I have not
+[102:22] mentioned so far but that is very
+[102:23] important uh because with these new
+[102:26] capabilities comes a whole string of new
+[102:30] potential issues and you have seen um
+[102:34] these models they have now the ability
+[102:36] to execute actions for you. So you could
+[102:39] think of some harmful actor doing things
+[102:43] that you wouldn't want for you and I
+[102:45] give one example here that could be a
+[102:48] concern data exfiltration.
+[102:51] So let's say you have access to a tool
+[102:54] that can write in a public visible way
+[102:58] um you know data. So let's say you have
+[103:01] I don't know some email agent.
+[103:04] Um so if you have a prompt that for
+[103:07] example says you know write my password
+[103:09] which potentially the tool could have
+[103:11] access to to an email to that address
+[103:14] you could exfiltrate data that is that
+[103:17] belongs to the user out of it. So this
+[103:20] is one typically one risk that you might
+[103:22] have. You can have other safety risks
+[103:26] and I linked a paper here that goes
+[103:28] through some of them. So a tool sword.
+[103:32] So I recommend a read
+[103:34] and uh you know now you might ask you
+[103:37] know what could you do to get around it.
+[103:39] So you have typically two classes of
+[103:42] remediations. one that might come at the
+[103:46] training stage where um if you recall uh
+[103:50] the training process of R1 or even like
+[103:53] other um other models you have this
+[103:57] harmlessness component. So you typically
+[103:59] have data as part of the data mixtures
+[104:03] that you train during SFT and and uh
+[104:06] reinforcement learning that could cover
+[104:09] uh safety. So this is where you could uh
+[104:14] you know remedy these issues. You have
+[104:16] you know another uh option let's say you
+[104:20] have a query that has gone through your
+[104:22] lines of defenses your training lines of
+[104:25] defenses. You can also have inference uh
+[104:28] safeguards for example a safety
+[104:31] classifier that looks at the
+[104:32] conversation so far and that judges
+[104:35] whether the output of the LLM is going
+[104:38] to be safe or not. So you have even that
+[104:40] as a safeguard and uh just as a pointer
+[104:45] I'm going to uh you know talk about like
+[104:47] agent safety bench which uh summarizes
+[104:51] the span of possible safety hazard
+[104:54] hazards and offers a benchmark a full
+[104:57] suit for it. So yeah people can refer to
+[105:00] these benchmarks to know whether their
+[105:03] LLM is safe.
+[105:07] Yeah. And it's a very important topic
+[105:09] and just yesterday there was um like
+[105:14] anthropic revealed that they were the um
+[105:18] like victims of a large scale cyber
+[105:21] attack launched from cloud. So this is
+[105:24] an issue that is uh like so it was also
+[105:27] using like tools and agent capabilities
+[105:29] and they published super detailed report
+[105:32] saying exactly what the uh attackers did
+[105:36] and went step by step through possible
+[105:38] lines of remediations. And this is just
+[105:41] to emphasize how important safety is in
+[105:44] this more capable world. And both
+[105:48] attackers and the line of defense can be
+[105:51] you know more and more sophisticated. So
+[105:53] it's not a lost battle. It's just that
+[105:56] the you know tools we have for defending
+[105:59] against
+[106:00] um like tool you know tool based attacks
+[106:03] you know need to be so we need to have
+[106:06] like such measures in place and with
+[106:08] these measures maybe it's going to be
+[106:10] fine. So I think that was like the
+[106:12] overall mindset of that article which I
+[106:16] strongly recommend to read.
+[106:19] So
+[106:21] I'm going to say a last few words. So
+[106:23] when you talk about agents, you have um
+[106:27] you know this this risk that at every
+[106:30] step of your uh thought process, you
+[106:33] might diverge to something that just
+[106:35] doesn't work. So that is a huge problem.
+[106:37] Let's say if the model doesn't ground to
+[106:40] the output properly or maybe does a
+[106:42] mistake into that argument prediction of
+[106:45] a tool call. So this is one big issue.
+[106:49] uh which is the reason why you don't see
+[106:51] uh you know large scale agents ruling
+[106:53] the world right now because uh it's it's
+[106:56] really like we are limited by these
+[106:58] consequences.
+[107:00] Um and then uh I'm going to talk about
+[107:03] like the developing capabilities of
+[107:06] models that enable you to have this
+[107:08] agentic capabilities. So this is
+[107:10] something that you can uh like like fix
+[107:14] with SFT but uh ideally you wouldn't
+[107:17] want to use SFT to fix reasoning uh gaps
+[107:21] and use the model itself.
+[107:24] And we're going to see uh next week uh
+[107:27] what the evaluation landscape looks
+[107:29] like. So I'm going to reserve it to next
+[107:30] week. And just a few words of advice
+[107:34] regarding building tools or building
+[107:37] agents. Always start small on a very
+[107:40] simple case. For example, find the
+[107:43] nearest pair. Try to see if the your
+[107:46] current implementation and prompt just
+[107:48] works and then start from there. So
+[107:52] start small and then start smart. So
+[107:55] take the the like most capable model
+[107:57] first so that you know the headroom of
+[108:01] where you can go with the current models
+[108:03] and then try to uh gain on latency
+[108:06] capabilities and so on. So yeah, start
+[108:10] correct, start small and then you can
+[108:12] optimize later.
+[108:15] And uh when it comes to debugabilility,
+[108:19] these LLMs, they output chains of
+[108:21] reasoning. So it's always good to look
+[108:22] at them to see what what is going wrong.
+[108:25] And I will close this lecture on a note.
+[108:29] You know what's you know my favorite use
+[108:31] case of using agents right now is uh as
+[108:34] AI assistant is assistant coding. So
+[108:37] this is something I strongly recommend
+[108:39] in case you have a projects that require
+[108:41] you to do you know complex piping of
+[108:44] things you can free your mental load by
+[108:48] delegating some of these tasks and this
+[108:50] is something that is you're going to see
+[108:51] in the real world very much used now uh
+[108:55] but with the caveat that you know please
+[108:57] make sure to learn the foundations of
+[108:59] code know how to code right because your
+[109:02] taste is going to matter most from now
+[109:04] on you know generating code is cheap,
+[109:07] but judging whether a code is correct
+[109:10] and does the right thing. This is the
+[109:11] hard part. And with that, thank you.

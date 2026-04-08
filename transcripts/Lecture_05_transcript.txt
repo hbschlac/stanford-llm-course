@@ -1,0 +1,2138 @@
+[00:05] Cool.
+[00:07] Hello everyone and welcome to lecture 5
+[00:10] of CME 295.
+[00:13] So first of all, thank you all for
+[00:16] taking the time to take the midterm last
+[00:18] week. So I hope it was reasonable for
+[00:21] you. Um so for those of you who are
+[00:24] auditing in case you are interested in
+[00:27] taking the exam just know that the exam
+[00:30] and the solutions are both posted on the
+[00:32] websites
+[00:34] and um so now you know a little bit how
+[00:37] the exam looks like. So for the final
+[00:40] we'll have the same format except that
+[00:42] the content will be on lectures five. So
+[00:45] this one up until 9.
+[00:49] So I'll go down that point.
+[00:52] Cool. Uh great. So with that we're going
+[00:57] to start the lecture. So today we're
+[00:59] going to talk about LLM tuning.
+[01:03] So as usual we're just going to recap
+[01:06] what we saw last time. Um, so last time
+[01:09] was already two weeks ago, but we talked
+[01:12] about how to train an LLM. And in in
+[01:16] particular, we've looked at two
+[01:19] important steps. So the first one was
+[01:22] called pre-training
+[01:24] where you're basically taking a model
+[01:27] that has been initialized and you're
+[01:30] trying to teach the model about
+[01:32] language, about code. So you have this
+[01:36] step that is very time consuming,
+[01:39] expensive
+[01:40] um compute heavy that is happening on a
+[01:43] lot of data. So we've seen training
+[01:47] optimizations on how to make that
+[01:49] happen. So we've seen uh techniques to
+[01:52] parallelize that across GPUs. So we've
+[01:55] seen data parallelism methods and in
+[01:58] particular zero so the variant 0 1 2 3
+[02:03] and we've also seen very quickly what
+[02:05] model parallelism was in this case. So
+[02:08] at the end of this step what you obtain
+[02:12] is a model that knows about the
+[02:14] structure of language about codes
+[02:17] basically all the text that it has been
+[02:19] fed. But what this model can do is only
+[02:24] predict the next token.
+[02:26] So it's a great autocompleter,
+[02:29] but it's not a helpful model yet, which
+[02:33] is why we have a second step. And we saw
+[02:36] uh here it's typically called
+[02:38] fine-tuning or SFT for supervised
+[02:41] fine-tuning.
+[02:42] So here what we do is we take our
+[02:45] pre-trained model and we train it for
+[02:48] specific tasks.
+[02:50] So nowaday you have you know chat GPT
+[02:52] and all these like uh chat assistants.
+[02:55] So this can be one application. So
+[02:58] transforming your model into an
+[03:00] assistant. And so here the goal is to
+[03:03] teach the model how to behave.
+[03:07] So the model already knows what language
+[03:09] is, what code is, etc. And you're just
+[03:13] trying to make it behave like the use
+[03:17] case that you're trying to tune it for.
+[03:19] So typically here what you have is a
+[03:22] data set that is much smaller in scale
+[03:25] but of much higher quality
+[03:28] and you're basically tra uh taking your
+[03:31] model your pre-trained model and
+[03:34] teaching it exactly which tokens to
+[03:37] predict with the next token prediction
+[03:39] task.
+[03:42] And uh we've seen uh Laura which is
+[03:45] parameter efficient method which does
+[03:49] not tune all the weights but in a clever
+[03:52] way introduces low rank matrices that
+[03:56] are the ones that are being tuned
+[03:59] and we had stopped there. So what we're
+[04:02] going to see today is how to align the
+[04:06] model to align with what we call human
+[04:10] preferences.
+[04:11] And so here we're taking our model that
+[04:13] has been fine-tuned for a specific task
+[04:16] and trying to align our model to um make
+[04:21] it more something that a human would
+[04:22] like or that some metric that we're
+[04:26] defining would be more aligned with
+[04:28] that.
+[04:29] So as an example, let's suppose if you
+[04:32] have an assistant at the end of step
+[04:34] step two. So it's very much possible
+[04:37] that your assistant is you know behaving
+[04:39] the way you want but not let's say at
+[04:43] the tone that you want. So it's not
+[04:45] let's say friendly or it's not uh you
+[04:48] know safe. So you want to tune those
+[04:50] aspects in that third step.
+[04:56] Cool. So this step is called preference
+[05:00] tuning
+[05:01] and we're going to exactly see what that
+[05:03] is. So here for context let's suppose
+[05:07] that we have an SFT model and so by SFT
+[05:11] model I mean a model that has gone
+[05:13] through the pre-train stage and the
+[05:15] finetuning stage. And so for instance we
+[05:18] may ask our model uh to suggest a new
+[05:21] activity we could do with our teddy
+[05:23] bear. And here the model let's say
+[05:25] responds with I would suggest you to not
+[05:28] spend much time with your teddy bear at
+[05:30] all. So this is the response of an
+[05:34] assistant but it's not necessarily with
+[05:35] aligned with what we want.
+[05:38] So the idea here is to take these quote
+[05:42] unquote bad outputs and find
+[05:47] an output or rewrite an output that we
+[05:50] would want to have instead.
+[05:54] So this pair would be what what we call
+[05:57] a preference pair.
+[06:00] So in other words given this prompt we
+[06:03] have two responses.
+[06:05] One that we want to see which is this
+[06:08] one I'm going to read in a second and
+[06:10] then the other one that we do not want
+[06:12] to see.
+[06:13] So the for instance in this example the
+[06:16] answer we want to see is you know of
+[06:18] course teddy bears not only make awesome
+[06:20] companions for delightful sleep but also
+[06:23] can also be great buddies for fun
+[06:24] activities and you know just like
+[06:26] suggest some activities.
+[06:29] Does the setup sound good?
+[06:33] Yeah. So long story short we want to
+[06:36] align our model with human preferences.
+[06:41] So you may ask, you know, we have this
+[06:45] fine-tuning step already. Why would we
+[06:48] want to have a third step? Well, during
+[06:52] the second step, which is the
+[06:53] fine-tuning stage, if you remember, what
+[06:56] we did was construct a very high quality
+[07:00] data set of the kinds of prompts on
+[07:05] which we want our model to behave in a
+[07:07] certain way. So in order to compose such
+[07:10] a data set, it's actually something that
+[07:13] is very time consuming and very actually
+[07:17] difficult because the data set must be
+[07:20] of very high quality. And in this case,
+[07:24] what we're doing is not really teaching
+[07:27] the model exactly what it should
+[07:29] generate,
+[07:30] but rather telling the model what kind
+[07:33] of output it should prefer.
+[07:37] So we're less in a you know please
+[07:40] generate that kind of thing and more in
+[07:43] a you know I prefer this option kind of
+[07:46] thing.
+[07:48] And so typically, I don't know, if we
+[07:50] asked you uh write a poem, write a great
+[07:54] poem from scratch, it would typically be
+[07:58] much more difficult to do rather than
+[08:00] just showing you two poems, one bad poem
+[08:03] and one great poem, and ask you to just
+[08:08] say which one is better.
+[08:11] So in order to obtain the data sets,
+[08:14] it's already much easier.
+[08:17] The second reason is so during the SFT
+[08:21] stage when we compose our data set of
+[08:24] very high quality there is one aspect
+[08:27] that we really try to get right which is
+[08:30] the distribution of prompts
+[08:33] and what I mean by that is if we have
+[08:37] too much of a given kind of prompt our
+[08:40] model will be more biased towards
+[08:43] responding in that particular way. So
+[08:47] what people try to do is to be careful
+[08:50] about the distribution of prompts that
+[08:53] are in the SFT data.
+[08:56] And so here, let's say if our model
+[08:58] misbehaves, if we were thinking about
+[09:01] just adding one example in the SFT data
+[09:04] set, well, we would have to be very
+[09:06] careful about which prompt we're adding
+[09:09] and whether it's not going to bias the
+[09:11] model like too much in that direction.
+[09:15] So that's the second reason. And then uh
+[09:18] the third reason is what I mentioned
+[09:20] which is uh the SFT data is typically
+[09:23] very high quality. So if you're um
+[09:26] looking at all the missteps that your
+[09:28] model is doing and trying to put that in
+[09:31] the SFT data, you're just, you know,
+[09:33] have a hard time takes a lot of time. Um
+[09:37] but one note here
+[09:40] is if your SFT data is misbehaving a
+[09:44] lot, it may also be due to the fact that
+[09:47] your SFT data set has some problem.
+[09:51] So preference tuning is not the answer
+[09:53] to everything. Maybe it's better
+[09:55] sometimes to just check your SFT data
+[09:58] set for some issues.
+[10:03] That sound good? Yep.
+[10:20] Yeah. So to do that in the preference
+[10:22] tuning stage. Okay. So the question is
+[10:24] we saw Laura for SFT. What is the
+[10:26] equivalent for preference tuning? uh so
+[10:28] we'll see that later in the in the
+[10:30] lecture but you can think of Laura as
+[10:34] being some way to I guess reduce the
+[10:38] number of parameters that you need to
+[10:40] tune that is slightly different with the
+[10:42] objective function that you're using to
+[10:44] train your model and here preference
+[10:47] tuning you can think of it more as a
+[10:50] different objective function but it's it
+[10:52] may very well be something that you also
+[10:54] use LoRa for. So the two are not
+[10:57] incompatible.
+[10:59] >> Yes,
+[10:59] >> but it will become more clear later on.
+[11:02] But yeah, great question. Uh one last
+[11:05] thing I will add here is um another
+[11:09] difference with the SFT stage is that
+[11:12] preference tuning allows us to inject
+[11:15] some negative signal
+[11:19] because SFT is all about teaching the
+[11:21] model about like what it should predict
+[11:25] but it does not teach the model about
+[11:27] what it should not predict
+[11:30] and we will see that perference tuning
+[11:31] allows you to inject some negative
+[11:33] signal
+[11:36] Cool. So to start, of course, we need to
+[11:41] have our preference pairs. And so we're
+[11:44] going to look at this uh data collection
+[11:47] step first.
+[11:49] So here's the setup.
+[11:51] You have a prompt. Let's say write a
+[11:54] poem and you have a given response which
+[11:58] is the poem that is being generated by
+[12:00] the model.
+[12:02] You have a few ways to construct your
+[12:06] preference data.
+[12:08] So either you start with kind of a p
+[12:11] pointwise mindset where you score each
+[12:16] proposed poem with some kind of
+[12:18] pointwise score. And here pointwise
+[12:21] score means a score just relative to one
+[12:26] observation.
+[12:28] You could very well do that, but I will
+[12:30] say it's kind of hard.
+[12:32] It's kind of tough as a human to say,
+[12:34] okay, this one is, I don't know, 0.9,
+[12:36] this one is like a 0 2. It's not super
+[12:39] clear uh exactly how you would scale
+[12:42] that.
+[12:44] The second idea is for you to get two
+[12:49] observations at the time and for you to
+[12:51] say which one is better. So this one is
+[12:54] called pair-wise preference data and
+[12:58] it's much easier.
+[13:02] And then the third one is listwise which
+[13:05] is you know you get a list of let's say
+[13:07] n poems and then you just rank you know
+[13:11] which one is best which one is uh worse
+[13:14] etc etc and I guess this one is easier
+[13:17] than pointwise because you don't have to
+[13:20] specify I guess how much better it is
+[13:22] but I guess it's still a bit more
+[13:24] complicated
+[13:27] and that's the reason why people
+[13:29] typically use parise
+[13:32] So what they do is they collect
+[13:35] pair-wise preference data meaning for
+[13:38] each prompt they have two possible
+[13:40] answers and then
+[13:44] they just specify which one is better
+[13:47] and so that's the one we'll continue um
+[13:51] this lecture with. Okay so now you may
+[13:55] ask okay great uh pair wise preference
+[13:57] data but how do you get it?
+[14:00] Well, here is the recipe. So, in order
+[14:03] to generate a pair of responses, so
+[14:05] first you need a prompt and we've seen
+[14:09] um you know, previously I think it's
+[14:12] lecture probably three um that what you
+[14:16] could do was to generate different
+[14:20] answers if you have a temperature that's
+[14:22] positive. So typically what people do is
+[14:26] they put this prompt let's say twice
+[14:28] into the model with a positive
+[14:31] temperature and then they can get two
+[14:33] different answers.
+[14:35] Um the prompt is typically something
+[14:39] where we wanted to follow the
+[14:42] distribution of what the users typically
+[14:44] ask. So the prompt X can be something
+[14:47] that we obtain from the logs or from
+[14:50] let's say a desired set of prompts.
+[14:54] And then what we do is we have these two
+[14:57] observations. So the first one is the
+[15:00] prompt and the first response. The
+[15:03] second one is the prompt and the second
+[15:06] response. And what we do is we rate we
+[15:10] compare them.
+[15:12] So we can compare them with of course
+[15:16] human ratings
+[15:18] but we can also compare them with some
+[15:20] other metrics.
+[15:22] So I'll just list a few. Uh so we have
+[15:26] LLM as a judge which you may have heard
+[15:29] of which we have not seen yet which we
+[15:33] will see in a few lectures. That is also
+[15:36] typically used to just compare
+[15:39] I guess how much better one observation
+[15:43] is compared to another.
+[15:46] We can also use some other metrics
+[15:49] rule-based one like blur rouge etc.
+[15:52] Although it is not as used these days
+[15:56] and the simplest way to compare these
+[15:58] two observations is to have a binary
+[16:02] setting
+[16:04] where you say okay is response one
+[16:06] better or worse than response two. But
+[16:09] you could also think of a more nuanced
+[16:12] scale. Meaning you can also say okay
+[16:15] response one is much better, better,
+[16:19] slightly better, slightly worse, worse
+[16:22] or much worse. So this is also something
+[16:25] that you can do. Um but there are some
+[16:28] challenges with that approach
+[16:30] because for instance if you uh I don't
+[16:33] know consider human ratings a lot of
+[16:35] tasks are a little bit subjective.
+[16:38] So in a lot of cases actually what
+[16:40] people do is
+[16:42] having a pair wise preference data set
+[16:46] on the binary scale.
+[16:48] So only is it better or worse.
+[16:54] Does that sound good?
+[16:57] Yeah. Um okay. So another way to obtain
+[17:00] that data is
+[17:02] to have to find in your logs a response
+[17:07] that you did not like
+[17:09] to take that response and to rewrite it
+[17:13] which is basically what we did here. So
+[17:16] here when we have the response here what
+[17:20] we did is take the response and rewrite
+[17:22] rewrite a good one.
+[17:27] So this is also what people do but of
+[17:29] course it is a bit more involved because
+[17:31] you need to you know generate and I told
+[17:32] you that generation was uh kind of
+[17:35] costly and tough but this is also
+[17:38] possible.
+[17:41] Does the data collection make sense?
+[17:46] Yeah. Cool. Okay. So now we have our
+[17:52] preference data and what we want is to
+[17:56] align our model to prefer responses that
+[18:00] were preferred by the rating and I guess
+[18:04] down downweight the responses that were
+[18:06] not preferred.
+[18:08] And so in order to do that we will see a
+[18:11] method that's called RLHF RLHF.
+[18:16] And uh I'll see we'll see that uh in
+[18:20] more details in a second. Uh but as the
+[18:23] name indicates RLHF
+[18:26] relies on RL.
+[18:28] So I'm just going to start with some RL
+[18:31] basics. So do we have any RL experts
+[18:34] here?
+[18:37] Yeah. No. Okay. So no need to be an RL
+[18:40] expert. So don't worry, we'll go really
+[18:43] slowly on that.
+[18:45] So in the RL world world what people do
+[18:48] is they have an agent and here I mean
+[18:52] agent in the RL term which interacts
+[18:55] with an environment.
+[18:58] So what does it do? It is at a given
+[19:01] state at let's say time t. It can take
+[19:05] an action
+[19:07] at time t and it takes that action
+[19:11] according to some policy.
+[19:14] The policy is typically noted pi pi of
+[19:19] theta of the action given the state. So
+[19:22] what that policy means is simply
+[19:27] giving you the probability of you taking
+[19:31] an action given a state.
+[19:35] Easy, right? And so given that the agent
+[19:40] takes some action,
+[19:43] it also receives some rewards.
+[19:46] So sometimes it's a good reward,
+[19:48] sometimes it's bad rewards.
+[19:52] So what we're going to do is to leverage
+[19:55] that mindset
+[19:57] for our preference tuning exercise.
+[20:02] So let's see together how we can
+[20:05] transpose these quantities in the LLM
+[20:07] world.
+[20:09] So what is the agent?
+[20:12] The agent is the LLM.
+[20:15] So in terms of uh the state that it is
+[20:19] in so it's simply the input that it has
+[20:22] so far.
+[20:25] So the action that it wants to do is to
+[20:28] predict the next token. So it basically
+[20:31] always wonders okay what is the next
+[20:33] token given this input
+[20:36] and this action or this next token is
+[20:40] among the set of tokens that there are
+[20:43] out there. So if you want you know the
+[20:45] environment can be the set of tokens of
+[20:47] your vocabulary
+[20:50] and in order to decide which token
+[20:53] should come next.
+[20:56] The LLM determines that using the
+[20:59] probability of next token which is
+[21:02] obtained by you know when you do your
+[21:04] forward pass and when you look at uh the
+[21:07] probability distribution as an output
+[21:11] which is basically our policy.
+[21:15] So our policy here is simply equal to
+[21:18] the output of the LLM given the input in
+[21:24] order to determine the next token.
+[21:27] So far so good. And now we're adding one
+[21:31] additional thing. So I told you, you
+[21:33] know, we're composing our preference
+[21:36] data sets and we want to know which
+[21:40] output is better than the other output.
+[21:44] And so we're going to use that for a
+[21:46] reward. We're going to somehow use that
+[21:49] for a reward and we will see how we will
+[21:51] use that.
+[21:54] So I'm going to just recap that part. So
+[21:57] we have our LLM take some inputs and
+[22:00] then it wants to predict
+[22:03] the next token. It wants to take this
+[22:04] action. So in order to do that, it uses
+[22:08] the probability distribution that it
+[22:10] outputs
+[22:13] and then the token that it predicts or
+[22:16] the output that it generates then
+[22:19] receives some reward that is going to
+[22:22] feed back into tuning the agent. And
+[22:26] here's the LLM. Yep.
+[22:36] So the question is wouldn't that be
+[22:38] expensive if we do uh this for all
+[22:40] pairs? Why would that be expensive?
+[22:53] Mhm.
+[22:57] Uh yeah. So
+[22:59] yeah, the question is what do you do in
+[23:01] terms of how expensive that is? So yeah,
+[23:03] typically people take batches for
+[23:05] instance. Um but I would not so it is
+[23:08] indeed expensive but we're going to see
+[23:10] a little bit some order of magnitude and
+[23:12] how that works. But you can think of
+[23:14] this as uh being um kind of a training
+[23:18] procedure that could be seen as as
+[23:20] expensive as some other training
+[23:22] procedure. There's nothing that makes
+[23:23] this more expensive.
+[23:25] >> Okay,
+[23:26] >> but we're going to see exactly. So I
+[23:27] think you're there are some points that
+[23:29] you're you know touching correctly. Uh
+[23:31] there's some parts that are added
+[23:35] compared to the regular you know
+[23:37] supervised let's say supervised fine
+[23:39] tuning uh setting and we're going to see
+[23:41] that in a second.
+[23:54] H so the question is uh does the reward
+[23:57] that you're getting from here uh I guess
+[24:00] powerful enough for the LM to change
+[24:03] well you will see some expressions on
+[24:05] the internet just characterizing this uh
+[24:08] training procedure as you know like it's
+[24:11] nearly not as many signals as what you
+[24:14] would get for SFT let's say because for
+[24:16] SFT you're literally always taking a
+[24:20] partial input and making the LLM learn
+[24:23] how to um generate the next token. But
+[24:28] here you're only getting roughly one one
+[24:31] signal per completion. So yeah,
+[24:34] definitely it's more sparse and that's
+[24:36] why you will see that RHF is seen as
+[24:39] more an approach that has sparse
+[24:42] signals.
+[24:46] Yeah. Yeah.
+[24:53] Great question. So the question is, do
+[24:56] you apply reward for each token or for
+[24:58] the whole thing? We're going to see this
+[24:59] in more detail, but it's for the whole
+[25:01] thing. It's for the whole thing, but
+[25:02] we'll see that in uh in just a second.
+[25:07] Yeah.
+[25:13] So the AD and H. Oh, right. So the
+[25:15] question is what is the AT and ST? So uh
+[25:19] just as a reminder ST is the state that
+[25:22] you're in and 80 is the action you want
+[25:25] to take. So in the context of an LLM
+[25:28] uh the state that you're in for an LLM
+[25:32] is the input that you have that you have
+[25:34] so far and then the action is which
+[25:38] token you want to generate given that
+[25:40] input. Yeah.
+[25:44] Cool. Yeah. So far so good.
+[25:47] Okay, perfect. So now that we know a
+[25:52] little bit what a mental model could be
+[25:54] for I guess LLM based RL,
+[25:58] I just want to highlight once more that
+[26:01] what we're trying to achieve is learn
+[26:05] how to align this policy
+[26:09] with
+[26:11] rewards.
+[26:13] So we want to learn theta and theta is
+[26:15] the parameters of our LLM such that pi
+[26:19] of theta
+[26:21] align with preferences
+[26:25] and that's where RHF comes into play. So
+[26:29] RHF stands for reinforcement learning
+[26:33] from human feedback and it is typically
+[26:36] composed of two stages. So the first
+[26:39] stage is you
+[26:43] figuring out how to distinguish good
+[26:47] output from bad output.
+[26:50] So here you know all the preference
+[26:52] pairs that you collected are actually
+[26:55] used for you to learn what is good what
+[26:57] is bad. So the input here is the
+[27:01] concatenation of the prompt and the
+[27:03] response and the output is a score.
+[27:07] So what you want to know given a prompt
+[27:09] and a response how good that is.
+[27:14] And then the second step is the RL step,
+[27:17] the reinforcement learning step. And
+[27:19] this is where you use the rewards
+[27:22] to align your model with the
+[27:25] preferences. So here as input you have
+[27:28] the prompt and what you somehow want to
+[27:30] do is to be able to generate yhat that
+[27:35] is more aligned with the rewards.
+[27:38] And by the way I just want to call out
+[27:40] one thing. So RLHF is reinforcement
+[27:43] learning from human feedback.
+[27:46] The human feedback part
+[27:48] refers to the labels on which the reward
+[27:52] model is trained.
+[27:55] So if the preference pairs are based on
+[27:58] human ratings
+[28:00] then we're relying on human preferences
+[28:03] then we're in RHF
+[28:06] because you will see out there there is
+[28:08] also RL let's say Aif reinforcement
+[28:12] learning from AI feedback and that one
+[28:14] is relying on nonhuman preferences.
+[28:18] So yeah
+[28:21] cool. Okay, so now that we know what RHF
+[28:25] is and we know that there are two steps,
+[28:28] we'll go through the first step
+[28:30] naturally. So here the idea is we want
+[28:33] to construct a model that knows which
+[28:38] output is good, which output is bad. And
+[28:42] of course here what we want is to not
+[28:44] only consider the output but also the
+[28:47] input
+[28:48] because uh you need to somehow
+[28:50] contextualize that answer.
+[28:53] So let's go with the our favorite
+[28:55] example. Uh so let's suppose you have
+[28:58] the following prompt. Suggest a new
+[29:00] activity I could do with my teddy bear.
+[29:04] So what you want is to have a reward
+[29:08] model that here we note RM that tells
+[29:12] you that you know the answer that we
+[29:14] rewrote into the good answer is good
+[29:18] and we want to somehow have that model
+[29:20] that tells us that the output that we
+[29:23] constructed or that we did not construct
+[29:26] the output that we saw was bad is bad.
+[29:30] So we want to somehow have a model that
+[29:33] takes in the prompt and the good
+[29:35] response and say it's you know good and
+[29:38] we want to somehow have a model that uh
+[29:41] you know takes the prompt and the bad
+[29:43] response to say it's bad. So now the
+[29:46] question is how do you construct such a
+[29:48] model?
+[29:50] Well in order to do that we are using a
+[29:54] formulation that's called the Bradley
+[29:56] Terry formulation.
+[29:58] So that one is an important formula. So
+[30:01] uh we just stay here for a little bit.
+[30:03] So what it what it says is that the
+[30:06] probability bless you uh to have an
+[30:10] output yi
+[30:13] be better than an output yj
+[30:17] is equal to an exponential of some score
+[30:22] which is a score with respect to i over
+[30:26] the exponential of that score with
+[30:28] respect to i plus the exponential of
+[30:32] some 4 respect to J.
+[30:36] So that is called the Bradley Terry
+[30:38] formulation and this is the formulation
+[30:41] we will use to build our model.
+[30:46] So here um it's also equal to sigma of
+[30:50] RA I minus RJ. So who knows what sigma
+[30:54] is?
+[30:57] >> Yes, exactly. So it's a sigmoid. So just
+[30:59] as a reminder sigmoid is 1 / 1 +
+[31:03] exponential of minus x. So this is how
+[31:07] uh the graph looks like. So when it's
+[31:08] minus infinity it's uh it tends towards
+[31:11] zero and then when it's towards plus
+[31:13] infinity it tends uh towards one.
+[31:19] So in other words,
+[31:22] if I is better than J,
+[31:26] what we want is for the input to sigma
+[31:30] to be as high as possible
+[31:34] because you want the probability to be
+[31:35] as close to one.
+[31:38] So you want to somehow
+[31:40] have
+[31:42] R I be high if the output I is good.
+[31:47] and somehow our J to be low if the
+[31:51] output is bad.
+[31:54] So far so good.
+[31:56] So here
+[32:00] what we want to do is to somehow
+[32:04] train a model that is able to output
+[32:08] scores RA I and RJ
+[32:12] using this formulation.
+[32:16] So this formulation involves two
+[32:19] quantities because we have a pair-wise
+[32:21] data set.
+[32:24] So far so good. Okay. So it will become
+[32:27] more clear in a second. So here for
+[32:29] training the idea here is you have some
+[32:33] model that you initialize
+[32:37] and you input on the one hand your
+[32:40] prompt X and your winning output. So I'm
+[32:45] saying winning. So it's yhat W.
+[32:49] You put it into the model.
+[32:52] It produces score R of X and Y W.
+[32:57] And then you have a second output. So X
+[33:00] and Y L Y L which is the losing output.
+[33:05] So you put it into the model and it has
+[33:07] a second score.
+[33:10] And now you somehow want to have a loss
+[33:14] function
+[33:16] that takes into account these two
+[33:18] scores.
+[33:20] So based on this formulation,
+[33:25] do you have like a some suggestion as to
+[33:28] which loss function to use?
+[33:34] So here our loss function would be
+[33:36] parise.
+[33:37] Yep.
+[33:39] Yeah. Uh so the uh the proposed answer
+[33:42] is a binary cony. Um so can you explicit
+[33:46] that a bit more?
+[33:50] >> Mhm.
+[33:59] >> Uh-huh. Okay. So um I guess in that case
+[34:01] what would it be?
+[34:07] Yep.
+[34:10] Yeah.
+[34:13] Yeah. Yeah. Exactly. So I guess the Yes.
+[34:15] So great great answer. So I guess your
+[34:17] answer is having uh some negative log
+[34:22] likelihoods of this quantity which is uh
+[34:25] so the cross entropy can be seen as kind
+[34:27] of a special case of this but so just so
+[34:30] that that we make sure that we uh get
+[34:32] this part. Um
+[34:36] so in order to just get that uh
+[34:39] formulation which you mentioned again I
+[34:42] guess one idea that we can have is given
+[34:47] our data
+[34:49] and given this formulation that we saw
+[34:51] the Bradley Terry one
+[34:54] to find
+[34:57] parameters theta that maximize the
+[35:00] probability of that data happening which
+[35:03] basically leads leads to what you
+[35:04] mentioned. Uh so here I'm just going to
+[35:06] write what that means so that just we
+[35:09] can um kind of be all aligned. So here
+[35:13] it's
+[35:15] so let's suppose you have a preference
+[35:19] data set of let's say um you know
+[35:23] winning example associated with losing
+[35:26] example. So you have a bunch of pairs
+[35:28] like this. So let's suppose that these
+[35:30] pairs they happened independently of one
+[35:33] another. So what you want is to find
+[35:39] parameters that somehow maximize the
+[35:43] probability of you seeing
+[35:47] those examples.
+[35:49] Right? So here what that means is we
+[35:52] want to somehow maximize
+[35:55] the product of let's say these
+[35:59] n preference pairs which is the
+[36:01] probability of you know uh like some
+[36:05] output uh w being uh better than some
+[36:09] output l
+[36:12] and we saw that with the Bradley Terry
+[36:16] formulation. So we have this formulation
+[36:20] which is basically the product of
+[36:25] uh y I1 to n of this uh sigma of
+[36:32] this reward which is basically a
+[36:34] function of the input prompt and the
+[36:37] output
+[36:41] like this.
+[36:45] So what I'm doing here is to just
+[36:47] reconstruct the loss from first
+[36:49] principles.
+[36:52] So whenever you see a product of
+[36:54] probabilities, the first thing you need
+[36:56] to think about is
+[36:59] yes log because this can become very
+[37:01] small. So it can cause instabilities. So
+[37:04] if you take the log, if you want to
+[37:06] maximize a product is the same as
+[37:08] maximizing the log of that. So if you
+[37:11] take the log of that. So let's suppose
+[37:13] I'm taking let's say the log of that.
+[37:17] Let's say I'm taking the log of that.
+[37:20] So it's basically equal to the sum
+[37:26] of the log of
+[37:30] sigma of r of the winning
+[37:36] minus the one from the losing.
+[37:43] So we want to maximize that.
+[37:46] But people in ML they like to minimize
+[37:48] things. So we're going to take like have
+[37:52] a negative in front. So maximizing plus
+[37:56] the sum of the log is the same as
+[37:58] minimizing minus the sum of the log. And
+[38:01] so this
+[38:03] will be our loss function.
+[38:12] Does that make sense?
+[38:14] And this is exactly what you mentioned.
+[38:18] And
+[38:20] typically we uh you know write the
+[38:23] expectation
+[38:24] and this is our loss function.
+[38:27] So our last function is minus the
+[38:29] expectation of log of sigma r and x and
+[38:33] y y w minus the reward of the losing.
+[38:40] Sounds good. So here the last function
+[38:44] is pairwise
+[38:46] but the reward model is it pair wise or
+[38:48] is it pointwise
+[38:50] like I guess do you need a pair to make
+[38:52] a prediction or do you need just one?
+[38:55] >> Do you need a pair
+[38:57] pair? Well that's the beauty of things.
+[38:59] You don't need a pair. So you're just
+[39:00] training it pair-wise but it's actually
+[39:02] pointwise.
+[39:06] So I think that's one thing I kind of
+[39:07] realized. You know I look at this loss
+[39:09] and you know this is a beautiful thing.
+[39:10] So you're training in a pair wise way,
+[39:12] but at the end of the day, you have a
+[39:15] reward model that takes in one prompt
+[39:19] and its output and just outputs one
+[39:21] number.
+[39:23] And we saw that it will try to output a
+[39:26] high score for, you know, winning um
+[39:31] examples and then a low score for losing
+[39:33] examples.
+[39:36] So this is our reward model. And I'm
+[39:38] looking at the time. I'm actually not on
+[39:41] time, so I'll just move on. Um, so
+[39:43] typically here what you would need is a
+[39:46] set of data, which is typically on the
+[39:48] tens of thousands or maybe even more.
+[39:51] Um, and here the label would be the
+[39:53] preference rating. The preference here
+[39:57] should come from humans if we're talking
+[40:00] about RLHF.
+[40:03] And in terms of model, well, you have a
+[40:05] bunch of different choices. Uh so as we
+[40:09] know now uh models that are decoder only
+[40:12] that predict the next token are very
+[40:15] popular. So you could very well take
+[40:17] such an LLM and just have some
+[40:20] classification heads at the end of your
+[40:23] sentence that you're uh taking into
+[40:25] consideration and then use that to
+[40:29] predict the reward. Or if you remember
+[40:32] uh we've also seen encoder only models
+[40:35] uh in the beginning of the class. So for
+[40:37] instance BERS you could typically also
+[40:39] project the embedding of the CLS token.
+[40:44] This could very well be an option.
+[40:47] So typically what people do nowadays
+[40:50] is take the LLM route because everything
+[40:52] is an LM these days. So it's like
+[40:54] decoder only. You just put a
+[40:56] classification head.
+[40:59] And so people have also come up with
+[41:01] benchmarks
+[41:03] to evaluate how good you're doing. So
+[41:07] just put a reference here. Reward bench
+[41:10] in case you're interested is a pretty
+[41:12] popular one.
+[41:14] Um
+[41:16] but yeah,
+[41:18] so at the end of this you get a reward
+[41:21] model that takes in a prompt and a given
+[41:25] response
+[41:27] and gives you a score.
+[41:29] Yep.
+[41:49] >> Exactly. So the question is uh in some
+[41:51] tasks the human preference would be
+[41:54] something but in other tasks it may be
+[41:56] something else. So typically those
+[41:58] rewards they are with respect to a given
+[42:00] dimension.
+[42:02] So they can be let's say is the output
+[42:06] useful
+[42:07] or is the output I don't know friendly
+[42:10] is the output safe. So all of that are
+[42:12] different dimensions. So they can be
+[42:14] different reward models.
+[42:17] Um you can also have like some holistic
+[42:19] score as well.
+[42:21] uh but yes so you need to define a
+[42:23] dimension across which you're actually
+[42:27] quantifying how good your response is.
+[42:30] So the ones that I mentioned are uh the
+[42:32] common ones that you would you would
+[42:33] find. Um another thing that I will say
+[42:37] as well uh while we're at it so human
+[42:42] ratings are very sensitive to the
+[42:44] guidelines that you're also exposing.
+[42:47] So, we're not going to go into details
+[42:48] here, but one important aspect of human
+[42:53] preference data is to make sure that the
+[42:55] guidelines you're telling your raiders
+[42:58] are as objective as it could get. I
+[43:02] mean, sometimes you cannot have them be
+[43:05] super objective, but you you have the I
+[43:08] guess the task of just making sure
+[43:10] they're clear enough so that your human
+[43:13] preferences
+[43:14] uh they're not noisy because they can be
+[43:16] noisy, but that's also one challenge.
+[43:20] Yep.
+[43:25] So the question is uh is the reward here
+[43:29] like a regression or a classification.
+[43:32] So let's look at the
+[43:35] at the loss function and here.
+[43:40] So well it's kind of hard I guess I
+[43:44] would say um because the reward can be
+[43:48] kind of something that can be
+[43:49] interpreted as a score but we have a
+[43:52] probabilistic formulation
+[43:55] um so I'll probably frame that as a
+[43:58] classification task because you have
+[44:00] preference data is it better worse so
+[44:02] it's like one or zero but at the end you
+[44:06] use the rewards so it's not I
+[44:09] purely a classification task because at
+[44:12] the end you have this um but one thing
+[44:15] to note is that the scale that these
+[44:17] rewards are at is typically something
+[44:20] that is scaled itself.
+[44:23] >> So at inference time you have some
+[44:26] normalization procedure that normalizes
+[44:29] that across your batch but yeah I would
+[44:32] probably characterize the formulation
+[44:34] more as a probabilistic one I would say.
+[44:42] Yep.
+[44:44] Yep.
+[44:49] Yep. So the question is do we normalize
+[44:51] the score? So there are many different
+[44:53] methods to I guess normalize things. We
+[44:55] typically do. We typically do normalize.
+[44:57] So I guess if you're in a regression
+[45:00] setting, you're trying to predict some
+[45:04] score on a given scale, which you're
+[45:06] you're not doing here. So it's kind of
+[45:08] free form here.
+[45:10] Um so yeah, so there is some rescaling
+[45:12] that happens. Yeah. You had a question.
+[45:26] >> Yeah. The question is uh can you tell us
+[45:28] more about what a the output of a reward
+[45:32] model is? So we're going to see that a
+[45:35] bit later but you can think of you know
+[45:37] good outputs as being let's say one bad
+[45:40] outputs as being a minus two minus
+[45:42] three. So it's basically on the
+[45:44] continuous scale if you want.
+[45:47] We're going to see an example in a
+[45:49] little bit. So hopefully this can Do you
+[45:51] have a question? Perfect. Uh we're going
+[45:54] to see an example. So hopefully that
+[45:56] will be clear.
+[46:00] Cool. Um
+[46:03] so what we did is train a reward model.
+[46:07] Now the second step is to use that
+[46:11] reward model to align our model or and
+[46:15] by model I mean the LLM. The LLM that
+[46:18] went through the pre-training stage and
+[46:19] the SFT stage is the model that we want
+[46:23] to align with human preferences.
+[46:26] We're going to do that using
+[46:27] reinforcement learning and we're going
+[46:30] to do that using the reward model that
+[46:32] we just constructed.
+[46:36] So the reward model here
+[46:38] is the model that we obtained in step
+[46:41] one and it allows us to distinguish
+[46:46] good outputs and bad outputs.
+[46:50] So here is a general recipe of how you
+[46:54] would align your model.
+[46:56] So first you would take your prompt
+[46:59] as input.
+[47:02] Your LLM will generate
+[47:05] a completion.
+[47:07] So here a completion means like a full
+[47:10] response from the model. So by the way
+[47:13] completion people use also the term roll
+[47:16] out. So it generates a completion, a
+[47:19] roll out, a full response
+[47:22] and that full response along with the
+[47:24] prompt
+[47:26] goes into the reward model.
+[47:29] So as we saw the reward model right now
+[47:31] knows if it's a good, if it's bad. Let's
+[47:34] say right now it's bad. So in practice
+[47:36] it does not generate the the thumbs
+[47:38] down. It generates some kind of score.
+[47:40] So if you if you want like minus two,
+[47:42] let's suppose.
+[47:44] So we take that reward into
+[47:47] consideration
+[47:49] and then what we do is we tune the LLM
+[47:55] with this information.
+[47:57] So it's more complicated than that and
+[47:59] we'll see how we go about doing this but
+[48:01] this is the general idea.
+[48:05] So just as a reminder, the reward model
+[48:09] is the model that we trained as step one
+[48:13] and it is a model that is frozen.
+[48:16] We're not training the reward model. The
+[48:18] reward model has been trained.
+[48:21] The model that we're training is the the
+[48:23] LLM.
+[48:26] So I think that's an important point to
+[48:28] note.
+[48:31] And our goal
+[48:34] is to optimize for higher rewards
+[48:40] but then
+[48:42] without going too far from the initial
+[48:46] model.
+[48:49] So I think the you know optimizing for
+[48:51] higher rewards I think everyone agrees
+[48:53] with me right. But I I I just said a
+[48:57] second statement which is but we don't
+[49:00] want to go too far from the initial
+[49:02] model.
+[49:04] So why would that be like why would we
+[49:07] want to not deviate too much from the
+[49:10] base model?
+[49:16] So one suggested answer is it will
+[49:18] catastrophically forget what it has
+[49:20] learned. Why would that be a problem?
+[49:35] great. Yeah, I think it's a great way to
+[49:37] put it. So the the the suggested answer
+[49:40] here is uh you have all this knowledge
+[49:43] in your initial model which is
+[49:45] pre-trained and then instruction tuned
+[49:48] or tuned and you don't want to move away
+[49:50] too much. This is exactly it. So that's
+[49:53] one reason.
+[49:55] What could be another reason? So
+[49:57] definitely one, it's a very very good
+[49:58] reason. What could be another reason?
+[50:02] Yeah.
+[50:04] Yeah. So uh overfeeding on that data. So
+[50:07] can you tell me more?
+[50:14] >> Yeah, great point. So the second
+[50:16] suggested answer is uh you can overfeit
+[50:19] on a data that is not super clean. And I
+[50:21] will go a bit more into detail on what
+[50:23] that means.
+[50:25] Yep. You want to add?
+[50:32] Yeah. Yeah. Exactly. So I guess your two
+[50:34] points are I guess along the same lines
+[50:35] which is the reward model can be noisy.
+[50:38] So that's exactly it. So, it's a
+[50:40] phenomenon that's called reward hacking
+[50:44] where
+[50:46] if you are trying to optimize too much
+[50:49] for the rewards, you're basically
+[50:52] assuming that the reward is exactly
+[50:56] quantifying what you want, but it may
+[50:59] not be the case because the reward model
+[51:01] itself is imperfect.
+[51:04] So just to make sure that everyone gets
+[51:06] the point going to illustrate that with
+[51:09] an an example. Um so let's suppose that
+[51:15] I'm giving a lecture
+[51:17] and my objective is for the lecture to
+[51:21] be as informative as possible.
+[51:25] So I can take the choice to have
+[51:28] something that I can quantify to know if
+[51:31] what I'm saying is informative. So let's
+[51:33] suppose if my reward is uh how loud the
+[51:38] claps are at the end of the lecture if
+[51:40] the clapping is very is a lot or not.
+[51:44] The problem is if I optimize too much
+[51:48] for the volume of clapping at the end.
+[51:52] It may be the case that if I found out
+[51:56] that you all like jokes and I start
+[52:00] making jokes and then you clap at the
+[52:02] end, you know, my reward is maximized
+[52:05] but my objective is not fulfilled which
+[52:07] is make the lecture informative.
+[52:10] So in practice, this reward hacking
+[52:14] phenomenon
+[52:15] is something that leads your model to
+[52:18] optimize too much
+[52:20] on a metric or a score that is
+[52:22] imperfect. So you can very well maximize
+[52:25] the rewards but not fulfill what you
+[52:27] want. And this is exactly what the idea
+[52:30] behind reward hacking is.
+[52:34] So yeah and another reason by the way.
+[52:36] So it's one reason is because uh your
+[52:38] base model is already great. it knows a
+[52:40] lot of things. Second one is because the
+[52:43] reward model is imperfect. So you have
+[52:45] this reward hacking phenomenon. The
+[52:48] third reason is also because you can
+[52:49] have some training instabilities.
+[52:53] Anyways, we have a bunch of reasons why
+[52:55] we don't want to deviate too much.
+[52:59] And so in this setup, you typically have
+[53:02] more observations than in the reward
+[53:04] model case. So you have typically at
+[53:07] least 100k observations
+[53:10] and the label that you get here is from
+[53:12] the reward model
+[53:15] and uh so you start with the model that
+[53:20] you obtain that's after SFT. So that's
+[53:22] the one that you train. And the last
+[53:25] function will be something that will try
+[53:30] for you to maximize the rewards, but
+[53:33] also
+[53:35] to not have you deviate too much from
+[53:37] the base model. So we're going to see
+[53:39] exactly how we can do that. But that's
+[53:42] the idea of how our loss function will
+[53:45] look like. It will have these two parts.
+[53:49] Sounds good.
+[53:52] And as we saw uh so we don't want it to
+[53:55] deviate too much because of reward
+[53:56] hacking and instability and and so on.
+[54:01] So in order to do that you may have
+[54:03] heard a very popular RL algorithm that's
+[54:07] called PO.
+[54:09] So PO stands for proximal policy
+[54:13] optimization.
+[54:15] So the reason why it's named proximal is
+[54:18] because we do not want our model to
+[54:21] deviate too much from the base model and
+[54:24] we're going to see how we do that.
+[54:28] So this is roughly how our loss function
+[54:30] will look like. So we'll have a part
+[54:33] that is a reward model that we want to
+[54:36] maximize and then some other part that
+[54:40] is around
+[54:41] uh measuring how far the distribution of
+[54:46] the policy that we're training
+[54:49] is to the reference model or the base
+[54:52] model. So here the reference model would
+[54:54] be
+[54:56] your SFT model.
+[55:00] So you have these two parts.
+[55:04] Does the formulation of the loss roughly
+[55:06] make sense so far? That make sense?
+[55:12] Cool. Uh okay. Kale divergence. Um so
+[55:16] I'm just talking about Kale divergence,
+[55:18] but I don't want to just assume you know
+[55:20] what that is. Um so the Kale divergence
+[55:25] is
+[55:26] some measure. I don't want to say
+[55:29] distance because distance has a lot of
+[55:32] connotations to it. It's not a distance
+[55:34] but it's some measure of how far two
+[55:38] probability distributions are.
+[55:42] So you take a probability distribution
+[55:44] let's say P and another one probability
+[55:47] distribution Q and you compute this um
+[55:51] formula which is the sum of PI log of PI
+[55:54] over QI just gives you a number of how
+[55:58] distant or how far these two
+[56:01] uh probability distributions are.
+[56:05] So you want to minimize
+[56:08] the loss.
+[56:10] So, I guess you want to minimize
+[56:13] how far they are.
+[56:16] Um,
+[56:19] does that make sense that we're using
+[56:21] this? Yeah. Um, okay. So, just one
+[56:26] little question. So, okay. Is the K KL
+[56:30] divergence positive or negative or like
+[56:33] what what can you tell me about the KL
+[56:35] divergence?
+[56:40] Have you seen the Yeah, it's positive.
+[56:42] Why is it positive?
+[56:55] Yeah, but why?
+[56:59] So maybe we can come later. But great,
+[57:01] great. I think the, you know, the result
+[57:03] is here, but I guess I want to know why.
+[57:05] Yes.
+[57:07] Ah, yes. Exactly. So yeah, if you use
+[57:09] Jensen's inequality because uh when you
+[57:12] look at this formula, I mean luck can
+[57:14] take like positive and negative values.
+[57:16] It's not super clear, but uh yeah, the
+[57:18] the way you prove that it's always
+[57:20] positive or equal to zero is with the
+[57:22] Jensen's inequality.
+[57:24] Um and so yes, this quantity is equal to
+[57:28] zero if and only if P and Q are equal.
+[57:34] Cool.
+[57:37] So with that, we're going to go a little
+[57:40] bit more in depth into
+[57:43] um the loss function. So I mentioned
+[57:47] that the loss function tries to maximize
+[57:50] for rewards
+[57:52] but also make it so that the model does
+[57:56] not deviate too much from the base
+[57:59] model.
+[58:00] Well, there's something that I've
+[58:03] like kind of lied a little bit about
+[58:05] you, which is we don't want to maximize
+[58:07] rewards. We actually want to maximize a
+[58:11] quantity called advantage.
+[58:13] So what is the advantage? So you can
+[58:16] think of the advantage as being how much
+[58:20] better is your output compared to what
+[58:25] you would expect.
+[58:29] So people typically use advantage to
+[58:33] make the whole process be I guess more
+[58:36] stable the training more stable
+[58:40] and we estimate that advantage with a
+[58:45] function called the value function which
+[58:47] we will see in a little bit. Did you
+[58:48] have a question? No, no question. So we
+[58:51] we we have two quantities right? We have
+[58:53] the reward that we saw previously how to
+[58:57] compute which is given a prompt given a
+[59:02] completion
+[59:04] how good is this you know prompt and
+[59:06] completion
+[59:08] and then the value function is another
+[59:11] estimation
+[59:13] but this estimation is not at the
+[59:15] completion level is actually at the
+[59:17] token level.
+[59:20] So what we're doing here is we're taking
+[59:23] the prompt along with the partial
+[59:27] generation as input
+[59:31] and we're trying to estimate
+[59:33] what the reward would be if we were to
+[59:37] continue to generate the output
+[59:41] following the policy.
+[59:45] So I'm just going to repeat this one
+[59:46] more time because it's charged in
+[59:48] meaning. The value function is a token
+[59:52] level estimation
+[59:55] of the rewards that takes in a partial
+[59:59] input and predicts the reward.
+[60:04] So
+[60:05] if that predicts a reward if you were to
+[60:08] follow the policy in your generation.
+[60:12] So this value function is something you
+[60:15] will see in papers as something that
+[60:18] people have to train when they do PO and
+[60:22] it's typically because people need to
+[60:25] have this value function when they
+[60:26] compute the advantage that I mentioned
+[60:29] above
+[60:31] and this value function
+[60:35] is typically trained jointly with the
+[60:38] policy.
+[60:40] So in other terms you have your LLM
+[60:44] which is initialized as the SFT model
+[60:48] which you know generates the prediction.
+[60:51] So what you typically do is also have
+[60:56] some head value head
+[61:00] that also
+[61:03] so this time is not a classification
+[61:04] problem it's a regression problem. you
+[61:07] try to estimate the final reward if you
+[61:11] were to continue to generate according
+[61:14] to policy.
+[61:16] So this is typically something that you
+[61:18] also need to train jointly with the
+[61:20] policy
+[61:22] and I am intentionally not going too
+[61:26] much into detail as to exactly how that
+[61:29] advantage is formulated. It is just
+[61:31] beyond the scope of this class. But in
+[61:34] case you're interested, I would highly
+[61:36] recommend reading this paper which is uh
+[61:39] mathematically involved about the
+[61:42] generalized advantage estimation methods
+[61:45] which people typically use for this. So
+[61:48] it's this highdimensional continuous
+[61:50] control using generalized advantage
+[61:52] estimation paper. If you if you're
+[61:55] interested just feel free to take a
+[61:56] look. But this is typically the method
+[62:00] that people use to estimate these
+[62:03] advantages.
+[62:06] So now we're going to see in a second
+[62:08] where those advantages are used. But
+[62:11] just as a high level, does that make
+[62:13] sense to everyone? What we're trying to
+[62:16] achieve here?
+[62:20] Um yeah. So um in other words, what we
+[62:25] want is to maximize the rewards but not
+[62:30] deviate too much from the base model.
+[62:32] But what we want is to actually
+[62:36] find a way to
+[62:40] make the rewards a bit more relative as
+[62:42] to what you would actually expect.
+[62:45] So you want to compare the rewards that
+[62:47] you're obtaining
+[62:49] with kind of an average response if you
+[62:52] want like the idea is okay if you are
+[62:55] having a great reward what would be the
+[62:57] reward kind of in the average case and
+[62:59] you want to still maximize that
+[63:02] and the reason why people use this
+[63:06] reward minus baseline is because it
+[63:10] reduces the variance of these estimates
+[63:13] and it just makes the training just kind
+[63:16] of go faster typically. So that's why
+[63:19] people use that part.
+[63:22] But in order to compute the advantage,
+[63:26] what people use is a method called
+[63:28] generalized advantage estimation which
+[63:31] you can think of it as like a big
+[63:34] formula with some hyperparameters.
+[63:37] Uh that is in the paper below.
+[63:40] Just a general idea.
+[63:45] Cool. So, okay, looking at the time. So,
+[63:48] we're going to look at two typical
+[63:50] variants of the PO loss.
+[63:54] The first one is called PO clip.
+[63:58] So, the idea here
+[64:01] is to prevent the updates to our model
+[64:05] from being too large from one iteration
+[64:08] to the next.
+[64:11] So what you have is this loss
+[64:14] formulation
+[64:15] which is the minimum of
+[64:20] the ratio and we're going to see what
+[64:22] that is times the advantage and some
+[64:26] clipping of that ratio between two uh
+[64:30] bands which we're going to see in a
+[64:32] second times that advantage.
+[64:35] So before we go into details, I just
+[64:38] want to call out a few things that may
+[64:40] seem like it's confusing because it was
+[64:44] confusing to me. Um so first of all
+[64:48] that formula is expressed as L is equal
+[64:51] to but it's actually not something we
+[64:54] want to minimize something that we want
+[64:56] to maximize.
+[64:58] So what people typically mean by L is
+[65:00] loss.
+[65:02] Um so yeah just know that we want to
+[65:04] maximize that we don't want to minimize.
+[65:08] The second thing is we're introducing a
+[65:11] term called R of theta.
+[65:14] This is not the reward model.
+[65:17] So typically people use R to say it's
+[65:20] the reward but here it's not the reward.
+[65:23] It's actually the ratio in the
+[65:26] probabilities between our policy
+[65:30] and the policy from the previous step
+[65:33] which is denoted pi old pi theta old.
+[65:39] So it quantifies
+[65:41] how different your policy at the current
+[65:43] stage is to your old policy.
+[65:49] So here when we say old,
+[65:51] it's not
+[65:53] the SFT model. It's not the SFT model.
+[65:56] It's the model at the previous iteration
+[65:59] during the RL stage.
+[66:01] Because here, what we want is for the
+[66:04] policy to not have updates that are too
+[66:08] wide.
+[66:12] So far so good.
+[66:15] Yeah.
+[66:17] What is a? Uh a is our advantage.
+[66:20] So you can think of it as you know this
+[66:22] complicated formula that's a function of
+[66:24] the reward and the value function that
+[66:26] just tells you how good your uh your
+[66:31] your piece is basically.
+[66:34] Okay. So this um complicated formula
+[66:39] we're just going to see why it makes
+[66:41] sense.
+[66:43] So
+[66:45] if the advantage is positive,
+[66:49] it means that we somehow want to
+[66:53] reinforce whatever was generated.
+[66:58] And so here our objective function will
+[67:00] look like this. So if a is positive
+[67:05] then this L of clip will look like some
+[67:10] linear function as a function of R
+[67:13] because it's R * A.
+[67:17] So it's a it's a linear function as a
+[67:19] function of R and then after 1 + epsilon
+[67:25] it will just be flat.
+[67:28] So why why do we want such a such a
+[67:31] shape for our graph? Well, we need to
+[67:36] think again about what R means. So if A
+[67:40] is positive,
+[67:42] meaning it's something that we want to
+[67:44] reinforce,
+[67:46] we typically want the probability of
+[67:50] whatever happened to be increased.
+[67:54] So we want R
+[67:57] to be higher,
+[68:00] but we don't want it to be too too high.
+[68:03] So that's why we have this clipping
+[68:06] mechanism.
+[68:10] So that's why we have this uh this
+[68:13] clipping here. We want to I guess
+[68:17] maximize L. So we go uh towards
+[68:20] increasing R. But we don't want to
+[68:21] increase it increase R too much.
+[68:24] So that's the rational for this.
+[68:28] But when a is negative,
+[68:31] it means that somehow what we've done is
+[68:34] something that we don't want to do as
+[68:36] much.
+[68:38] So in order to uh maximize L, what we
+[68:42] want is to actually
+[68:44] decrease the probability
+[68:47] of just generating what we generated. So
+[68:50] we want R to be
+[68:53] smaller because it also increases L, but
+[68:57] we don't want it to be much smaller. We
+[68:59] don't want too big of an update, which
+[69:02] is why we have this clipping mechanism
+[69:04] here.
+[69:06] So in other words, this super
+[69:09] complicated formula can be just
+[69:11] intuitively explained with what I just
+[69:14] mentioned,
+[69:16] which is if you have positive
+[69:19] advantages,
+[69:20] you want to reinforce
+[69:24] the fact of generating this output
+[69:26] because this is something that the model
+[69:28] liked. I mean the by model I mean the
+[69:31] reward model. Um but you don't want it
+[69:34] to update it too much which is why you
+[69:36] have this clipping and same when the
+[69:39] advantage is less than zero. Um I guess
+[69:43] you want to downweight
+[69:47] the probability of this output from
+[69:49] happening. So you want to have a smaller
+[69:51] R which is your ratio between the policy
+[69:54] you're training with respect to the old
+[69:55] one. But you don't want to be too small
+[69:58] either again to not make too big of an
+[70:01] update.
+[70:04] Does this make sense?
+[70:09] Does this roughly make sense? Okay,
+[70:11] roughly makes cool. Just I will just um
+[70:16] recommend just rereading this formula.
+[70:19] I'm just uh remembering what I mentioned
+[70:22] and hopefully it would make a bit more
+[70:24] sense. Um but yeah, happy to answer any
+[70:27] questions if there are any. Yeah. Oh,
+[70:30] yeah.
+[70:32] Yes.
+[70:42] Yeah. Uh so question is uh what happens
+[70:45] uh where it's not continue. It's the
+[70:47] same as ReLU, right? Like you you would
+[70:49] basically use the same methods. Um so
+[70:51] yeah, it's the same same thing. Yep.
+[70:58] So great question. question is why are
+[71:00] you using from the previous iteration
+[71:02] and not the base model? Because actually
+[71:05] we don't want just to not be too far
+[71:08] from the base model. We also want our
+[71:11] updates to be not too extreme from one
+[71:14] iteration to another. And this is to uh
+[71:18] improve with uh stability of training.
+[71:21] So this is just like another additional
+[71:23] constraint we want.
+[71:29] uh question is are we considering the
+[71:30] base model? We will consider it and I
+[71:32] will tell you exactly but u in this in
+[71:35] this formulation we're not in this
+[71:37] formulation we're not but in the
+[71:39] formulation we're using typically for
+[71:41] LLM based RL we are and we will see how
+[71:47] Yep.
+[71:54] Yep.
+[72:04] Yeah. Yeah. Yeah. So the question is how
+[72:05] do you quantify R like what is R? What
+[72:08] does it mean? So it's typically u the
+[72:11] probability of a token happening with
+[72:13] respect to the input. So you can think
+[72:15] of the probability distribution that you
+[72:17] get at the output of your LM. So you
+[72:19] would use that.
+[72:24] Cool. So this is the first variant that
+[72:27] the PO paper mentions. So it's called PO
+[72:31] clip.
+[72:33] So the second variant that we have is
+[72:36] the one that uses KL divergence which is
+[72:39] called KL penalty. And this one is a
+[72:44] function of the ratio times the
+[72:46] advantage minus
+[72:49] the K divergence between
+[72:53] the old policy which is the previous
+[72:55] iteration and the current iteration.
+[72:59] So you had a great point which is why
+[73:01] are we using the old? In fact, old means
+[73:06] previous RL iteration. But nowadays,
+[73:09] people use the reference. So, it's just
+[73:13] a change because this paper has been
+[73:16] published in 2017 where in 2025
+[73:20] LLMs, they kind of came more into like
+[73:23] something that was popular in the 2020s.
+[73:25] So, um, so yeah, there's just been this
+[73:28] like difference in what you put there.
+[73:31] So yeah, it's indeed the reference that
+[73:33] you would typically put in a Kyle
+[73:34] divergence.
+[73:37] Uh the other thing that I will say is
+[73:41] that
+[73:42] nowadays when someone wants to train uh
+[73:47] a policy using PO, they would typically
+[73:50] use the kale divergence and they would
+[73:53] also maybe mix it with the clipping
+[73:57] clipping thing with the old iteration.
+[74:00] they were basically mix the two.
+[74:03] There are many different formulations of
+[74:05] what the loss can be. So what I'm saying
+[74:08] is not always true, but this is what
+[74:10] people sometimes do. They sometime mix
+[74:12] the two.
+[74:15] Cool.
+[74:17] So, I talked to you about PO and how it
+[74:21] allowed you to maximize
+[74:23] rewards, maximize advantages
+[74:26] by not making your model deviate too
+[74:29] much from the base model and also from
+[74:32] the previous iteration.
+[74:35] But the problem is that for PPU, you
+[74:37] need a lot of models.
+[74:40] So you need your policy, you need your
+[74:41] LLM that you're training. You also need
+[74:45] the value function which I me which what
+[74:48] I mentioned is is used for the advantage
+[74:51] estimation.
+[74:53] You also need the reward model
+[74:57] of course and then you need the base
+[75:00] model. So the base model is frozen. It's
+[75:02] the just the SFT model just to be able
+[75:04] to compare with the current policy. So
+[75:07] it's a lot of models.
+[75:10] So now the question that you may ask is
+[75:13] do you really need to have all these
+[75:15] models to perform well?
+[75:18] And the answer is maybe not. Maybe but
+[75:23] maybe not. And nowadays there is a bunch
+[75:27] of other methods that are becoming more
+[75:29] popular. So you may have heard of GRPO
+[75:33] in the context of reasoning models. So
+[75:37] we will look at GRPO in more detail next
+[75:40] week for lecture six. Um but just know
+[75:43] that there are many variants. So PO is
+[75:47] just one algorithm that has been very
+[75:50] popular and even within PO there's been
+[75:53] many variants and nowadays there are
+[75:56] many other RL algorithms
+[76:00] that are being used.
+[76:03] Yeah.
+[76:05] And uh yeah if you want to just uh
+[76:08] anticipate next lecture um you can also
+[76:11] take a look at this paper from uh the
+[76:13] deepseek team. So deepse math limits of
+[76:16] uh mathematical reasoning in open
+[76:18] language models that introduces the gRPO
+[76:20] algorithm. But if you don't it's fine
+[76:22] we're going to talk about it next week.
+[76:27] So I also want to talk about some
+[76:30] challenges when it comes to
+[76:33] RLbased approaches.
+[76:35] So the first one is you need to have
+[76:38] this two-stage process. You need to
+[76:41] first train your reward model and then
+[76:44] you need to use the reward model to
+[76:46] train your policy.
+[76:49] But the problem is you do step one, you
+[76:51] do step two and then you realize, oh
+[76:54] wait, step one has a problem. then you
+[76:56] need to redo everything. So there is
+[76:58] like a bunch of dependencies that that
+[77:01] can really you know make your life
+[77:03] harder and um you know just the training
+[77:07] recipe is not the simplest. So that's
+[77:10] one downside.
+[77:13] The second downside is about the number
+[77:15] of hyperparameters that you need to
+[77:17] tune. So we saw beta from the Kyle
+[77:21] divergence formulation. So that's one.
+[77:25] We have epsilon from the PO clip
+[77:27] version. That's another one. The
+[77:30] generalized advantage estimation. We
+[77:32] have not seen the formula, but there's I
+[77:35] think at least two hyperparameters that
+[77:36] I can think of.
+[77:39] Anyways, you have a bunch of them.
+[77:43] So of course, you know, some
+[77:45] hyperparameters perform better than
+[77:46] others. And you know, if you need to
+[77:48] retrain, then well, you need to do
+[77:50] everything again.
+[77:52] um then you have some instability
+[77:55] challenges. So you know you can
+[77:58] constrain your iterations to not be too
+[78:00] wides to kind of control for that but
+[78:03] sometimes it's not uh you know
+[78:05] sufficient.
+[78:08] So in terms of the metric that you can
+[78:10] use to monitor the training, what what
+[78:14] is the metric you would use?
+[78:19] So we're trying to maximize rewards in
+[78:22] some sense. So typically the metric that
+[78:24] you would use to monitor your training
+[78:27] would be the average rewards.
+[78:30] But this is not like a great I mean this
+[78:33] is a way to to you know monitor your
+[78:37] training but this is not like the best
+[78:39] way necessarily.
+[78:41] So at least when it came to pre-training
+[78:43] and SFT you had this cross entropy loss
+[78:46] that you were monitoring that was really
+[78:48] telling you how your model was able to
+[78:52] you know just reproduce the behavior you
+[78:54] were trying to make it uh output.
+[78:58] But yes, so this is another challenge.
+[79:00] And then the other thing is
+[79:03] in the RL world, in order for you to
+[79:07] know which completion you should not do
+[79:11] and which completion you should do more,
+[79:14] you need to have some diversity
+[79:16] whenever you generate. So if during the
+[79:19] RL training loop, every time you have a
+[79:22] prompt, you generate something and then
+[79:25] you retry and you generate something
+[79:27] else that's too close.
+[79:29] Well, it's not it's not great because
+[79:31] you're not exploring the set of possible
+[79:33] completions. So this is another
+[79:35] challenge you need to have in mind which
+[79:37] is you need to force your model to do
+[79:40] some exploration to see I guess what can
+[79:43] be good.
+[79:45] Um, and then the last point is
+[79:48] I mean a lot of you were not familiar
+[79:50] with RL. I was not and it's not super
+[79:54] clear why we would necessarily need need
+[79:58] RL to do this stage.
+[80:02] Um, also I will say one thing. So this
+[80:05] RLbased training you will hear a lot the
+[80:09] term on policy training. I just want to
+[80:13] tell you what that means. So what is
+[80:16] different between this and SFT is during
+[80:21] SFT we had some prompt and some response
+[80:27] that we wanted our model to generate to
+[80:30] mimic.
+[80:32] But here what we're doing is at each
+[80:35] iteration
+[80:37] we're asking our model to generate an
+[80:40] output and then we're using how good
+[80:43] that output is to update our model. So
+[80:46] there is a core difference between the
+[80:48] two because in here what we're doing is
+[80:52] we're asking the model to generate
+[80:54] something
+[80:56] whereas for SFT we're just using some
+[81:00] you know some data that is not
+[81:02] necessarily generated by our model.
+[81:06] So on policy training refers to training
+[81:09] that involves the model generating from
+[81:13] its current policy and optimizing on
+[81:16] that.
+[81:18] And this is in contrast with off policy
+[81:21] training which is relying on generations
+[81:25] that are not done by the model that
+[81:28] you're training.
+[81:31] Does this make sense?
+[81:35] Yeah. So this is a term you will see a
+[81:37] lot which is why I'm telling you. Um and
+[81:40] yeah so PO is an on policy
+[81:44] algorithm.
+[81:46] Yeah.
+[81:53] So the question is why don't we do SFT
+[81:55] on this preference data? Well SFT you
+[81:59] you tell the model you should generate
+[82:01] this given this input. then you should
+[82:03] generate this given this input. But
+[82:05] you're not telling it about things it
+[82:08] should not generate.
+[82:11] Like let's suppose you have something
+[82:12] that you don't want to happen unless you
+[82:15] rewrite that into you know a perfect
+[82:18] sentence. There is no way for you in a
+[82:20] traditional SFT framework to tell your
+[82:23] model to not generate that.
+[82:27] But that being said, it's a great prompt
+[82:29] because later on in let's say 10
+[82:31] minutes, we will see a supervised way of
+[82:34] doing what we did with RL.
+[82:37] But yeah, it will be in about 10
+[82:39] minutes.
+[82:40] But apart from that, does that roughly
+[82:43] make sense?
+[82:45] Yeah,
+[82:46] perfect. So in the next few minutes we
+[82:49] will see a method that is actually used
+[82:54] more often than not and this is for
+[82:56] people who have a reward model but that
+[83:01] don't want to do RL.
+[83:03] So why do you not want to do RL because
+[83:05] you know it's expensive it's you need a
+[83:07] lot of models. So to your points it's
+[83:08] indeed expensive because you need all
+[83:10] these like models and you know sometimes
+[83:13] it's just too hard to tune that
+[83:16] training. So you have this method called
+[83:19] best of n or bun
+[83:24] and the idea here is to leverage the
+[83:27] reward model that you obtained in order
+[83:30] to choose the output that you will
+[83:33] return to the user.
+[83:36] So the idea here is
+[83:39] you have a prompt
+[83:41] and you tell your models okay I you
+[83:44] actually want to have several um
+[83:47] generations. So you generate let's say I
+[83:49] don't know four times five times and
+[83:51] what you do is you give a score to each
+[83:56] prompt completion
+[83:59] and you just return the best one the top
+[84:02] rated one
+[84:04] which is why it's called best of n. So
+[84:07] you have n completions you rate all of
+[84:11] them and you just return the best one.
+[84:15] So you have your prompts. So, uh, our
+[84:18] favorite example suggests a new activity
+[84:19] I could do with my teddy bear. You put
+[84:22] it into your SFT model. So, you're not
+[84:25] training your SFT model. It's asis
+[84:28] and you're just generating, let's
+[84:30] suppose, three completions. Uh, the
+[84:33] first one is a great answer. The second
+[84:35] one is no, don't spend time with the
+[84:37] teddy bear, which is not a good answer.
+[84:39] And then the third one, I think it's
+[84:41] also a good one, take your teddy bear to
+[84:42] a picnic. You put all of these into your
+[84:45] reward model and this is where I wanted
+[84:49] uh to respond to you like you know what
+[84:50] is an output of the reward model. So it
+[84:52] would be a score like this. So for
+[84:54] instance the first one would be you know
+[84:56] pretty good uh completion. So it's like
+[84:58] 0.8 the second one is not good at all.
+[85:00] Let's say minus two and the third one is
+[85:03] like let's say so so in between.
+[85:07] So the best of end method would select
+[85:11] the top rated one which is the first one
+[85:15] and this is the one that you would
+[85:18] return.
+[85:21] Okay. So
+[85:24] what is one problem with this approach?
+[85:31] So the the answer is uh if the model is
+[85:34] bad then it's going to be bad. That's
+[85:36] fair. But I guess if you uh make enough
+[85:40] completions with let's say a high enough
+[85:42] temperature, you will have some
+[85:44] diversity.
+[85:45] Um so it's it's a fair point uh which
+[85:48] can be a problem. But let's suppose it's
+[85:50] it's indeed a problem. Let's suppose
+[85:51] it's not a problem. What is another
+[85:53] problem that you may have?
+[85:57] Yep.
+[86:00] Yes. Yes. So the answer is uh you query
+[86:03] the model many times which is indeed the
+[86:06] problem. So you write inference what you
+[86:08] want is to not spend a bunch of money
+[86:10] and compute but here what you're doing
+[86:13] is uh complete your prompt multiple
+[86:16] times
+[86:18] and this is indeed the main challenge
+[86:20] with this. So you indeed skip
+[86:24] the RL training but you're basically
+[86:27] pushing all the work to your inference
+[86:31] to the inference stage
+[86:33] and uh this is just making everything so
+[86:35] super costly. So when can it be bad? So
+[86:40] um if for instance you're in a in a case
+[86:42] where you need to serve your model to
+[86:45] let's say a bunch of traffic it may not
+[86:47] make sense for you just um just from a
+[86:51] cost standpoint.
+[86:53] So um I would say before taking that
+[86:58] route it may be good to just assess what
+[87:01] will be your inference traffic what
+[87:04] would be your training cost and kind of
+[87:06] uh determine that from there.
+[87:08] And um yeah, I think that's pretty much
+[87:12] it. Do we have any questions on that
+[87:14] part?
+[87:16] Oh yeah. Yeah.
+[87:24] Um that sigmoid would be softmax. Are
+[87:26] you talking about this one?
+[87:29] Um
+[87:31] so in that algorithm you're assuming
+[87:35] that your reward model is is trained.
+[87:39] So uh the best of end approach is you do
+[87:42] this this training. So I guess the sigma
+[87:45] here is uh pairwise because you trained
+[87:48] your model in a pair wise fashion.
+[87:52] Um but in the best of end um case what
+[87:57] you do is you just use your reward model
+[88:00] to score end times and you just pick the
+[88:02] the the highest one. Yeah.
+[88:07] Yep.
+[88:33] >> Yeah. The question is uh but what if all
+[88:36] the responses are bad? This is
+[88:37] definitely a fair a fair concern. Uh and
+[88:41] this is indeed a concern. So your model
+[88:43] needs to be at least a little bit good.
+[88:48] Yeah. Yeah. Yeah. Yeah. Exactly. Yeah.
+[88:50] Yeah.
+[88:52] Yeah.
+[89:02] It's a great question. And do you have
+[89:04] any constraint on the scale? Well,
+[89:05] depending on how your scaling is done,
+[89:08] you actually don't care about the scale.
+[89:11] As long as you take the best one, the
+[89:13] highest one, if you think about it,
+[89:15] let's suppose if you scale it with,
+[89:17] let's say, with a normal score, the
+[89:19] highest one will still stay the highest
+[89:21] one. So in this case, you actually do
+[89:23] not care about the scale.
+[89:29] Yes, you also don't care about that.
+[89:31] Yep. But typically the scaling matters
+[89:34] when it is coming into play in a loss
+[89:37] function which is the case for RL
+[89:41] and so that's where people use some like
+[89:43] scaling mechanism. Um you know that's
+[89:46] that's the part that matters.
+[89:50] Cool. And with that I'm going to give it
+[89:53] to Shervin.
+[89:54] Thank you.
+[89:57] So, for this last part, we're going to
+[89:59] talk about DPO.
+[90:02] Um, but I'm not going to tell you what
+[90:04] DPO means just yet. We're just going to
+[90:07] first um listen to the complaints we had
+[90:10] in the RL world and then see um what we
+[90:14] could do about it and then how have
+[90:17] folks um like remedied it.
+[90:20] So the first thing that I'm going to
+[90:22] repeat from one what Afinen covered is
+[90:25] that in the RL formulation of PO
+[90:28] you have to carry during your loss
+[90:32] optimization a bunch of model weights.
+[90:34] So when you look at this um loss
+[90:37] function you have uh so first the policy
+[90:41] of the current model you have to
+[90:42] optimize for the one of the old model or
+[90:46] the reference model uh and then you have
+[90:48] your advantage which hides the reward
+[90:51] model as well as the value function that
+[90:54] we discussed. So like all these four
+[90:57] which is a lot
+[90:59] and uh the second thing is that let's
+[91:02] say you go with the approach of best of
+[91:07] end you don't do RL you just generate
+[91:09] multiple times uh and then like pick the
+[91:11] best completion as Ein mentioned and um
+[91:15] so you have this uh latency and cost
+[91:18] issues and just uh for the sake of you
+[91:22] know thoughts uh for a thought
+[91:24] experiment. Let's suppose we had
+[91:26] infinite money. Would it be still fine?
+[91:29] Um so let's suppose you generate all of
+[91:32] these in parallel.
+[91:34] So you would still need to um wait for
+[91:37] the maximum time of like the generation
+[91:40] of an answer to give your resulting
+[91:42] answer. And then if you look at the
+[91:44] distribution of latency, usually it's
+[91:47] some you know shape that is not centered
+[91:50] on a single point. And when you look at
+[91:53] the probability distribution of the max
+[91:56] of let's say n answers, it will tend to
+[91:59] be uh shifted to the right. So let's
+[92:02] suppose you have infinite money,
+[92:04] infinite compute,
+[92:06] um you still have to wait more than you
+[92:08] would have on a single pass.
+[92:12] Do these concerns make sense?
+[92:17] And okay, so there comes the question
+[92:19] that someone was asking. Why don't we do
+[92:22] supervision all this time? And this is
+[92:25] the route that uh DPO folks have
+[92:28] explored. So DPO stands for direct
+[92:32] preference optimization. So instead of
+[92:34] doing this uh expensive two-step process
+[92:38] of first finding some reward model and
+[92:41] then uh iterating on the model's
+[92:43] weights, it optimizes a single loss
+[92:46] function that directly optimizes for the
+[92:48] model's weight. And as you can see, uh
+[92:52] there is no reward involved anymore. So
+[92:55] no R. and you have a way to formulate
+[92:59] what you care about as a function of
+[93:02] your preference pairs. So in that loss
+[93:05] function all you have is a bunch of
+[93:08] variables and then the sigmoid functions
+[93:10] but within uh the parenthesis you have
+[93:15] the probability of a given completion
+[93:18] like to happen and uh you have this uh
+[93:22] subtraction operation that compares the
+[93:25] probability of the winning uh completion
+[93:28] to happen versus the losing one. So as
+[93:31] you can see it's a direct expression
+[93:34] with respect to these preference pairs
+[93:36] which is pretty nice
+[93:39] and if you look at it a bit closer you
+[93:43] will recognize what I've just mentioned
+[93:46] regarding Bradlary
+[93:49] formulation because you have this uh
+[93:52] expected value of log of a sigmoid and
+[93:56] then within that sigmoid you have a
+[94:00] difference of terms where you can
+[94:02] recognize the equivalent of what you saw
+[94:05] as a reward term.
+[94:10] So I know it's a lot to see at once. The
+[94:12] formula is not super pretty. Um yeah, do
+[94:16] you have any questions?
+[94:19] And then we're going to discuss in a bit
+[94:21] what that beta is and also how we
+[94:24] obtained this formula in the first
+[94:26] place.
+[94:29] Uh okay. And I one thing I will mention
+[94:31] before going to that is that the paper
+[94:34] is titled your language model is
+[94:36] secretly a reward model. And the reason
+[94:40] for that is that the reward um like
+[94:43] placeholder that you could identify from
+[94:45] this loss function is expressed as a
+[94:49] function of your policy. So you don't
+[94:52] have any Rs in there. But when you
+[94:55] express the equivalent of a reward, you
+[94:57] find the expression of your model um of
+[95:01] your model directly. So which is um kind
+[95:03] of pretty interesting insight.
+[95:07] Okay. So but but now let's think
+[95:10] together about how we got there in the
+[95:12] first place.
+[95:14] So you recall from a few few slides ago
+[95:18] the PO objective that we had. So we
+[95:21] wanted to maximize
+[95:25] uh rewards and minimize the distance of
+[95:29] the obtained policy with respect to the
+[95:31] reference one which is this uh trade-off
+[95:34] between maximizing rewards and scale
+[95:37] diver divergence term. And then you have
+[95:40] this beta coefficient that appears there
+[95:43] that uh controls
+[95:46] how how much you want to penalize going
+[95:49] further from the base model. And what
+[95:53] this paper did is that it wrote down
+[95:55] this formula and then solved what would
+[95:58] be the optimal solution. Uh so it
+[96:01] expressed the optimal policy pi star and
+[96:05] when you derive this expression so you
+[96:08] get it as a function of r. So that's
+[96:12] other term that was in the objective
+[96:15] function
+[96:16] and uh so like all these steps have no
+[96:20] extra assumptions. It's just a bunch of
+[96:24] uh derivations that was done. And uh
+[96:27] what you can see here is like this Z
+[96:30] term that stands for a partition
+[96:33] function and that just normalizes things
+[96:37] uh but it's not something that is new.
+[96:38] It's like a function of the other uh of
+[96:41] the of the terms that were already in
+[96:43] there.
+[96:45] So when you rearrange these terms you
+[96:48] can uh equivalently
+[96:51] express R as a function of this pi star.
+[96:55] Uh so it's just like a rearranging terms
+[96:57] between these two expressions. Nothing
+[97:00] um nothing too fancy.
+[97:02] And then uh the key part of of what this
+[97:06] paper did is recognize this term as some
+[97:11] reward and then
+[97:15] express it as part of a Bradley
+[97:18] formulation. So you remember you had
+[97:21] this probability of um of a completion
+[97:25] of a winning completion being bigger
+[97:28] than a losing completion and you had
+[97:30] this sigmoid of uh like the difference
+[97:33] between the two Rs. So basically they
+[97:35] took this formulation again and they
+[97:38] plugged in the expression they had
+[97:40] obtained for the optimal reward which we
+[97:43] had seen was a function of the policy.
+[97:48] So at the end of it you plug in things
+[97:51] you have no more rewards just a function
+[97:54] of the other parameters. So you have
+[97:56] this beta and uh only the the policy in
+[98:00] there.
+[98:02] And the last step is the same one as
+[98:05] Afin was mentioning. Once you have this
+[98:07] probability that you want to maximize
+[98:10] you can turn it into a loss function.
+[98:12] And this loss function is what this
+[98:14] paper proposes to optimize in order to
+[98:18] tune
+[98:19] policy weights in order to align it with
+[98:23] this preference data.
+[98:27] So yeah, I simplified a lot the quite
+[98:31] heavy steps of this paper uh into like
+[98:33] this these few steps. Do they make
+[98:36] sense?
+[98:43] And uh the beta that we see here is the
+[98:45] same beta as we had seen in the PO
+[98:48] formulation. So typically taken um
+[98:51] around 0.1 if you want some order of
+[98:54] magnitude. So beta is a hyperparameter
+[98:56] and all you want to optimize for is the
+[98:58] policy and then the preference pairs you
+[99:01] have them as input.
+[99:04] Make sense?
+[99:07] Okay, great. So now let's compare uh
+[99:10] what this method gives with respect to
+[99:12] RHF.
+[99:13] Um so RHF is this two-stage training
+[99:18] process where you first fit a reward
+[99:21] function and then use it uh in order to
+[99:25] do the policy update steps. So as Afin
+[99:29] was mentioning it, it's quite heavy. Um
+[99:32] we were mentioning it just before you
+[99:34] need a lot of models in memory and then
+[99:37] training stability is is a concern. You
+[99:39] don't have direct supervision. You rely
+[99:42] on the policy of the current model to
+[99:46] generate the next updates. So there is a
+[99:49] lot of complexity in it and as opposed
+[99:51] to that this DPU formulation gives a
+[99:54] supervised way to think about preference
+[99:57] tuning where you just take these
+[99:59] preference preference pairs and you
+[100:01] directly fit a loss function on them
+[100:05] and um yeah and then instead of four
+[100:08] models you just need two because you had
+[100:10] this pi of theta and then a pi ref which
+[100:14] was your base SFT model and you don't
+[100:16] need any other model copi copies.
+[100:21] So now you might want to ask um if it's
+[100:24] um if it's much easier, why um why is
+[100:29] not everyone just simply using DPO? So
+[100:32] it's not as easy. Uh in practice um
+[100:36] there are some pros and cons to each
+[100:38] method. Um and the paper that is listed
+[100:41] below uh gives a very interesting study
+[100:45] of um you know like the benchmarking
+[100:47] differences and the steps to get there.
+[100:50] Uh so just to get the main lines overall
+[100:54] PO performs better than DPO. Um and um
+[100:59] one great thing about DPO which is like
+[101:02] this supervision this direct supervision
+[101:05] comes at the cost of sometimes fitting
+[101:08] something that is not the exact
+[101:09] distribution that the model has seen as
+[101:11] training time. So this paper talks about
+[101:14] it a bit. um if you train via SFT on the
+[101:20] preference related data, you could get
+[101:23] better performance. But this shift in
+[101:26] distribution is uh you know a challenge
+[101:29] intrinsic to to DPO.
+[101:33] uh because one thing that the DPO method
+[101:35] enables you uh to have is just to not
+[101:38] worry about that reward modeling at all
+[101:41] and just get some preference data set
+[101:44] out there. But the issue with with doing
+[101:48] so is exactly that distribution shift.
+[101:50] Uh so you could you know either train uh
+[101:53] like SFT on it or generate it yourself
+[101:56] and then rate it but that is u like yet
+[101:59] another cost that you would need to uh
+[102:01] to pay.
+[102:04] Okay, great.
+[102:06] Um and
+[102:10] yep, any questions?
+[102:21] Uh so the question is uh you are
+[102:23] optimizing the parameters with respect
+[102:24] to the base model. So yes but it's not
+[102:27] the base model it's the current one. You
+[102:29] have a base model that will stay fixed
+[102:31] in the iterations and that occurs in the
+[102:33] loss function and you're indeed uh
+[102:36] updating parameters and that will be
+[102:38] like the preference tuned one. Yeah. So
+[102:41] you have like two weights two set of
+[102:42] weights one frozen one one that you
+[102:44] update. Yep. Okay, great.
+[102:48] Any other questions?
+[102:58] Yes. So the question is uh instead of
+[103:00] the reference model, could you use
+[103:02] another model uh another large model? So
+[103:04] I think that is a that's an interesting
+[103:07] point.
+[103:10] I guess that would be a different
+[103:11] algorithm.
+[103:13] Um, and you might lose a bit the meaning
+[103:17] of what you're trying to do because this
+[103:19] preference tuning stage is trying to
+[103:22] align your responses to what you prefer
+[103:26] and you want them to align with respect
+[103:29] to what you had learned so far. So if
+[103:31] you like start from a different model
+[103:32] and then you preference tune like a
+[103:36] different probability distribution, you
+[103:38] might be doing things that might not
+[103:42] make as much sense from a loss
+[103:43] standpoint. But I guess you know the
+[103:45] direction I mean I I cannot tell like a
+[103:48] blanket answer there. You know, maybe it
+[103:50] could give like interesting behavior,
+[103:52] but my intuition would tell you that the
+[103:55] point of all of this is to start from
+[103:57] the last train checkpoint that you had
+[104:00] and then further like preference tune
+[104:02] the distribution of your completions,
+[104:12] >> right? So like the the suggestion was
+[104:15] you know if you change the reference
+[104:16] model that could be seen as another SFT
+[104:19] uh version of your model. Yeah I guess
+[104:21] so.
+[104:24] Okay great. And now the favorite my
+[104:28] favorite part of of today. So do you all
+[104:31] remember the completions we had obtained
+[104:33] on our favorite prompts? So can I put my
+[104:36] teddy bear in the washer? So if you
+[104:39] remember last episode we had said uh
+[104:42] after instruction tuning the response
+[104:44] was no it might get damaged try hand
+[104:47] washing it instead.
+[104:49] So does anyone have any complaints
+[104:52] regarding this answer?
+[104:59] So I can give a hint teddy bears they
+[105:02] indeed should be handwashed. So, it's
+[105:04] factually correct.
+[105:08] But let's suppose it's factually
+[105:09] correct. What else do you not like? I
+[105:12] mean, could you not like about this
+[105:13] answer?
+[105:22] Yeah. So, the suggestion was uh is
+[105:24] asking to try it instead. And I guess
+[105:27] like a broader point is it's a bit too
+[105:30] rough, doesn't sound super friendly. And
+[105:33] then you know someone who asked this
+[105:35] question might love teddy bear. So did
+[105:37] you want you might want to tell them
+[105:39] about it in a gentle way. And uh this is
+[105:42] exactly what a preference tuning stage
+[105:45] is about. We don't want to learn new
+[105:48] facts. We want to focus on the existing
+[105:50] distribution of completions and align
+[105:54] what the model should return with
+[105:55] respect to what the human prefers.
+[105:58] So on this intuition, the preference
+[106:02] tunes answer could be um like a gentler
+[106:06] one. It's better not to your teddy bear
+[106:09] could get hurt. Uh gentle hand wash is
+[106:12] safer. So it's conveying the same points
+[106:14] but in a tone that's uh that sounds like
+[106:19] much better to the ears of of the person
+[106:21] who asks.
+[106:24] Okay, great. Any questions on the DPO
+[106:26] part?
+[106:29] Yep.
+[106:40] Yeah. The question is um like what are
+[106:43] the trade-offs and then which one is
+[106:45] used in practice. So I think it all
+[106:46] depends on your compute budget on how
+[106:49] much you want to worry about performance
+[106:52] versus babysitting your training
+[106:55] process. PO like the RL bar is very hard
+[106:58] to tune right. It will give the highest
+[107:02] uh results. Uh but you might get almost
+[107:05] at that level with much less efforts. So
+[107:09] I guess if you want to get like a quick
+[107:11] preference tuning that is shown to like
+[107:14] show good results but maybe not not the
+[107:15] best results and DPO is your is your
+[107:19] friend. And if you're an expert at uh
+[107:22] reinforcement learning, you you know
+[107:23] what you're doing and you want the every
+[107:25] last bit of performance, then PO might
+[107:28] be like a better way.
+[107:32] Okay. Amazing. And with that, thank you
+[107:35] very much.

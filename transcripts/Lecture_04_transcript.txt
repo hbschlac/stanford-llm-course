@@ -1,0 +1,2223 @@
+[00:00] Cool.
+[00:07] Hello everyone and welcome to lecture 4
+[00:10] of CME 295. So today is Friday, October
+[00:16] the 17th, which means that the midterm
+[00:19] is one week away. So before we start,
+[00:22] I'm just going to go over some logistics
+[00:25] to make sure you know we're all aligned
+[00:27] on what to expect.
+[00:30] So the midterm will take place next
+[00:33] week, same time. Instead of an hour and
+[00:37] 50 minutes, it will be an hour and 30
+[00:39] minutes. So it's 3:30 to 5 in this
+[00:43] classroom.
+[00:45] So it's like business as usual. Um in
+[00:49] terms of topics
+[00:51] the midterm will be about lectures 1,
+[00:55] two and three which we had and this one
+[00:58] which is lecture four.
+[01:01] So just to give you like an overview of
+[01:04] what you can expect in the midterm.
+[01:06] There's going to be uh some multi-choice
+[01:09] questions along with some free form
+[01:12] questions but they're mainly going to be
+[01:14] about the things that we've seen in
+[01:16] class. So if you watch the recordings or
+[01:19] attend the lectures and you know just go
+[01:22] through the slides and know the
+[01:24] important formulas I think yeah you'll
+[01:27] be you'll be fine.
+[01:29] So I know that you may have questions
+[01:32] until uh next week. So that's why after
+[01:34] this lecture with Shervin we will be
+[01:36] holding office hours. So feel free to
+[01:39] you know come to us and ask us any
+[01:41] questions. And uh of course we'll be
+[01:44] fully available between now and next
+[01:47] week. So in case you have any questions,
+[01:49] feel free to uh ping us on Ed. Um and
+[01:53] yeah, we'll make sure to respond.
+[01:56] Um cool. Uh I also know that a number of
+[02:00] you are auditing this class. So in case
+[02:03] you're still interested to take the
+[02:05] midterm for some reason uh maybe uh
+[02:08] because you have an upcoming interview
+[02:10] uh just uh tell us so that we can just
+[02:14] expect the number of uh like copies to
+[02:16] print. So we'll be printing this on
+[02:18] Monday. So just let us know over the
+[02:20] weekend in case you're interested.
+[02:24] Cool. So that's for the midterm. And
+[02:26] then the second piece of news is the
+[02:28] final. So, we said we were working on
+[02:30] the dates. So, we finally finalized the
+[02:34] dates, which did not change. So, it's
+[02:37] Wednesday, December the 10th. Okay. So,
+[02:40] a little bit late, 7:00 p.m. to 8:30
+[02:42] p.m. Uh, so it's a slot that we have.
+[02:45] Uh, the location is different from this
+[02:46] one. So, it's in this room.
+[02:51] And the final will only cover the second
+[02:55] part of the class which is basically
+[02:56] lectures five to 9.
+[03:01] Any questions on this? Yeah.
+[03:05] Oh yeah, good question. So is it closed
+[03:07] notes? Yes. Yeah. Yes.
+[03:14] So question is what is the format of the
+[03:16] multiple choice? So you'll have uh so we
+[03:18] did not finish writing the exam, but
+[03:19] it's going to be something like you have
+[03:21] a question and you let's say you have
+[03:22] like three four possible answers and
+[03:24] then you just choose the the one that's
+[03:27] that's correct. Something like this. And
+[03:30] you'll also have some free form uh like
+[03:32] you'll have to just like answer in your
+[03:33] own words. Yeah.
+[03:41] >> Yeah. Uh thanks. So question is are we
+[03:43] allowed to take anything? So it's closed
+[03:45] book. So like
+[03:48] like yeah nothing just a pen.
+[03:53] Yeah.
+[03:55] Uh question is no calculator you will
+[03:57] not need calculator
+[03:59] but speaking of the cheat sheet. So I'm
+[04:01] not sure if we mentioned I think we did.
+[04:03] So there is a cheat sheet for this one
+[04:04] which we cannot bring to the exam but
+[04:07] you can use for your uh just for uh you
+[04:10] know just your studying. Uh that's on
+[04:12] the website class website.
+[04:16] suggest recommends looking at it.
+[04:21] Cool. So, super clear for everyone.
+[04:25] Very cool. Well, okay.
+[04:29] As always, we'll be starting the class
+[04:31] just recapping what we saw in the
+[04:33] previous lecture. Um so if you remember
+[04:38] we
+[04:40] basically
+[04:41] studied a new kind of architecture which
+[04:44] was called the mixture of experts uh
+[04:47] which is such that if you have an input
+[04:50] what you want is to not necessarily
+[04:52] activate all the parameters and so you
+[04:56] are in a setting where you have multiple
+[04:58] experts uh and in the forward pass you
+[05:01] only activate some of them so that's a
+[05:03] sparse MOE. You also have the dense MOE
+[05:06] which basically weights the outputs as a
+[05:09] function of the output of the gate. So
+[05:13] we saw that this architecture was used
+[05:15] in LLM
+[05:17] and it was mainly used to be able to
+[05:19] scale these LLMs without incurring an
+[05:24] expensive cost at inference time because
+[05:25] you don't want to activate all the
+[05:27] parameters.
+[05:29] The second thing that we saw was uh just
+[05:32] defining what an LLM was and in
+[05:35] particular how you could
+[05:38] decide on what the next token prediction
+[05:40] is. So we saw three methods. First one
+[05:45] was we called uh greedy decoding which
+[05:48] was always taking the highest probable
+[05:50] token.
+[05:52] The second method we saw was beam search
+[05:55] where we kept track of the k most
+[05:58] probable sequences.
+[06:00] And then the third one was sampling.
+[06:04] So we're not doing a most probable we're
+[06:07] not keeping track of the highest
+[06:08] probable sequences. What we do is we
+[06:11] sample the next token respect to the
+[06:14] distribution that we get as output. And
+[06:16] then we saw there's this hyperparameter
+[06:18] that's called temperature that allows
+[06:20] you to tweak how spiky you want your
+[06:23] distribution to like versus uh not.
+[06:28] And we also saw some inference
+[06:32] optimization techniques which are used
+[06:35] in practice to avoid having uh like a
+[06:39] big cost at decoding time. So I'm not
+[06:42] going to just mention everything but I
+[06:44] would say KV cache for instance is a is
+[06:47] an important method. So yeah just
+[06:49] recommend just knowing what it is along
+[06:51] with the other ones.
+[06:54] And with that we're going to start
+[06:57] lecture four and actually I was really
+[07:00] looking forward to today because lecture
+[07:03] one we saw what self attention was what
+[07:06] a transformer was. Second lecture, we
+[07:08] saw
+[07:10] some of the tricks that people use today
+[07:13] and some of the variations from the
+[07:14] transformer. We introduced what an LLM
+[07:17] was last lecture and this lecture we're
+[07:21] finally going to see how these LLMs are
+[07:23] trained. So today we're going to focus
+[07:27] on LLM training.
+[07:31] And the first thing that I'm going to
+[07:32] say is if you've been in the ML field
+[07:37] for let's say more than a few years now
+[07:42] uh you may have noticed that
+[07:44] traditionally
+[07:46] if you had a task what you would do is
+[07:50] train a model specifically for that
+[07:52] task.
+[07:54] So let's suppose like 10 years ago,
+[07:56] let's suppose we had a task which was
+[07:58] around detecting spam. You would train a
+[08:02] model specifically to detect spams. So
+[08:05] you would train on the training set,
+[08:06] eval on the validation set and then test
+[08:08] on the test set. If you had another use
+[08:12] case that suppose sentiment extraction,
+[08:14] you would train a model specifically for
+[08:16] that
+[08:18] and so on and so forth.
+[08:21] But one could argue that these tasks,
+[08:26] they're not completely disjoint.
+[08:29] They're all involving just understanding
+[08:33] the text. So one could argue we could
+[08:38] find a way to somehow leverage the
+[08:42] knowledge that we acquired during
+[08:43] training for let's say one task
+[08:46] and reuse that for another task.
+[08:50] So this method has a name. It's been
+[08:52] around for some time. It's called
+[08:54] transfer learning.
+[08:56] So the goal of transfer learning is to
+[08:59] not always start from scratch. If you
+[09:00] have a new task, it's to start with some
+[09:05] pre-trained model. And we're going to
+[09:07] see what pre-train is and then tune it
+[09:10] for your task instead of starting from
+[09:14] scratch.
+[09:16] Well, it's basically the paradigm on
+[09:19] which LLMs are trained. So the idea here
+[09:24] is that all these tasks, they involve
+[09:28] understanding language. So, what we're
+[09:30] going to do is have what we call a
+[09:34] pre-training stage, which involves
+[09:38] training your LLM on vast amounts of
+[09:41] data to just understand what language,
+[09:44] what code is
+[09:47] and then have a second stage of quote
+[09:50] unquote tuning.
+[09:52] And we're going to see a little bit what
+[09:53] that tuning is. But in that second
+[09:57] stage, we're going to take our
+[09:58] pre-trained model and somehow find a way
+[10:02] to tune the weights to adapt to a
+[10:06] specific task.
+[10:08] So as an example here uh we would
+[10:11] pre-train a huge model and then suppose
+[10:13] for spam detection we would somehow tune
+[10:15] it for that uh sentiment instruction
+[10:18] same we would tune it for that and so
+[10:20] on.
+[10:22] So this is just to take the example from
+[10:24] before. And the idea here is in order to
+[10:27] obtain these models, we're not going to
+[10:30] start from scratch.
+[10:34] Cool. So okay. So now we're going to see
+[10:37] what pre-training is. So pre-training is
+[10:40] by far the most expensive both in terms
+[10:44] of compute cost, you know, everything
+[10:47] part of the training.
+[10:50] So what it does is taking a huge amount
+[10:54] of data and training your LLM to just
+[10:58] predict the next token.
+[11:01] And here by data what I mean is
+[11:04] basically everything you can find. So it
+[11:06] can be uh you know text in English, can
+[11:09] be text in other languages, it can be
+[11:13] even codes,
+[11:15] can be code in different languages, can
+[11:18] be basically the whole internet.
+[11:20] We're going to see some of the data sets
+[11:24] that people use for that. But you can
+[11:26] think of this as just training your
+[11:28] model to try to predict anything that's
+[11:31] written.
+[11:34] And as I mentioned, the objective here
+[11:37] is to predict the next token. So if you
+[11:41] remember, our LLM is a texttoext model
+[11:45] and most likely a decoder only model in
+[11:47] more than 90% of the cases. So what it
+[11:50] does is it takes some input text and it
+[11:54] tries to always predict the next token
+[11:57] in an iterative basis.
+[12:00] So in terms of the data sets that are
+[12:02] used, you will see the term common crawl
+[12:06] a lot on papers, it's basically a data
+[12:09] set composed of anything you can find on
+[12:12] the internet. So I think they have
+[12:14] something like three billion pages per
+[12:17] month. So if you go on their website,
+[12:19] they have a hu huge archive. So there's
+[12:23] a bunch of other websites as well that
+[12:25] you can find in there. So for instance
+[12:26] the Wikipedia articles any like social
+[12:29] media as well like Reddit I know there
+[12:31] are a lot of Reddit conversations in
+[12:32] those in those data sets you have a lot
+[12:35] of codes and of course you have a bunch
+[12:37] of places for that you have GitHub you
+[12:39] have stack overflow all these like
+[12:40] forums that talk about codes so all of
+[12:43] this is meant for your model to just
+[12:46] understand the structure of the language
+[12:48] and code
+[12:52] and in terms of size so it's measured in
+[12:55] terms of token number of tokens and one
+[12:58] order of magnitude that I want you to
+[12:59] remember is is on the order of hundreds
+[13:04] of billions or even trillions or even
+[13:06] tens of trillions of tokens.
+[13:10] So I'll give you an example. So GPT3 was
+[13:12] trained on 300 billion tokens and for
+[13:15] instance Llama 3 which was I believe
+[13:17] published last year was trained on 15
+[13:21] trillion tokens.
+[13:23] So these are huge data sets.
+[13:27] So before we go further, I want to
+[13:31] introduce two notations and I think one
+[13:34] of them I introduced I introduced it
+[13:36] last lecture.
+[13:38] The reason why I want to talk to you
+[13:40] about these notations is they are used
+[13:43] everywhere to talk about how much
+[13:45] compute
+[13:47] uh some model needs. So the first
+[13:50] notation is flops
+[13:53] which stands for floating operations
+[13:57] and what it is is it's a unit of
+[14:00] compute. So the higher the flops the
+[14:04] more operations are involved because by
+[14:07] definition flops is the number of
+[14:09] operations that involve floatingoint
+[14:13] numbers. So floatingoint numbers you can
+[14:15] think of them as just like numbers with
+[14:17] decimal points.
+[14:19] So in terms of order of magnitude
+[14:22] training an LLM is on the order of 10 ^
+[14:26] of 25 flops
+[14:30] and the way you obtain flops. So usually
+[14:33] it's like a complicated formula but in
+[14:35] your mind you can think of it as
+[14:38] something that is a function of the size
+[14:41] of your data. So the number of tokens
+[14:43] that you train it on and the number of
+[14:46] parameters of your model.
+[14:49] So there's not like a universal formula
+[14:51] because it also is a function of the
+[14:53] architecture. So you can think of for
+[14:56] instance based LLMs as requiring let's
+[15:00] say less compute because only some parts
+[15:02] are activated compared to let's say
+[15:04] dense LLMs.
+[15:08] But you can just think of it as it's a
+[15:11] function of the number of tokens and
+[15:12] parameters. It's like O of the product
+[15:15] between the two more or less.
+[15:19] And then there's a second notation that
+[15:22] I want to introduce which is also flops
+[15:24] but it's different. So here flops stands
+[15:28] for floating point operations per
+[15:31] second.
+[15:34] So it's a measure of compute speeds. So
+[15:38] it's basically how fast can your
+[15:41] hardware
+[15:42] execute these operations
+[15:46] and so you also have like some order of
+[15:47] magnitudes here. uh but if you're into
+[15:51] uh let's say GPUs, you will see that in
+[15:54] the description of GPUs, they always
+[15:56] indicate flops and we will see that in a
+[16:00] second.
+[16:01] But I just want to call out that flops
+[16:05] here usually all caps.
+[16:08] Although you may see some papers that
+[16:11] use one for the other,
+[16:14] which is confusing. So I just recommend
+[16:18] uh just contextual contextualizing
+[16:21] this notation with respect to the
+[16:23] sentence that it is in because sometimes
+[16:25] people actually switch the two but this
+[16:27] is the common notation.
+[16:31] So far so good.
+[16:34] Cool.
+[16:35] Okay. So now we know that we have a
+[16:39] pre-training step. We know it involves a
+[16:42] lot of compute. We know it involves a
+[16:44] lot of data. We know that our model is
+[16:46] large. So what people did was trying to
+[16:50] see how the performance evolves as a
+[16:53] function of model size and training
+[16:58] size.
+[17:00] And there's this one paper called
+[17:02] scaling loss for neural language models
+[17:04] that was published in 2020 that
+[17:07] performed a bunch of experiments by
+[17:09] varying these parameters. And what they
+[17:12] found was the more compute you have, the
+[17:16] better your model learns about
+[17:18] predicting the next token. Same for data
+[17:21] set uh size. So the more the bigger your
+[17:26] training set, the better it is. And the
+[17:29] bigger your model, the better it is.
+[17:33] So for some time, I think between 2019
+[17:36] and 2024,
+[17:39] you were seeing models that were larger
+[17:41] and larger, just people just building
+[17:43] things that were bigger and bigger
+[17:46] because according to these experiments,
+[17:49] um the performance was just getting
+[17:51] better.
+[17:53] So something else that they noticed was
+[17:57] bigger models tend to be more what they
+[18:00] call sample efficient.
+[18:03] So what that means is for an equal
+[18:07] amount of tokens that is processed
+[18:10] you will have a better performance with
+[18:13] a bigger model compared to a smaller
+[18:16] one.
+[18:19] But then you can wonder you know um we
+[18:23] don't have unlimited compute you know
+[18:25] compute is expensive it you know it has
+[18:28] a lot of drawbacks. So uh you have a
+[18:32] fixed compute and people also try to
+[18:36] answer the question given a certain
+[18:39] amount of compute.
+[18:42] How can you fix your training set size
+[18:45] and your model size in a way that's more
+[18:48] optimal?
+[18:50] Cuz um here uh you need to decide how
+[18:53] big is your model. So what they did is
+[18:56] they fixed a unit of compute which is
+[18:59] the color of these curves
+[19:02] and they tried training models of
+[19:05] different sizes with different training
+[19:08] set size. And what they saw was that
+[19:11] there was always a sweet spot here
+[19:16] which followed some kind of
+[19:19] relationship.
+[19:21] And in particular, this is a table that
+[19:24] summarizes quote unquote the optimal set
+[19:27] of number of parameters and training set
+[19:30] size, which is sometimes called the
+[19:32] chinchila.
+[19:33] And what they realized was if you have
+[19:38] an amount of training set size that's
+[19:42] about 20 times
+[19:44] the model size then you're spending your
+[19:48] compute in quote unquote like an optimal
+[19:51] way. And in particular,
+[19:55] GPT3 for instance,
+[19:58] I think it was like 175
+[20:01] billion parameters if I remember
+[20:03] correctly, but it's only trained on 300
+[20:05] billion tokens. So this one for instance
+[20:08] is according to this really undertrained
+[20:12] quote unquote.
+[20:14] I think there's a question. Yeah.
+[20:26] Um so yeah the question is do they fit
+[20:28] the neural architecture? So I think um
+[20:31] by now everyone agrees that LLMs are
+[20:35] transformerbased decoder only models. So
+[20:38] everyone uses the same model.
+[20:42] Yeah. So you can assume that when I say
+[20:44] LLM here it basically means decoder only
+[20:47] transformer based models.
+[20:53] Yeah. Question is architecture change
+[20:55] does not play a big role. So that's what
+[20:56] they say actually in their paper. They
+[20:58] say the thing that changes the most is
+[20:59] the amount of tokens on which you train
+[21:01] and the size of your model.
+[21:05] Cool. Any other questions?
+[21:08] Yeah.
+[21:23] Oh yeah, good question. So question is,
+[21:25] is there some kind of transfer learning
+[21:27] between different versions of models?
+[21:29] Um, so for a lot of these models,
+[21:31] they're actually closed source, so they
+[21:33] don't exactly reveal these things. But,
+[21:35] uh, I guess it's an interesting
+[21:38] question.
+[21:39] um one that I cannot answer in a general
+[21:41] way. So maybe I think it's the best
+[21:43] answer I can give you. Um but in any
+[21:46] case uh when you look at um some of
+[21:49] these papers they always state how much
+[21:52] it costs to train this and it's always
+[21:54] in the order of you know millions. It's
+[21:57] always an expensive step regardless.
+[22:02] Cool. Um just uh speaking of that um so
+[22:06] pre-training has a lot of challenges.
+[22:07] One of them is cost. So, uh when I say
+[22:10] millions of dollars, it's a minimum. I
+[22:13] think it can even cost tens of millions
+[22:14] of dollars or sometimes hundreds of
+[22:16] millions of dollars. It takes a lot of
+[22:19] time
+[22:21] and um people have been mindful of the
+[22:25] impact on in the environment. So,
+[22:26] they've also been including the
+[22:28] ecological cost.
+[22:30] So the other uh challenge is that the
+[22:34] pre-training
+[22:36] step is on data that is up to the time
+[22:41] at which you pre-train your model on. So
+[22:44] what that means is that the knowledge
+[22:47] that you acquire from training on this
+[22:50] data set can only go up until the date
+[22:56] at which you cut your data set.
+[23:00] So this date is called the knowledge
+[23:02] cutoff date. And so what that means is
+[23:06] your base model, your pre-trained base
+[23:08] model does not know has no way to know
+[23:12] by itself knowledge that occurred after
+[23:15] this state.
+[23:17] And speaking of that, a lot of papers
+[23:20] they've tried to edit knowledge, inject
+[23:22] knowledge. It's always tricky because uh
+[23:25] there's not a clean way to um you know
+[23:28] change the weights in a way that does
+[23:31] not penalize
+[23:33] some parts. So I guess what people want
+[23:35] to do is inject knowledge but not
+[23:38] regress in some other domains. And this
+[23:41] is a very hard problem. And of course
+[23:44] you know these models they try to
+[23:45] predict the next token and uh there's
+[23:48] this question of uh what if it just
+[23:52] generates something that it has seen at
+[23:54] training time. So what we call
+[23:55] plagiarism so there's always a risk. So
+[23:59] these are all the challenges I just want
+[24:00] to illustrate when I said the knowledge
+[24:03] cut off dates. So if you go on let's say
+[24:05] the open a website or Google websites to
+[24:09] look at the model cards you will always
+[24:11] see so I'm not sure if you can see from
+[24:13] here but um there is always a line on
+[24:17] knowledge cutoff dates which tells you
+[24:20] on when the pre-training of this model
+[24:23] was done. So here for instance GP5 was
+[24:26] released a few weeks ago and here it
+[24:28] says the knowledge cut of date is
+[24:30] September 30th. So you can guess that
+[24:34] they've done their pre-training around
+[24:36] that stage.
+[24:39] Cool.
+[24:40] Any questions on the first part?
+[24:45] Everyone good?
+[24:47] Perfect. So in this first part, we've
+[24:51] seen that pre-training was a crucial
+[24:54] step of the LLM training process and
+[24:58] we've seen all these big numbers
+[25:01] and one could wonder well how can you
+[25:05] train such a big model on such a big
+[25:08] amount of data like how do people do
+[25:10] that?
+[25:12] So this is what we're going to see here.
+[25:16] So just what I had mentioned so LLMs you
+[25:20] can think of them as decoder only
+[25:24] transformerbased models. So in order to
+[25:27] train your model you need that
+[25:30] you need a lot of data but then if you
+[25:35] look at your architecture
+[25:37] you see that a lot of the operations
+[25:41] involve matrix multiplications.
+[25:44] And I guess I have a question for you.
+[25:46] What is the kind of hardware that loves
+[25:48] matrix multiplications?
+[25:51] GPUs. Yes. So you also need GPUs.
+[25:54] Actually more than one. Yeah. You had a
+[25:57] question.
+[26:03] Oh. Uh question is GPUs for inference.
+[26:04] So this one we're going to focus on
+[26:06] training. But um requirements for GPUs
+[26:09] they differ a little bit between
+[26:10] training and inference. But in this
+[26:13] part, we're solely focused on training.
+[26:16] And speaking of GPUs, uh I guess uh it's
+[26:19] not GPUs everywhere because for
+[26:20] instance, Google, they've developed
+[26:22] their own hardware that's called TPUs.
+[26:25] Uh but any non Google
+[26:28] uh Google based models, they've most
+[26:30] likely been trained on GPUs.
+[26:34] Cool. So in order to train your model,
+[26:36] what do you do? So first of all you have
+[26:40] your LLM which is now so this is this
+[26:42] model but uh now we're representing with
+[26:44] a box just for simplicity you initialize
+[26:47] it uh it's like um you know lot of
+[26:50] parameters so you can think of uh the
+[26:52] scale as being somewhere around like
+[26:55] billions to hundreds of billions of
+[26:56] parameters. a huge model.
+[27:00] And what are the steps involved to train
+[27:02] a model? Well, what you're trying to do
+[27:06] is to tune the weights so that the model
+[27:09] can learn how to generate the next
+[27:13] token.
+[27:14] So, you have one step called the forward
+[27:16] pass where you have a bunch of data that
+[27:20] you're trying to pass through the
+[27:21] network. And um while we do that I just
+[27:25] want to call out things that are
+[27:28] important to note that we need to
+[27:31] somehow save in memory.
+[27:33] So when you do this forward pass you
+[27:35] have something that's called activations
+[27:38] which are basically the values at each
+[27:40] layer that are needed in order to
+[27:44] compute the loss.
+[27:46] So the loss tells you how off you are
+[27:49] compared to uh the label that you want
+[27:51] to train this on. And so the amount of
+[27:54] memory that you will use here is
+[27:56] dependent on a lot of things. It's
+[27:58] dependent on the mouth size which
+[27:59] impacts the number of activations. It's
+[28:02] dependent on how big your batch of data
+[28:05] is for training and it's dependent on
+[28:08] how large your context length is because
+[28:11] if you remember uh here we have of n
+[28:15] squared complexity because of this self
+[28:18] attention operation where n is the
+[28:20] sequence length. So you have all these
+[28:23] parameters that come into play.
+[28:26] So once you do the forward pass, let's
+[28:28] suppose you compute the loss, you know
+[28:30] how off you are compared to your label.
+[28:34] Now the next step is to somehow tweak
+[28:38] the weights in a way that minimizes the
+[28:42] loss. So how do you do that? There's
+[28:44] this another pass called backwards pass.
+[28:48] So what this pass does is quantify
+[28:53] the direction where the loss is going to
+[28:56] be minimized.
+[28:58] It's called a gradient. You take the
+[29:00] gradient of the loss with respect to
+[29:02] each parameter.
+[29:04] Well gradients they also need to be
+[29:07] saved somewhere in memory.
+[29:10] And then you have finally the weight
+[29:11] update
+[29:13] which is where you know where the
+[29:17] direction at which your loss is going to
+[29:18] be minimized. So you apply that update
+[29:20] to your weights and you typically use
+[29:24] optimizers out there like have you heard
+[29:27] of atom optimizer? Yeah. So atom
+[29:30] optimizer just a fancy version that has
+[29:32] some additional quantities
+[29:35] uh which keep track of uh which are
+[29:39] basically a function of the gradient. So
+[29:41] you have the first moment and the second
+[29:42] moment which is basically an average of
+[29:45] the moving average of the gradient and
+[29:48] the squared gradients
+[29:51] and all these quantities. So the first
+[29:53] moment the second moment you also need
+[29:56] to somehow save them somewhere in
+[29:58] memory.
+[30:00] So it's a lot of things to save.
+[30:03] Well,
+[30:05] okay, breaking news. Memory is not
+[30:07] unlimited. Memory is limited. And so
+[30:10] here what we have in front of us is the
+[30:12] description of a GPU.
+[30:16] Uh I think so. Yeah, H100, which is a
+[30:18] very good GPU. And you will see that in
+[30:22] that description there's a line on GPU
+[30:25] memory. So GPU memory is your amount of
+[30:28] memory per GPU. It's uh 80 gig for this
+[30:31] one. It's quite large. So it's in on the
+[30:34] order of tens of gigabytes.
+[30:38] So you need to store all these things in
+[30:40] 80 GB
+[30:42] which is not a lot.
+[30:45] So
+[30:47] what are we doing? What will you be
+[30:49] doing?
+[30:51] So I guess the idea is to leverage not
+[30:54] one but several GPUs in order to somehow
+[30:58] distribute the load across CPUs. And in
+[31:03] order to do that you have several
+[31:04] methods
+[31:06] which we will see in a second.
+[31:08] So the first set of methods is called
+[31:12] data parallelism
+[31:14] also known as DP.
+[31:17] So what this set of methods does is it
+[31:21] distributes
+[31:24] data across GPUs
+[31:27] so that this forward pass and backward
+[31:30] pass they can all be done kind of
+[31:31] independently.
+[31:34] And so the idea here is to divide the
+[31:36] batch of data across devices.
+[31:39] And then um in order to do that of
+[31:43] course you need to have a copy of the
+[31:45] model per device
+[31:47] because of course you need to compute
+[31:49] the activations you you need to compute
+[31:51] all these things. Um but when you do
+[31:55] that you're able to reduce the memory
+[31:58] that is linked to the batch size.
+[32:02] So that's called data parallelism. Yes.
+[32:07] uh question is how about the gradient
+[32:09] updates? Well, it's a great question.
+[32:11] So, how what do you do when you have
+[32:14] independent computations here and there?
+[32:17] Well, the gradient is just the average
+[32:19] of the gradients uh for this for this
+[32:21] thing. So, you have some communication
+[32:24] in between the GPUs that basically
+[32:26] aggregate the gradient for for the
+[32:28] updates.
+[32:30] So, I have a question for you.
+[32:33] Is
+[32:35] this the answer to everything? Like if
+[32:37] we just scale up like this for I don't
+[32:39] know lot of GPUs is it is it is is it
+[32:42] great always great or do we have like
+[32:44] cons?
+[32:48] Oh yeah uh great point. So yeah you have
+[32:50] to fit one model so yeah that's great
+[32:52] point. So the second point that I will
+[32:54] add is you have an additional cost which
+[32:58] is called communication cost because you
+[33:00] need to somehow communicate between your
+[33:02] GPUs in order to aggregate some
+[33:05] quantities.
+[33:07] So your training is going to be slower.
+[33:09] It's good you you can scale up the
+[33:11] memory. Of course you need to uh fit a
+[33:14] model on a on a device and we will see
+[33:17] what how we can do to do that but you
+[33:20] will be incurring those communic
+[33:23] communication costs so it's not all you
+[33:25] know great
+[33:27] so speaking of the memory and the fact
+[33:30] that we want to I guess be able to at
+[33:33] least store a model per um per uh
+[33:37] device. So people have realized that
+[33:42] there's actually a lot of duplication
+[33:46] and there's been a paper on wanting to
+[33:51] dduplicate this duplicate information
+[33:54] and this method is called zero
+[33:57] zero redundancy optimization
+[34:01] and the idea is that in each on each GPU
+[34:07] you know you store the same parameters,
+[34:10] you store the same gradients, you store
+[34:12] the st same optim optimizer step states.
+[34:17] So the idea here is how about we shard
+[34:22] we partition those quantities across
+[34:24] GPUs. So the first variation is around
+[34:29] sharing the optimization optim optimizer
+[34:31] states. So meaning we partition those
+[34:34] states across the GPUs. So this reduces
+[34:37] the memory by a lot. We can also
+[34:40] partition the gradients
+[34:43] and we can also partition the
+[34:44] parameters.
+[34:46] So here we have no redundant
+[34:49] information. Things are just
+[34:51] partitioned. Well, the problem is you're
+[34:53] going to have even more communication
+[34:56] costs, but at least it allows uh for us
+[35:00] to decrease the memory load on each GPU.
+[35:07] So this is zero. So there's 0 1, 02, 03.
+[35:11] And I guess the variation that you will
+[35:13] choose will be a function of how
+[35:18] sensitive you are to I guess training
+[35:20] time and how big is your model
+[35:25] and whether this will be an actual
+[35:26] problem or are you just fine with just
+[35:29] storing everything.
+[35:32] So that's one set of methods. So this
+[35:35] set of methods is again data
+[35:37] parallelism.
+[35:39] So it's basically you having independent
+[35:44] sets of data that are handled by
+[35:46] different GPUs.
+[35:49] Well, you have another set of methods
+[35:51] that's called model parallelism.
+[35:55] So model parallelism tries to
+[35:58] parallelize
+[35:59] the operation even within one batch.
+[36:04] So there's a bunch of methods. I don't
+[36:07] want to sound too like a catalog. So
+[36:08] we're not go through them all by one by
+[36:10] one, but I will just call out a few that
+[36:14] are worth noting.
+[36:16] So if you remember last lecture we
+[36:18] talked about MOE based LLM and how
+[36:22] sequences were being sent to different
+[36:25] experts.
+[36:27] Well there is a way to distribute that
+[36:30] across GPUs via this expert parallelism
+[36:34] techniques
+[36:36] which is uh having let's say one expert
+[36:39] on a device another one on another
+[36:41] device.
+[36:42] So that's one thing worth noting.
+[36:45] Another one I will say so tensor
+[36:47] parallelism is uh when you have big
+[36:51] matrix multiplications
+[36:53] to somehow cut that in a way that
+[36:55] decreases the uh memory required for
+[36:58] that.
+[37:00] Okay. And maybe the last one I will say
+[37:02] is pipeline parallelism.
+[37:04] It's when
+[37:06] you consider a forward pass as involving
+[37:09] several layers. So you're going to say
+[37:12] that one GPU is going to only be
+[37:14] responsible for let's say layers 1 2 3
+[37:17] and then another one layer three uh
+[37:19] sorry four to five four sorry four five
+[37:22] six and so on and so forth
+[37:25] um so you also have that kind of
+[37:26] parallelism but anyways there's a bunch
+[37:28] of techniques and the ones that I
+[37:31] mentioned they fall in the bucket of
+[37:34] model parallelism
+[37:39] make sense
+[37:41] No need to know the details on there,
+[37:43] but I think just like knowing that there
+[37:45] are several methods and just a rough
+[37:46] idea, I think is a is a good good thing
+[37:50] to have in mind.
+[37:52] Cool.
+[37:54] So, what did we do? So, we realized that
+[37:57] during the training process, we had to
+[38:00] save a lot of things in memory. So what
+[38:02] we saw was techniques that reduce
+[38:07] the burden of having memory per GPU. So
+[38:10] we are trying to distribute that across
+[38:12] GPUs. So we saw data parallelism and
+[38:16] then the zero method that has some extra
+[38:20] optimizations and we saw model
+[38:23] parallelism as well.
+[38:25] So now we're going to see another
+[38:28] technique that leverages the structure
+[38:31] of the GPU. And you may have heard of
+[38:35] this technique is called flash
+[38:37] attention.
+[38:39] It was actually developed here at
+[38:41] Stanford uh in 2022.
+[38:44] And in order for me to talk to you about
+[38:47] this technique, I want to tell you more
+[38:50] about what GPU is composed of.
+[38:54] So if you look under the hood, well GPU
+[38:58] is very complicated and I'm for sure not
+[39:00] uh I don't know everything either, but
+[39:02] what I know is that we have two kinds of
+[39:06] memories in a GPU. So you have one kind
+[39:10] of memory that's big but relatively slow
+[39:14] that's in the HPM
+[39:17] and then another kind of memory that is
+[39:19] fast but much much smaller which is on
+[39:24] chip next to the where the compute
+[39:27] happens that's called the SRAM
+[39:30] so you have HPM and SRAM HPM has
+[39:35] something around uh you know tens of
+[39:37] gigab by so it's like the GPU memory
+[39:39] that you saw in the description.
+[39:42] SRAMM is much smaller. It's like
+[39:44] something around like several like you
+[39:47] know tens of megabytes let's say. So
+[39:49] it's much smaller but then it is like 10
+[39:53] times faster. So this one is uh a few
+[39:58] terabytes per second let's say and the
+[40:00] SRAM is uh tens of terabytes per second.
+[40:04] So it's like a noticeable difference in
+[40:07] speed.
+[40:08] So what we want is to somehow leverage
+[40:13] the strength of these kinds of memories
+[40:17] in order to speed up the attention
+[40:19] computation in a in an exact way. So
+[40:22] what do I mean by exact way? So what I
+[40:24] mean is we're not making any
+[40:27] approximations to the computation.
+[40:31] What we're doing is we're just
+[40:33] leveraging the strength of these
+[40:35] components and sending the computation
+[40:38] in a in a clever way.
+[40:42] So
+[40:43] if you remember the self attention
+[40:46] computation is done with this very
+[40:49] important uh formula. So it's softmax of
+[40:53] queries and the keys over some scaling
+[40:56] factor times v.
+[41:00] So this allows queries to interact with
+[41:03] everyone else.
+[41:06] Um so in matrix form you can think of
+[41:09] queries as being uh as having the number
+[41:13] of rows equal to the sequence length and
+[41:15] then columns to being the the dimension
+[41:18] of the query and then you same for key
+[41:21] and value. So you have this big matrix
+[41:23] multiplications.
+[41:26] So if you do it, if you do this
+[41:28] computation the standards, the vanilla
+[41:32] way, what you would do is store them in
+[41:37] the big but slow memory component of the
+[41:41] GPU.
+[41:43] So you would store it in the HPM.
+[41:46] So here is what you would do if you were
+[41:49] to not do any optimization. So you would
+[41:51] take those matrices from the big but
+[41:55] slow
+[41:57] HPM,
+[41:59] perform the computation
+[42:02] and then write it back to the HPM
+[42:06] and then you would read that result
+[42:08] again from the HPM, compute the softmax
+[42:13] and then write it back to the HPM
+[42:16] and then you would again load this plus
+[42:20] the value matrix multiply them and then
+[42:24] write them to the HPM.
+[42:26] See there's like a lot of read and write
+[42:29] to the HPN. So it's a lot of uh data
+[42:32] transfer
+[42:33] which actually becomes the bottleneck.
+[42:36] So a GPU is very very fast but then you
+[42:40] spend a lot of time just loading your
+[42:42] matrices from the memory.
+[42:45] The reason why you do that is because of
+[42:48] the softmax softmax operation. So do you
+[42:52] remember what a softmax does? So it
+[42:54] normalizes the quantities so that they
+[42:57] sum to one but it's row dependent
+[43:01] meaning that each row needs to sum up to
+[43:04] one.
+[43:07] So in a sense you need that computation
+[43:10] to happen first before you do your
+[43:12] softmax. Like uh if you just like look
+[43:16] at it like that you you would think yeah
+[43:18] you you need to do the whole thing
+[43:20] first.
+[43:22] Well turns out that you don't need to do
+[43:26] everything
+[43:28] at once.
+[43:30] And this is the core idea behind flash
+[43:33] attention.
+[43:34] So what flash attention does is it tries
+[43:38] to minimize the amount of read and write
+[43:42] from and to the HPM
+[43:45] and instead takes small blocks and it's
+[43:49] called tiling. The method is called
+[43:51] tiling. It takes small blocks that it
+[43:54] sends to the SROM so that it gets
+[43:58] computed from end to end before being
+[44:01] sent back to the HPM.
+[44:05] Does that make sense? So the idea is
+[44:09] let's send small matrices into the SRAM
+[44:14] so that it does the whole you know full
+[44:16] end to end computation and just send it
+[44:19] back to the HPM because we want to
+[44:22] minimize the amount of read and write
+[44:23] from the HPM.
+[44:26] So here's how how you would do it. So
+[44:28] you remember the softmax
+[44:30] uh computation with the query and the
+[44:32] key and then the value. Well, what you
+[44:35] would do is to cut your matrices
+[44:41] and then proceed step by step.
+[44:46] But then there's a cool trick that I
+[44:48] want to talk to you about which is that
+[44:51] you don't need to compute the whole
+[44:54] matrix inside a softmax
+[44:57] in order to achieve the whole softmax
+[44:59] computation
+[45:01] cuz if you think about it let's suppose
+[45:03] you have a whole matrix and then you
+[45:05] have like different let's say columns or
+[45:06] like submatrices S1 to SN well submax of
+[45:11] this huge matrix
+[45:14] is equal to this matrix where the
+[45:17] softmax is taken respect to each of
+[45:20] these submatrices
+[45:22] up to some scaling factor.
+[45:26] So this is the core trick
+[45:29] and if you want to be convinced of it
+[45:31] just look at the softmax formula it's
+[45:33] like exponential of something over some
+[45:36] quantity which is shared across the row.
+[45:39] So this scaling factor will just
+[45:43] fix this with respect to that.
+[45:47] So with this in mind, what we will do is
+[45:52] take each respective slices of these
+[45:55] matrices,
+[45:57] do the whole computation and then
+[46:00] populate the corresponding
+[46:03] uh entry in the output matrix.
+[46:07] So we will do that between let's say the
+[46:10] first slice of the query and the first
+[46:12] slice of the keys and the values and
+[46:14] then we will repeat for the other slice
+[46:17] until the end
+[46:19] and then we will repeat for the other
+[46:21] queries as well until the end.
+[46:26] So what the paper explains is how this
+[46:30] scaling factor is being computed. So
+[46:33] this one is some formula that I did not
+[46:35] put on the slide. So it's not necessary
+[46:37] for you to memorize the formula. It's
+[46:40] just the idea
+[46:42] and the idea is exactly this trick.
+[46:47] So once you do that,
+[46:50] you basically end up with only one read
+[46:54] from the HPM
+[46:57] and these like tiled quantities are
+[47:00] stored in the SRAM
+[47:02] and then they're read from the SRAM
+[47:04] which is very fast and then computed and
+[47:07] then back to the SRAMM and then at the
+[47:10] end in order to accumulate the results
+[47:13] they're being sent back to the HPM.
+[47:18] So, just to make sure we're clear. So,
+[47:20] in green is basically when it's red from
+[47:23] the SRAM and then in blue is from the
+[47:24] HPM. You have a question? Yeah.
+[47:41] >> Yeah. The question is do you take the
+[47:42] whole row or a portion of it? So you can
+[47:44] take a portion of it but just for
+[47:46] illustrative purposes. Here we take the
+[47:48] like just this is just for illustrative
+[47:50] purposes. You can think of your your
+[47:52] matrix as being completely uh you know
+[47:55] like a grid and then uh you just like
+[47:58] multiply accordingly. But yeah this is
+[48:00] just for illustrative purposes. Yeah.
+[48:03] Yep.
+[48:12] Yeah. So the question is uh are you
+[48:15] computing alpha and all these quantities
+[48:16] on the fly or do you have some
+[48:18] estimation? So all this is exact and
+[48:20] they're computed in an iterative basis.
+[48:23] So the way it works is when you
+[48:27] populate the output you will keep on
+[48:32] having some extra quantity that will
+[48:34] adjust for that.
+[48:36] Think of it as just some formula that
+[48:38] works.
+[48:40] So yeah highly recommend looking at the
+[48:42] paper. They actually explicit that quite
+[48:44] quite a lot. So the paper is flash
+[48:45] attention fast and memory efficient
+[48:47] exact attention with IO awareness. All
+[48:50] of the links are in the the slides. But
+[48:52] yeah, highly recommend just looking at
+[48:53] the exact formula in case you want to be
+[48:55] convinced.
+[48:57] Cool. But the idea makes sense overall.
+[49:02] Any questions on this?
+[49:06] Cool.
+[49:08] Well, this was flash attention.
+[49:12] But there's actually another idea from
+[49:14] the paper. So this was only the first
+[49:16] idea which was around making the
+[49:18] attention computation
+[49:21] faster.
+[49:23] The second idea is given that the
+[49:26] attention computation is faster.
+[49:29] Now let's let's try to be smarter about
+[49:33] the backwards pass
+[49:36] because when you compute in the
+[49:38] backwards pass when you compute the
+[49:39] gradient of the loss with respect to a
+[49:41] parameter
+[49:43] the chain rule will surface some
+[49:47] activations that you need to have in
+[49:50] memory.
+[49:52] Well, here given that computing these
+[49:55] activations is very fast,
+[49:58] one idea is to just not store
+[50:02] activations from the forward pass or at
+[50:05] least not store everything
+[50:08] but instead in the backwards pass
+[50:10] compute these activations again.
+[50:15] So it's called recomputation.
+[50:18] So when you do the forward pass, you
+[50:19] compute an activation to be able to
+[50:21] compute the loss, but then instead of
+[50:24] saving it to reuse it during the
+[50:27] gradient update, you will just discard
+[50:30] it and then recomputee the activation
+[50:34] during the backwards pass with this very
+[50:37] uh fast technique.
+[50:41] And when you do that, it's actually
+[50:43] quite remarkable. So you do more
+[50:46] operations
+[50:47] Uh so gigaflops is uh you know it's just
+[50:50] a derivative of flaps. So it's the
+[50:51] number of operations you're doing. So
+[50:53] with flash attention you're doing more
+[50:55] operations because you're actually
+[50:57] recomputing things.
+[51:00] But then so you also see fewer read and
+[51:04] rights from the HPM. So here for
+[51:06] instance it was 40.3 in the standard way
+[51:08] and then 4. So it's like almost a 10x
+[51:11] reduction. But then you see that the
+[51:14] runtime is also smaller.
+[51:17] So this is very remarkable because
+[51:20] usually when you recomputee things
+[51:23] you are saving memory but at the expense
+[51:27] of
+[51:28] uh runtime you're just taking longer but
+[51:31] here you're not only taking less amount
+[51:34] of time you're also saving memory. So
+[51:35] you're basically having everything it's
+[51:37] the best of all worlds.
+[51:40] So this is what flash attention uh
+[51:42] mentioned. So you will see that there
+[51:44] are some uh I guess variants of flash
+[51:47] tension. So flash two, flash three and I
+[51:52] would say that these are more adaptation
+[51:55] of these methods to the current infra
+[51:58] because each new GPU comes with new um
+[52:03] pros and cons, strength and weaknesses
+[52:06] and I guess there's always a way to make
+[52:08] these optimizations better.
+[52:11] Uh but yeah, I would say flash attention
+[52:13] is quite a common trick and I think it's
+[52:16] a very good thing to know.
+[52:20] So does that make sense?
+[52:25] Cool. I take that as a yes.
+[52:29] Okay, cool. Okay, so last thing. No, we
+[52:32] have a few things um that I want to talk
+[52:35] to you about. So you know, you have
+[52:38] your LLM with a bunch of weights. These
+[52:41] weights, they're all floating points. So
+[52:43] you can think of them as, you know, just
+[52:45] being numbers with a bunch of numbers
+[52:47] after the decimal. One natural question
+[52:50] you can ask yourself is, do you really
+[52:53] need to know
+[52:55] that much like precision after the
+[52:58] decimal point to be able to do a good
+[53:00] job? I guess put another way can you
+[53:03] just like cut your precision in some way
+[53:07] to save on memory but then keep the same
+[53:09] performance.
+[53:11] So this is the idea behind quantization.
+[53:15] So quantization is the process of
+[53:19] converting the precision of a number
+[53:21] from let's say one uh setting to another
+[53:26] to in order to better understand that I
+[53:28] think it's important to know how
+[53:31] floating points sorry floating point uh
+[53:36] numbers how they are encoded.
+[53:40] So in practice
+[53:42] they're just a bunch of bits
+[53:46] and here you have some bits that are
+[53:48] responsible for let's say the exponent
+[53:50] some they're responsible for the mantisa
+[53:52] which is basically how granular granular
+[53:55] your number is and then one that is
+[53:58] about the sign.
+[54:01] So you have a bunch of representations
+[54:03] of floats. So the most common ones are
+[54:05] in this table. So you have uh so single
+[54:09] point precision, half precision,
+[54:12] um floating point 64, floating point uh
+[54:15] brain float 16 that are each having
+[54:19] different granularities for a three
+[54:21] dimensions.
+[54:23] So if we take the first two rows which
+[54:25] are the two most common uh
+[54:27] representations that you will see out
+[54:29] there,
+[54:30] floating point 16 is only represented on
+[54:34] 16 bits.
+[54:36] compared to 32. So it takes basically
+[54:40] half the memory if if you want to think
+[54:42] about it this way. Uh but then it's less
+[54:44] precise, meaning it's less granular. So
+[54:48] I guess one idea that we could have is
+[54:51] to somehow decrease the granularity of
+[54:54] these weights and these numbers
+[54:57] hoping that it will not impact
+[54:59] performance too much.
+[55:03] So another thing that I want to uh
+[55:05] mention is you know back to that uh GPU
+[55:08] description
+[55:10] you see that there is also a bunch of
+[55:14] information around the compute speed. So
+[55:17] I'm not sure if you can see very well on
+[55:18] the can you see very well on the slide.
+[55:20] So I I'll read it. Uh the compute speed
+[55:22] as a function of which kind of
+[55:25] representation you're using. So here if
+[55:28] you're using FP64 which is this super
+[55:31] granular way of representing numbers you
+[55:34] only have 34 teraflops of comput speed
+[55:38] but then if you're using let's say P32
+[55:41] which is half of it you can uh kind of
+[55:44] double
+[55:45] your compute speed and so on you have
+[55:47] all these like other um numbers as well.
+[55:52] So the idea is you can save on memory,
+[55:54] you can also go faster.
+[55:59] So with this in mind, I just want to
+[56:02] touch on one last technique before
+[56:04] giving it to Shervin, which is mixed
+[56:06] precision training.
+[56:09] So the idea behind mixed precision
+[56:11] training is to leverage different
+[56:15] granularities of float representations
+[56:19] such that it will not hurt the
+[56:22] performance too much
+[56:24] but allow you to save on memory and do
+[56:29] things faster.
+[56:31] So the idea behind mixed precision
+[56:33] training is you have your models or you
+[56:37] have your model,
+[56:40] you keep your weights
+[56:42] in high precision, so FP32
+[56:46] and all the operations that you do in
+[56:48] the forward and backwards pass, you're
+[56:51] going to do it in a lower precision. So
+[56:53] in this case FP16
+[56:56] but then the weight updates will be done
+[57:01] still in FP32.
+[57:04] So the authors of the paper when they
+[57:07] when they did that basically what they
+[57:08] realized was the performance was not
+[57:11] degraded too much but then you had a lot
+[57:14] of savings on memory and then it was
+[57:16] running faster.
+[57:18] So now you may wonder well why are you
+[57:22] keeping the the weights at a high
+[57:25] precision but not the activations and so
+[57:27] on. Um so I can offer you just a bit of
+[57:30] intuition.
+[57:32] So whenever you perform a forward pass
+[57:36] you're performing that on a set of data
+[57:39] but the set of data can be noisy in
+[57:41] itself.
+[57:43] So maybe all the decimal points after so
+[57:48] all the numbers after the decimal points
+[57:50] may not be as useful.
+[57:53] So you can think of this update as being
+[57:55] more like you know in which direction
+[57:56] should the weights go to go to a more
+[57:58] optimal state. So it doesn't require
+[58:01] them to be super precise,
+[58:05] but then it's much more important to
+[58:07] keep your weights, so the weights of the
+[58:09] model in high precision
+[58:11] in order to not accumulate
+[58:14] errors due to contisation.
+[58:18] That's one way of just think about it.
+[58:21] But the long story short is if you
+[58:23] reduce the granularity of some numbers
+[58:27] then you will have a lot lot of benefits
+[58:30] and not a lot of disadvantages in terms
+[58:32] of the performance.
+[58:36] Cool.
+[58:38] Yeah.
+[58:52] That's a great question. So the question
+[58:53] is do you apply this uh technique to all
+[58:57] weights of all layers or just to some of
+[59:00] them? So there's been a lot of papers on
+[59:02] that. Uh and the answer is there's some
+[59:05] variations to it. Um and so the answer
+[59:08] is not necessarily. So I do have some
+[59:11] pointers happy to share share them with
+[59:13] you. But um some parts may be more
+[59:16] important than others.
+[59:19] So this strategy is a little bit uh like
+[59:22] a high level idea but there are always
+[59:24] some variations uh from setup to setup.
+[59:30] Yep.
+[59:35] So is your question that people rely on
+[59:37] the like relationship between compute
+[59:41] and sorry not compute parameters and
+[59:43] token from the chinchilla paper. Uh but
+[59:46] it may be different from their setup
+[59:48] which may introduce something is is
+[59:51] basically your question.
+[60:01] So the question is uh is there also an
+[60:03] optimal precision to use? So I would say
+[60:06] people use different things there's not
+[60:08] like a set way where everyone does
+[60:10] something but um I would say that these
+[60:14] uh scaling law like this chinchila law
+[60:16] is actually something that some authors
+[60:19] they try to reproduce for their own
+[60:22] model.
+[60:24] So actually uh for instance the lama 3
+[60:27] paper there's a whole part around trying
+[60:31] to uh have some relationship between uh
+[60:35] you know given a fixed amount of compute
+[60:38] what is the optimal
+[60:40] uh you know number of tokens and then
+[60:42] number of parameters that is uh unique
+[60:44] to their setup.
+[60:46] So what people do is they do this thing
+[60:49] themselves on a small amount of training
+[60:53] uh training set and on smaller models so
+[60:55] that it doesn't cost them too much. They
+[60:57] try to see what the relationship is for
+[60:59] their setup and then they extrapolate
+[61:03] and I believe that's how llama 3 so I
+[61:05] think there's a model that so lama 35
+[61:08] billion parameters I think they had the
+[61:10] whole section just justifying that they
+[61:12] came up to this number with some
+[61:13] experiments that they run. So to your
+[61:15] question um I think it highly depends on
+[61:18] the kind of model that someone is
+[61:20] training and they'll probably
+[61:22] have this analysis I guess with respect
+[61:26] to their own setup.
+[61:28] Does that answer your question?
+[61:31] Cool. Cool.
+[61:33] Okay. Yeah.
+[61:47] Yeah. Yeah. Yeah. The question is uh is
+[61:50] there something you can do about the
+[61:51] range? So there are several types of
+[61:53] quantization. We'll not go into details
+[61:55] here but I can give you like a zero
+[61:57] point quantization and apps quantization
+[62:00] which are different techniques that play
+[62:02] with these ranges. Uh there's also like
+[62:05] a quantization technique that Shvin will
+[62:07] cover that also talks about that. Um so
+[62:10] yeah stay tuned for this but um I think
+[62:12] 0 point quantization and absmax are are
+[62:14] ones that maybe you can look into for
+[62:16] this.
+[62:20] Cool.
+[62:21] So with that I'm going to give it to
+[62:23] Shervin.
+[62:27] Thank you Afin. So now we have seen uh
+[62:31] how pre-training worked. We're going to
+[62:33] see together the next stages of
+[62:35] training. Um so as we saw with Afin
+[62:39] pre-training was a way to um build the
+[62:42] intuition to the model about how
+[62:44] language was constructed and about uh
+[62:48] the main characteristics of what is
+[62:51] contained in the training data that is
+[62:52] general enough. So this is why we had
+[62:55] corpuses that spans huge corpora of text
+[62:59] that are typically of the size of what
+[63:01] you find on the internet. So typically
+[63:03] very large and raw and conveying um
+[63:07] aspects of language.
+[63:10] So now you might want to ask yourself
+[63:12] how can we make such knowledge actually
+[63:15] helpful. So this is something that we're
+[63:18] going to discuss
+[63:20] just in a second. But before we discuss
+[63:23] about what could motivate further
+[63:26] training, I want to come back to some
+[63:28] very simple example
+[63:31] that will
+[63:33] um surface what could be such a need. So
+[63:36] let's take our f favorite example about
+[63:38] our teddy bear and let's say we have a
+[63:41] very um practical use case. So, we have
+[63:45] thoroughly loved our teddy bear. Uh, but
+[63:48] now it has become a bit dirty. So, we
+[63:50] need to wash it. And you might want to
+[63:52] ask your favorite LLM um if you can put
+[63:56] it in the washer. So, with the
+[63:59] description that Afin mentioned of LLM
+[64:02] pre-training, I wanted to ask you all
+[64:04] what was your opinion about what could
+[64:07] the output to this be?
+[64:11] So, any guesses?
+[64:16] Yep.
+[64:21] Yeah.
+[64:23] Yeah. Excellent. Yeah. So the the answer
+[64:26] the guess was maybe another question. So
+[64:28] I think that is a great guess that could
+[64:29] definitely be it. So here in the example
+[64:32] we put some other sentence that could be
+[64:35] likely but the the gist is the same. it
+[64:38] has been trained on next token
+[64:40] prediction not being an assistant or
+[64:43] someone that is helpful to you. So this
+[64:46] is why uh it will try to mimic what
+[64:48] could be the pattern here and what could
+[64:50] be potential likely next words. So for
+[64:54] example, the example we put here is
+[64:57] something that relates to uh like how
+[65:00] the teddy bear is composed of um and uh
+[65:04] because it's in the same domain as kind
+[65:08] of teddy bear and then when you talk
+[65:10] about washer then maybe it has been
+[65:12] trained on data that includes materials
+[65:15] of teddy bears. So that could be it. Um
+[65:19] and I have a question with you all. Um,
+[65:22] are you happy with it?
+[65:25] No. Yeah, exactly. So, this is why we're
+[65:29] going to see what we can do with the
+[65:31] model to make it helpful to you.
+[65:35] And this stage is called fine-tuning. So
+[65:39] we're going to see um that it enables us
+[65:42] to uh like in the case of general like
+[65:45] the general case of LLMs to make the LLM
+[65:49] a helpful assistant but also if you have
+[65:52] a specific use case you can also use
+[65:54] this technique to tune the general
+[65:57] representation of the language towards
+[66:00] your task of interest. Uh but we're
+[66:02] going to focus first on what is done for
+[66:05] LLMs in general.
+[66:09] Uh so first I want to define some terms.
+[66:12] So model fine-tuning is commonly known
+[66:14] as SFT. SFT is uh short for supervised
+[66:21] fine-tuning. So the supervised part
+[66:24] suggests that we need some labels and
+[66:26] it's actually the case. So it's pairs of
+[66:29] inputs and outputs that we provide the
+[66:32] model to be trained on. And this is why
+[66:35] uh it's called supervised. And then
+[66:37] finetuning is uh the term that refers to
+[66:42] uh refining the weights that have been
+[66:44] already trained. So you you start from
+[66:45] the pre-trained weights and you further
+[66:48] train the model on additional data to
+[66:51] get a fine-tuned model. Um and um and
+[66:57] then one interesting note that I will
+[66:59] tell you all is that the objective
+[67:02] function even though it's the same will
+[67:06] differ a bit from the pre-training task.
+[67:09] So in the pre-training task you start
+[67:11] with the BOS token beginning of sentence
+[67:14] and you fit uh all your corpora of data
+[67:20] trying to predict the next token. But
+[67:23] here since you have uh this supervised
+[67:26] fine-tuning setup where you want the
+[67:27] model to do something useful in cases of
+[67:30] interest. So let's say when I ask the
+[67:32] model about washing my teddy bear. So
+[67:35] washing my teddy bear is actually an
+[67:38] input that I give to the model. It's
+[67:39] it's fixed. I don't want the model to
+[67:42] parrot what I say. I want the model to
+[67:45] be a helpful assistant to what I
+[67:48] condition it on. So in this setup, the
+[67:52] input is not a location where you would
+[67:55] predict the next token. You would not do
+[67:57] teacher forcing on it, but rather start
+[68:00] from this input and then predict the
+[68:02] next token onwards. And then you're
+[68:05] going to tune what the optimal um like
+[68:08] distribution of next token can be based
+[68:11] on this input.
+[68:13] So any questions on the overall idea of
+[68:17] SFT before we dive in a bit deeper?
+[68:21] Yep.
+[68:24] So the question is we don't put a loss
+[68:27] over the input. That's right. So you
+[68:28] start from the input and you start
+[68:30] predicting the next token and then the
+[68:32] loss calculation starts from there.
+[68:35] Yeah,
+[68:38] everything good.
+[68:40] Okay.
+[68:42] So uh what I want uh what I was just
+[68:45] telling you um is that SFT can be done
+[68:48] to tune your own uh task of interest but
+[68:51] also it's something that is being done
+[68:53] at uh the one of the main stages of
+[68:57] training LLMs as you use it every day
+[69:00] and then this transition from uh the
+[69:03] model being a good representation of
+[69:05] language to a useful assistance is a
+[69:09] subcategory of SFT called instruction
+[69:11] instruction tuning. So instruction
+[69:13] tuning comes from the fact that we want
+[69:15] the model to answer instructions.
+[69:20] So now I'm going to like show with the
+[69:24] graph what I was just mentioning
+[69:25] regarding predicting the next word. Uh
+[69:29] okay. So actually just in a bit first
+[69:30] we're going to look at the data. So um a
+[69:34] with a we saw that the composition of
+[69:36] the data for pre-training was basically
+[69:39] the whole internet where you had uh
+[69:41] sources that were carrying knowledge
+[69:44] such as Wikipedia um and in general like
+[69:48] masses of text of English that um that
+[69:51] tells that tells the model about how
+[69:54] English and other languages work as well
+[69:57] as coding and here it's slightly
+[70:00] different for instruction tuning. We're
+[70:03] going to look at data that presents to
+[70:06] the model how it can most helpfully
+[70:10] respond to instructions. So you can
+[70:13] divide this in several categories. So
+[70:16] here we present some categories that
+[70:18] could be helpful to users of LLM. For
+[70:21] example, uh story writing, you know,
+[70:24] you're interested in writing a story.
+[70:26] you give it a set of instructions and
+[70:29] then you have a ground truth that is
+[70:32] attached to it. Other um examples
+[70:36] include poem creation, list generation,
+[70:39] explanation and and many more that are
+[70:42] part of the data mixture of SFT.
+[70:47] So basically you uh run all these
+[70:50] supervised fine-tuning
+[70:52] um training with the input that is given
+[70:57] and then you train uh the model on
+[71:00] predicting the output
+[71:03] and I'm going now to show uh what it
+[71:06] looks like. So let's say your
+[71:08] instruction is here. So you ask your
+[71:10] model to do something. Um, so it could
+[71:13] be formulated in a different way, but
+[71:15] just to keep it short, I just said do X
+[71:19] and then the yellow part is where you
+[71:21] start fitting your objective function
+[71:24] on.
+[71:27] Um, does this make sense?
+[71:33] Great.
+[71:35] So as I was uh mentioning the data
+[71:38] mixture in includes um instruction
+[71:43] um geared data. So for example you had
+[71:46] all of these uh kinds of tasks that uh
+[71:50] users might ask for at inference time.
+[71:52] So it's what I put under the category
+[71:55] assistant dialogues.
+[71:57] Um, and these days, uh, since you have
+[72:01] all these, uh, large models that already
+[72:04] exist out there, and let's say you want
+[72:06] to generate a new one, you don't
+[72:09] necessarily have to start from scratch.
+[72:12] So, all of these that I mentioned were
+[72:14] originally human written. So you had all
+[72:17] these instructions that people gathered
+[72:20] and you had uh expert linguists that had
+[72:23] a set of instructions
+[72:26] on how to write the best answer that was
+[72:29] fluent, helpful and um everything that
+[72:33] was geared towards maximizing your
+[72:35] happiness as a user. But these days you
+[72:38] can use these already trained LLMs to
+[72:42] generate such data. So typically uh when
+[72:45] you have a large model that that is very
+[72:48] performant you can fit it such
+[72:51] instructions sample some generated
+[72:54] outputs and then have a human or some
+[72:56] other LLM review the quality. So it's
+[73:00] something that speeds up a bit uh the
+[73:02] curation of such data sets. So I just
+[73:04] wanted to emphasize on the fact that
+[73:06] it's not only human generated these days
+[73:09] but you can have some assistance
+[73:11] and besides all of the categories that
+[73:15] you care about. So typically
+[73:17] u math or um you know how you write a
+[73:20] proof, how things follow each other or
+[73:24] codes uh like high quality code bases.
+[73:28] You also have other aspects that um that
+[73:32] are very important when you when you
+[73:33] release a product like this to the wider
+[73:36] population that come under the umbrella
+[73:39] of safety. So uh you want your model to
+[73:43] be helpful but also harmless. So you
+[73:47] also have uh in the data mixture often
+[73:50] times a subset that enforces the model's
+[73:53] behavior not to uh repeat some of the
+[73:57] harmful content it might have seen on
+[73:59] its pre-training corpus. So it will
+[74:03] include techniques that might um reject
+[74:06] some um some some user prompts. So you
+[74:09] might have tested you know on your own
+[74:12] the limits of an LLM today. If you
+[74:15] submit queries that might leads to
+[74:18] something that that is considered bad it
+[74:20] would just say okay sorry I cannot
+[74:22] answer this and this sorry I cannot
+[74:25] answer this is you know could be done
+[74:28] via regex but very rarely because it's
+[74:31] not scalable and then people actually
+[74:34] embed this property as part of the
+[74:36] model. So um you have techniques that
+[74:41] like rejects user queries that are seen
+[74:43] as harmful or uh there is some other um
+[74:47] phenomenon such as hedging
+[74:50] that nuance the um the output of the
+[74:54] model in order to not make blanket
+[74:57] statement as well. So you might have
+[74:58] data sets that includes such um flavors
+[75:04] and you can have many more um depending
+[75:07] on the task of interest that you're
+[75:09] dealing with. But what I'm listing here
+[75:11] is what usually the LLM out there that
+[75:15] aim at being general assistants gather.
+[75:18] They tend to be like general tasks um
+[75:21] that there are being trained on.
+[75:24] Any questions on the data?
+[75:27] Yep.
+[75:44] Yep. So the question is the story
+[75:47] writing example doesn't precise what
+[75:49] kind of poetry uh the story should be
+[75:52] about. So it might be ambiguous. How can
+[75:53] it generalize? So that that is a great
+[75:55] point. So we rely on the model's uh
+[75:59] knowledge that it has accumulated at
+[76:00] pre-training time to be able to
+[76:03] generalize beyond the examples that it
+[76:05] has been fed. So let's say now you have
+[76:09] um a story about uh you know poetry and
+[76:14] from pre-training it knows about all
+[76:16] kinds of poetry that exist out there. So
+[76:18] you could imagine after fitting such an
+[76:21] example at supervised fine-tuning time
+[76:23] that you could give more details to this
+[76:26] prompt and then the model has the
+[76:28] ability to generalize the generation of
+[76:31] the story with respect to those other
+[76:33] attributes. So you can have I think like
+[76:35] the example that you mentioned is a
+[76:37] great um example of u the the the
+[76:44] magical ability of LLMs to adapt to
+[76:46] natural language. uh and all of that has
+[76:49] to do with the kind of distribution it
+[76:51] has seen in the past and what we teach
+[76:54] it. So uh I think like the concept
+[76:57] itself of writing stories is the key
+[76:59] learning to the model that it can
+[77:01] generize.
+[77:04] Does does that make sense? Yeah. Okay.
+[77:07] Great. I think there was another
+[77:08] question here.
+[77:19] Yep. So the question is about the term
+[77:21] of alignment. Um is this post training
+[77:24] uh what is called as being aligned? So
+[77:26] you are ahead of me. In a few slides
+[77:27] we're going to talk about it. Yeah.
+[77:30] Okay. Great great questions. Uh any
+[77:33] other question?
+[77:36] Awesome.
+[77:38] So uh and then just like Afin did it for
+[77:42] the pre-training part I'm going to give
+[77:44] some orders of magnitude. So the same
+[77:47] GPT3 and LMA 3 papers that Afin referred
+[77:51] some numbers from don't actually give
+[77:54] their uh statistics in terms of token
+[77:57] numbers for the for the instruction
+[77:59] tuning site but actually in number of
+[78:01] examples. So you see you you have about
+[78:04] 13k used by GPT3 and uh 10 million for
+[78:09] lama 3 and uh okay so let's do some
+[78:12] quick estimation let's say each example
+[78:14] is about a thousand token when you
+[78:17] multiply that with the number of of
+[78:19] examples you see that the size of the
+[78:23] data sets used for SFT is several orders
+[78:26] of magnitude
+[78:28] lower than the one used for pre-training
+[78:32] so The mental model that you need to
+[78:34] have here is that pre-training is a lot
+[78:37] of data. You want to learn about general
+[78:40] um characteristics about language and an
+[78:43] SFT is more exactly what's uh so someone
+[78:48] was mentioning just now regarding
+[78:50] alignment was aligning the goal of the
+[78:53] model to being uh suited for your tasks.
+[78:56] So typically very high quality data sets
+[78:59] and much more um like concise and
+[79:02] precise in terms of number. So like
+[79:05] lower like less order of magnitude.
+[79:10] Okay, great. So now let's try this
+[79:12] exercise again. What do you think could
+[79:15] be the answer to our instruction tuned
+[79:19] now model to the same question?
+[79:23] Anyone wants to take a guess?
+[79:29] You want to try again?
+[79:36] >> Yeah. So the the the answer was yes, you
+[79:38] can put in the teddy bear in the washer
+[79:40] except that you shouldn't put your teddy
+[79:42] bear in the washer. You should hand wash
+[79:44] it. Um so it will give you the answer
+[79:48] that is helpful to the user and indeed
+[79:50] uh this time respond to the query.
+[79:53] So which is which is pretty nice.
+[79:56] So now we talked about all the things
+[79:59] that are great about supervised
+[80:01] finetuning. Now that I'm going to detail
+[80:04] a bit more about what could make it hard
+[80:07] or challenging and then motivate the
+[80:11] optimization part that we're going to
+[80:13] see afterwards. So first we talked about
+[80:17] it a a bit. uh when we have these data
+[80:21] sets, these data mixtures for SFT
+[80:24] training, we need high quality data and
+[80:27] when you say highquality data means
+[80:30] often times human involved in the loop,
+[80:32] you need to make sure it abides with all
+[80:35] the rules and all the characteristics
+[80:38] that the user will care about. So
+[80:39] typically it's highly um involved. So
+[80:44] originally these first models they were
+[80:46] almost all human but now you might have
+[80:48] some um some mixture of human and uh
+[80:52] generation
+[80:54] um and but one good thing about these
+[80:57] things is that the data sets they are
+[81:00] trained on are reused. So so it's a work
+[81:03] that you do once and you can complement
+[81:06] with respect to time uh but it's still
+[81:09] very expensive in time and resources.
+[81:13] So the second point I want to mention
+[81:16] comes back to a point that someone just
+[81:18] made regarding uh the distribution of
+[81:21] your SFT data set and how it would align
+[81:25] with actual inference distribution. So
+[81:28] in the case of the story regarding a
+[81:31] specific kind of poetry, the
+[81:33] distribution of prompts that precise the
+[81:36] kind of poetry seems close enough for
+[81:40] generalation generalization to be made.
+[81:43] But you could think about examples that
+[81:45] widely differ. So let's say you ask for
+[81:48] a story that is in some movie plots and
+[81:52] it differs from the stories that you
+[81:54] might uh like see in in textbooks. So
+[81:57] this could be slightly out of
+[81:59] distribution and it could have trouble
+[82:01] generalizing to that. So um prom
+[82:04] distribution is very important and
+[82:07] aligning that prom distribution with
+[82:09] respect to the target task is of
+[82:11] interest. Yep.
+[82:22] Yeah, great point. So the question is
+[82:24] about let's say you have SFT tuned your
+[82:27] model and now you put a training input
+[82:30] back to the model. Will you get the same
+[82:32] story? So it has to do with the
+[82:35] phenomenon that Afin was uh mentioning
+[82:38] regarding
+[82:39] memorization.
+[82:41] So in practice you will not see the same
+[82:44] story most likely because the sampling
+[82:46] that you're doing is uh with a non-zero
+[82:49] temperature it will u maybe have the
+[82:52] same flavor but not word word for word.
+[82:56] Um
+[82:58] then the flavor of that story if you
+[83:00] have the exact same prompts might be the
+[83:03] same. You know it depends on what it has
+[83:05] seen as at pre-training time. Um but
+[83:08] yeah so the answer is that
+[83:11] if I had to give a guess on that precise
+[83:13] example it might be the same flavor but
+[83:16] definitely not the same wording.
+[83:19] Yeah. So and it might be a different
+[83:21] story um if the sampling goes through
+[83:24] some other region of the space. You know
+[83:26] stories are highly creative and the
+[83:29] pre-training uh corpora of of like data
+[83:32] mixture had uh like all kinds of stories
+[83:35] in there. So like the specific u example
+[83:38] of story is likely to generate different
+[83:41] um different like outcomes.
+[83:54] >> Yep. So the question is uh will how much
+[83:57] the model wanders around depend on the
+[84:00] temperature parameter and yes. So
+[84:02] typically when you have a high higher
+[84:04] temperature you also so it's also called
+[84:06] more creative and it's for that reason
+[84:08] it might also uh generate things that
+[84:11] are less likely u on its output
+[84:14] distribution with respect to what it has
+[84:16] learned and this is exactly you know a
+[84:19] case of something that we learn. So yeah
+[84:22] the answer is yes.
+[84:26] So but I so the question is is there any
+[84:29] way to tune that? So when you tune the
+[84:30] temperature, you you exactly do that.
+[84:33] Yeah.
+[84:34] Or were you thinking about something
+[84:36] else?
+[84:49] Yep. So the question is, you know, is
+[84:51] there something else you could do to
+[84:52] have like variations in the response? So
+[84:55] for that I have a simple but hard
+[84:58] solution. you would need more data in
+[85:01] that category that uh will ground the
+[85:04] model into seeing what kind of
+[85:06] distribution we target with such queries
+[85:08] and I think that will be one way for the
+[85:10] model to generalize more. Yeah. So I
+[85:13] think like it will be working on the
+[85:15] data part
+[85:18] was there another question
+[85:22] all good.
+[85:24] So yes, so this is a very relevant
+[85:28] question because it touches on the topic
+[85:29] of generalization.
+[85:31] So yeah, so data mixture matters a lot
+[85:34] and having points that are um sparse
+[85:38] enough in the distribution space to give
+[85:40] the gist to the model of what it needs
+[85:42] to learn rather than repeating the same
+[85:44] story again and again will have a lot to
+[85:47] do with generalization powers. Um and
+[85:50] then this is something we are going to
+[85:52] see in a second. How do you evaluate
+[85:55] such models? Um the feeling that you get
+[85:58] as a user on how helpful a model is
+[86:01] tends to be subjective. So how can you
+[86:04] put some number on it is going to be a
+[86:06] key topic of interest and then also um
+[86:10] very soon we're going to see how to make
+[86:12] the computations
+[86:14] not that expensive.
+[86:16] So Ashen talked about training
+[86:18] optimization techniques, but now uh when
+[86:21] we're at the finetuning stage, maybe we
+[86:23] can go one step further and and and see
+[86:26] what simplification assumption we could
+[86:28] make.
+[86:30] Okay, awesome. Now let's dive into one
+[86:33] of these challenges which was the
+[86:35] evaluation part. So people have
+[86:39] decomposed what they care about in
+[86:42] categories. So I'm listing here some
+[86:44] dimensions that are evaluated against
+[86:47] and that give some quantitative number.
+[86:50] So you have a general language where
+[86:53] this benchmark that is popular um is
+[86:57] generally one score that users that
+[86:59] people reports. It's a MMLU
+[87:03] um which is massive multitask language
+[87:06] understanding. So it has I think 50 or
+[87:09] so tasks in there where the model is
+[87:12] being evaluated against and you have
+[87:15] some score that you can compare with.
+[87:17] You have uh benchmarks on reasoning uh
+[87:20] on uh math reasoning as well as code
+[87:24] generation. So here you have all sorts
+[87:26] of acronyms and there is like even way
+[87:29] more. So uh benchmark um basically the
+[87:34] the setting up benchmark has been uh one
+[87:37] area of research. So you always see more
+[87:39] and more benchmark coming in because
+[87:42] people tend to optimize for those that
+[87:44] exist and then there are some gaps that
+[87:47] might be filled by further ones. And the
+[87:50] GSM 8K stands for
+[87:53] um
+[87:56] grad school. So yeah, grad school math
+[87:59] 8K stands for the number of examples. Uh
+[88:03] yeah, I think so. Or maybe maybe G
+[88:06] stands for something else, but it's like
+[88:07] high school topics basically.
+[88:12] And one very interesting uh pattern that
+[88:16] people have seen as these models came
+[88:19] out and as they were evaluated against
+[88:21] these benchmarks is that sometimes for a
+[88:25] same kind of model you see all of a
+[88:28] sudden a spike in uh numbers uh with
+[88:32] respect to some of these benchmarks
+[88:33] without a clear explanation behind it.
+[88:38] And there is this paper that I highly
+[88:40] recommend taking a look which um
+[88:43] explores the phenomenon of training on
+[88:46] the test task
+[88:48] not the test set the test task. So when
+[88:51] you have benchmarks regarding u math
+[88:55] reasoning let's say it matters a lot if
+[88:58] the model has has been trained on data
+[89:02] that relates to that kind of reasoning
+[89:04] versus not. And this is why when you
+[89:07] type in those kinds of benchmarks, you
+[89:10] will see that there are sets of
+[89:13] so-called auxiliary training that can be
+[89:17] used for the model to be trained on the
+[89:19] same domain and um and in that way it's
+[89:24] enables um like the fact of comparing
+[89:26] models with respect to that specific uh
+[89:29] capability. So the what the paper uh
+[89:33] tries to convey here is that if you want
+[89:35] to compare models between each other,
+[89:37] you need to compare um the training
+[89:40] mixture it has been trained on and then
+[89:42] ensure parity in terms of training on a
+[89:46] test task. So you need to make sure that
+[89:49] for example the two have been trained on
+[89:52] the test task or not. And if it's one
+[89:56] and the other knots, then it might not
+[89:59] be a good thing to compare uh them. It
+[90:02] doesn't give you like the intrinsic
+[90:03] value of the model.
+[90:06] So yeah, that's an interesting um
+[90:09] phenomenon here. Uh any questions?
+[90:16] Okay, great. So we can move on. Uh so
+[90:19] one thing that I was mentioning here is
+[90:20] that it's very hard to get a sense of
+[90:23] how good a model is even with respect to
+[90:26] benchmarks course because often times
+[90:28] what happens is that as they come out
+[90:31] people design um data on the training
+[90:35] side that resembles more what we try to
+[90:39] solve on the benchmark side. So
+[90:41] sometimes you end up with models that
+[90:43] score great everywhere but you as a user
+[90:46] don't necessarily see uh added value to
+[90:49] it. Uh and uh you know it's not the
+[90:52] fault of models. It's not the fault of
+[90:54] the benchmarks. It's just that it's very
+[90:56] hard to give a number that conveys the
+[91:01] value to you of the model. So this is
+[91:04] why people have come up with other uh
+[91:07] techniques to put a number on uh model
+[91:10] evaluation and you might have heard of
+[91:13] JetBot Arena.
+[91:15] Have any folks heard of it here?
+[91:19] Yeah. So, it's a website where models
+[91:23] can be submitted and um users come in
+[91:27] and they ask their questions and they're
+[91:30] presented responses from two models and
+[91:33] they're being asked to judge which one
+[91:35] is better and then with some pair wise
+[91:39] computations done on the website side
+[91:42] they come up with some ranking in the
+[91:44] end that's ranks model with respect to
+[91:46] quote unquote user preference.
+[91:49] So it's a sort of a a number that puts
+[91:53] on the like that is being put on the
+[91:55] vibes scene by the user and is it um all
+[91:59] perfect actually uh no. So it suffers
+[92:05] from several uh issues that are uh like
+[92:08] another set of issues that are hard to
+[92:10] deal with. So like among them when you
+[92:13] have a new model that come in you have
+[92:16] some noise at the beginning with respect
+[92:18] to with which other model it's being
+[92:20] compared against and these first few
+[92:23] steps actually um influence quite a bit
+[92:26] the actual ranking which makes it um you
+[92:30] know kind of a brittle
+[92:32] uh property
+[92:34] and uh there are there is a paper that
+[92:37] actually shows that it's easily possible
+[92:40] to rig
+[92:41] such a leaderboard. So I'm not sure if
+[92:44] there is any evidence that it has been
+[92:46] done in the past but you know you can
+[92:49] use any model if you ask the question
+[92:52] who are you it's just going to say who
+[92:54] who it is if you ask GPT who are you
+[92:57] it's going to say hey I'm Chad GPT I'm
+[92:59] helpful assistant and this paper uh you
+[93:03] know observed on this very simple
+[93:04] property that it was able to detect what
+[93:07] model was being evaluated against and
+[93:10] let's say you have an adversarial player
+[93:13] it could rig the ranking just by
+[93:15] selecting the right model. So it's not
+[93:18] um foolproof.
+[93:20] And then on other aspects, so um some of
+[93:25] the benchmarks that evaluate these
+[93:26] models, they're actually cured by
+[93:29] experts that know very well about the
+[93:32] target distribution of what a given
+[93:35] prompt should give. So it can uh so it
+[93:38] has a set of guidelines that says
+[93:40] clearly okay this is factual this is
+[93:42] non-factual. So they're able to
+[93:44] determine what is good versus bad and
+[93:47] you as a user you might not know about
+[93:50] it cuz let's just take the example of
+[93:52] the teddy bear that you wanted to put in
+[93:54] the washer. If I don't know that I need
+[93:56] to hand wash my teddy bear and if I have
+[93:59] a detailed response regarding uh you
+[94:03] need to wash it with the machine wash
+[94:05] cold and I could as a user find these
+[94:09] pieces of advice helpful because they
+[94:11] are actionable to me but actually are
+[94:13] they factual that is a whole other set
+[94:16] of issues that you as a user wouldn't be
+[94:18] able to tell on a lot of queries
+[94:22] and uh another challenge that we have
+[94:24] Here is a user preference. So, who here
+[94:28] likes it when there are emojis in LLM
+[94:32] responses?
+[94:34] Yes. No.
+[94:37] Yeah. Yeah. Personally, I do. And I
+[94:40] think there are like strong opinions and
+[94:43] some people don't like it at all. So,
+[94:45] they will downrank such such responses.
+[94:47] But actually, it's something that the
+[94:49] user should be able to to tell and
+[94:52] choose. And then the distribution of
+[94:54] people who choose the best model with
+[94:56] respect to the distribution of the wider
+[94:58] population that is going to use this
+[95:00] model these models is going to be
+[95:02] different. Um you know in often times
+[95:05] and I think the emoji case is a good
+[95:07] example. Uh because I think generally
+[95:10] emojis are popular in the wider
+[95:12] population but I think domain experts
+[95:15] might not like it as much. So I think
+[95:17] that that mismatch is one that you would
+[95:20] see here. And then the last point I will
+[95:22] mention here is the safety side. So you
+[95:25] as a user, you don't really like it when
+[95:29] a model rejects your prompt. When you
+[95:31] ask about something and it says, okay,
+[95:33] hey, sorry, I cannot answer it. So there
+[95:36] will be a bias towards responses that
+[95:39] actually responds to your query rather
+[95:42] than uh respect some safety principle
+[95:44] that might be eventually the intended
+[95:47] product decision. So there is also this
+[95:50] kind of bias that pops up here
+[95:54] and as I was mentioning evaluation is a
+[95:56] hard problem. So you have all these
+[95:58] angles all these angles that you can
+[96:00] explore and it's not one number that's
+[96:03] going to tell tell you what you care
+[96:06] about. It's the combination of all of
+[96:07] these and in the end it's um it's
+[96:11] tailored to what you actually need. So
+[96:13] you would need to
+[96:15] see the strength and weaknesses of a
+[96:17] given model and to determine like which
+[96:20] one corresponds to your use case.
+[96:24] Okay. So I'm going to come back to one
+[96:27] question about alignment here. So we're
+[96:29] going to see at the next lecture
+[96:31] a further step into aligning the model
+[96:34] to do what you want to do in a step
+[96:37] called preference tuning. And then the
+[96:39] combination of fine-tuning and
+[96:41] preference tuning um which is which
+[96:44] comes after pre-training is what we call
+[96:47] alignment of the model. So like these
+[96:49] two steps are called alignment.
+[96:52] And I want to call out one other thing.
+[96:55] Uh there is one step we didn't mention
+[96:57] here that is called mid training that
+[97:01] has been emerging very recently which
+[97:04] consists in a step just after
+[97:06] pre-training in aligning the kind of
+[97:10] data that the model is being trained on
+[97:12] to the tasks that you really care about.
+[97:15] So it's the same pre-training objective
+[97:18] but aligning the kind of task and the
+[97:21] kind of data set to something that you
+[97:23] care about and uh yes so it's an
+[97:25] emerging trend I have not mentioned it
+[97:27] but just so that you know mid-training
+[97:30] is something that you would have between
+[97:32] pre-training and fine-tuning
+[97:36] all good
+[97:39] okay great so now we're going to tackle
+[97:42] one aspect of the challenges that we had
+[97:44] mentioned regarding fine-tuning which is
+[97:47] computational expense like the fact of
+[97:50] being computationally expensive and
+[97:52] we're going to look at it with one uh
+[97:55] well-known technique called LoRa which
+[97:59] is a technique to fine-tune your weights
+[98:03] at the finetuning stage in an efficient
+[98:06] manner. So it's widely used it's um yeah
+[98:10] and and it saves a lot of computes. So
+[98:13] uh when you look at your weight matrices
+[98:16] instead of directly fine-tuning the
+[98:18] whole weight matrix the Laura technique
+[98:22] decomposes the fine-tuning between the
+[98:27] weights of the pre-trained model and
+[98:31] additional weights that it decomposes
+[98:34] into a low rank multiplication.
+[98:37] So uh in this formulation
+[98:41] the pre-trained weights that you have is
+[98:44] frozen. So this W0 is frozen and then B
+[98:48] and A are the matrices that you need to
+[98:50] tune. So B and A are typically um so
+[98:54] they have dimensions that will match the
+[98:57] like number of rows and number of
+[98:59] columns respectively from for the number
+[99:01] of rows of B and number of columns of A.
+[99:04] But then the dimension of the columns of
+[99:07] B and then rows of A is R which is the
+[99:11] rank of these matrices which is
+[99:13] typically taken very small.
+[99:16] So the dimensions of W is typically
+[99:19] hundreds or thousands and the dimension
+[99:22] of R is typically um you know up to 10
+[99:27] or of them. So as you can imagine it
+[99:31] results in much less weights to train.
+[99:36] Um and then I will mention just other
+[99:39] techniques to improve efficiency uh and
+[99:43] then ease the finetuning uh some u
+[99:46] methods called prefix tuning and
+[99:48] adapters. So, um, they're explained in
+[99:51] the in the class textbook, but we're not
+[99:54] going to dive in deep into them, um,
+[99:56] because they're like, uh, less commonly
+[99:58] used, but just so that you know.
+[100:01] Okay, so let's walk through in detail
+[100:05] how uh, does Lora work. So you when you
+[100:08] want to fine-tune your model, so you
+[100:10] have all these ways for which you have
+[100:12] already learned a distribution at
+[100:14] pre-training time. So one um naive way
+[100:18] of operating fine-tuning would be to
+[100:20] directly iterate on these weights. But
+[100:23] what we're doing here as we said is to
+[100:25] decompose this into the weights that we
+[100:27] have already pre-trained on and this
+[100:30] product of matrices. And what Laura says
+[100:34] is that you can do a forward pass on
+[100:38] both these terms and then adds these uh
+[100:42] quantities in the end. And yeah, A and B
+[100:46] is um like is going to be um
+[100:49] characterization of your task of
+[100:51] interest. So let's say you have a model
+[100:54] that uh to Ain was mentioning the kinds
+[100:56] of tasks that you can maybe specialize
+[100:59] your model on. for example, spam
+[101:01] detection. So you would take your
+[101:03] pre-trained model uh instantiate this
+[101:06] BNA in weights like in the weights of
+[101:09] your model fine tune on them and then
+[101:13] what you you will have is that BNA are
+[101:16] going to be specific to this task of
+[101:18] span detection similarly for sentiment
+[101:21] extraction and so on. So it's a very
+[101:24] nice property that you can start from a
+[101:28] base model further tune your weights and
+[101:31] then have your A and Bs that are task
+[101:33] specific.
+[101:36] Um so I want to comment now on where
+[101:42] were these um you know matrices being
+[101:45] learned. So in the original paper uh of
+[101:49] Laura it mentioned training only on the
+[101:52] uh attention matrices but later on uh
+[101:56] people realized that it might not be the
+[101:59] place where um it has the most positive
+[102:02] impact on uh on performance and then
+[102:06] there is a blog that uh came out a few
+[102:09] weeks ago that um studies this into
+[102:12] detail. uh and then they realized that
+[102:15] the feed forward blocks are actually
+[102:18] those where putting Lora is most
+[102:20] beneficial.
+[102:22] So today typically both these components
+[102:26] uh carry Lora matrices but the bulk of
+[102:30] the of the performance improvements is
+[102:33] actually contained in the feed forward
+[102:35] uh block.
+[102:38] And then I want to mention two
+[102:40] interesting properties about LoRa. Uh so
+[102:45] when you fine-tune with LoRa weights uh
+[102:47] you want to use a higher learning rates.
+[102:50] So typically 10 times more is the is the
+[102:53] guidance.
+[102:55] And then uh one interesting fact is that
+[102:57] it doesn't perform as well when you
+[103:00] train it with larger batch size.
+[103:03] So I don't have a good theoretical
+[103:06] explanation to give you for each of
+[103:08] them. It's more empirical observations
+[103:10] that have been emitted but to give the
+[103:13] main lines behind the mindset shared
+[103:17] from people who study this phenomenon.
+[103:19] Um the first one might be guided by the
+[103:22] rank of the Laura matrices that might be
+[103:25] small and as a result like given the
+[103:28] regions of space that it needs to
+[103:30] explore you need a higher learning rate.
+[103:33] And then the second one uh the
+[103:34] hypothesis here is that the training d
+[103:37] the training um like dynamic of products
+[103:44] of matrices is different than a full
+[103:46] matrix. And this is where the increasing
+[103:50] batch size phenomenon occurs. So it's
+[103:54] basically the um explanations tentative
+[103:57] explanations given there.
+[104:01] So now we're going to explore um an
+[104:06] optimization of this. Uh but before I
+[104:08] dive deep into that part, does anyone
+[104:11] have any questions on the Laura part?
+[104:13] Yep.
+[104:23] Yeah, great point. So the question is uh
+[104:25] do you do grid search on the rank? So
+[104:28] you could so it's a design choice the
+[104:31] rank R. Uh typically people would have
+[104:33] done it before you. So you have an idea
+[104:36] of what rank could be uh well suited for
+[104:39] your for your use case. Uh so you could
+[104:42] definitely do grid search or you could
+[104:43] just pick a popular value. I think a
+[104:46] four is is used commonly. You can just
+[104:48] go with with one of them. Um yeah and
+[104:51] then the we are going to see that the
+[104:53] reduction in number of parameters is so
+[104:55] huge already that reducing uh you know
+[104:59] even more maybe doesn't matter that much
+[105:02] like that initial redu reduction by
+[105:04] orders of magnitude goes a long way. uh
+[105:07] and then that is just a hyperparameter
+[105:09] tuning and you can see a given rank in a
+[105:11] given setup as being a design choice.
+[105:15] Uh okay so we have two minutes and we're
+[105:17] going to quickly cover quantized
+[105:20] uh Laura. So the techniques that Afin
+[105:24] mentioned just now uh regarding
+[105:26] quantizing weights uh and um and so
+[105:32] reducing the memory footprint is
+[105:34] something that we're going to see just
+[105:35] here. Uh so when you look at these
+[105:38] matrices w0 and a and b what people have
+[105:42] done in this paper is to quantize
+[105:46] the uh weights of w0 into a format that
+[105:51] is very smart and then uh compute and
+[105:54] iterate on these matrices that are being
+[105:56] learned a and b in full precision which
+[105:58] is in that case bf16.
+[106:01] Um and then uh the quantization of these
+[106:06] u frozen weights is super smart. It's in
+[106:09] a format called NF4
+[106:11] which assumes that the weights are
+[106:13] distributed normally and it splits the
+[106:18] space into quantiles rather than buckets
+[106:22] of fixed size which puts about the same
+[106:25] amount of number of uh values into each.
+[106:28] So it kind of optimizes the bits that
+[106:30] you use for encoding
+[106:33] and what it does is that it does like a
+[106:35] double quant quantization process. So it
+[106:38] quantizes the weights and then in a
+[106:41] second step it quantizes the
+[106:45] quantization constants that we didn't
+[106:47] see at length here. Basically when you
+[106:49] want to convert your um your full
+[106:53] weights in and out of quantized states
+[106:56] you have constants that are generated
+[106:59] and they propose to to quantize these
+[107:01] constants as well. So uh this method
+[107:05] generated 16x
+[107:08] um VRAMm uh savings and then the double
+[107:11] quantization methods uh gave some extra
+[107:14] savings but not that much but it's
+[107:16] interesting to know and then we're
+[107:19] exactly on time. Uh thank you for your
+[107:20] time.
